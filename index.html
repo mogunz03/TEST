@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>block reveal landing page animation</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <h1 class="counter">29</h1>
+
+    <div class="overlay">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+
+    <div class="container">
+      <nav>
+        <div>
+          <a href="#">About</a>
+          <a href="#">Contact</a>
+        </div>
+        <div>
+          <a href="#">Playground</a>
+        </div>
+      </nav>
+      <div class="header">
+        <div class="h1">T</div>
+        <div class="h1">E</div>
+        <div class="h1">S</div>
+        <div class="h1">T</div>
+        <div class="h1">.</div>
+      </div>
+      <div class="hero">
+        <img src="./hero-1.jpg" alt="" />
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.1/gsap.min.js"></script>
+    <script>
+      function startLoader() {
+        var counterElement = document.querySelector(".counter");
+        var currentValue = 0;
+
+        function updateCounter() {
+          if (currentValue === 100) {
+            return;
+          }
+
+          currentValue += Math.floor(Math.random() * 10) + 1;
+
+          if (currentValue > 100) {
+            currentValue = 100;
+          }
+
+          counterElement.textContent = currentValue;
+
+          var delay = Math.floor(Math.random() * 200) + 50;
+          setTimeout(updateCounter, delay);
+        }
+
+        updateCounter();
+      }
+
+      startLoader();
+      gsap.to(".counter", 0.25, {
+        delay: 3.5,
+        opacity: 0,
+      });
+      gsap.to(".bar", 1.5, {
+        delay: 3.5,
+        height: 0,
+        stagger: {
+          amount: 0.5,
+        },
+        ease: "power4.inOut",
+      });
+      gsap.from(".h1", 1.5, {
+        delay: 4,
+        y: 700,
+        stagger: {
+          amount: 0.5,
+        },
+        ease: "power4.inOut",
+      });
+
+      gsap.from(".hero", 2, {
+        delay: 4.5,
+        y: 400,
+        ease: "power4.inOut",
+      });
+    </script>
+  </body>
+</html>
