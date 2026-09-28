@@ -64,6 +64,17 @@ ollama pull qwen3:8b
 Files in `~/Library/Application Support/app.loba.desktop/loba/`:
 
 - `config.json` — `cleanup_enabled`, `model`, `timeout_ms`, `ollama_url`, `keep_alive`.
+- `dictionary.json` — your terms and how they get misheard:
+
+  ```json
+  { "entries": [{ "term": "DAUZE", "sounds_like": ["those"] }] }
+  ```
+
+  Terms (newest first, ~600 chars) become Whisper's `initial_prompt`.
+  `sounds_like` rewrites are whole-word, case-insensitive (Han patterns match
+  anywhere), and run both before the LLM and after it, so the model can't
+  "correct" a term back. A rule is literal: `those → DAUZE` rewrites _every_
+  "those" you say. Hand edits are picked up on the next dictation.
 
 ## Build
 

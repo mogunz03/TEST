@@ -4,50 +4,53 @@
 //! transcription and paste. Hotkey, capture and injection code is untouched.
 
 pub mod commands;
+mod watched;
 
-use loba_core::cleanup::{self, CleanupJob, Outcome};
-use loba_core::config::{load_or_seed, write_json};
-use loba_core::prompt::PromptContext;
-use loba_core::{LobaConfig, OllamaClient};
+use loba_core::cleanup::Outcome;
+use loba_core::pipeline::{self, Pipeline};
+use loba_core::{Dictionary, LobaConfig, OllamaClient};
+use once_cell::sync::Lazy;
 use std::path::PathBuf;
-use std::sync::{Arc, RwLock};
-use std::time::Duration;
+use std::sync::{Arc, Mutex, RwLock};
 use tauri::{AppHandle, Emitter, Manager};
+use watched::Watched;
 
 pub struct LobaState {
     dir: PathBuf,
-    config: RwLock<LobaConfig>,
-    client: RwLock<OllamaClient>,
+    config: Watched<LobaConfig>,
+    dictionary: Watched<Dictionary>,
+    client: Mutex<OllamaClient>,
 }
 
 impl LobaState {
-    fn config_path(&self) -> PathBuf {
-        self.dir.join("config.json")
-    }
-
     pub fn config(&self) -> LobaConfig {
-        self.config.read().map(|c| c.clone()).unwrap_or_default()
-    }
-
-    pub fn client(&self) -> OllamaClient {
-        self.client
-            .read()
-            .map(|c| c.clone())
-            .unwrap_or_else(|_| OllamaClient::new(loba_core::config::DEFAULT_OLLAMA_URL))
+        self.config.get()
     }
 
     pub fn set_config(&self, next: LobaConfig) -> Result<LobaConfig, String> {
-        let next = next.sanitized();
-        write_json(&self.config_path(), &next).map_err(|e| e.to_string())?;
-        if let Ok(mut c) = self.client.write() {
-            if c.base_url() != next.ollama_url {
-                *c = OllamaClient::new(&next.ollama_url);
-            }
+        self.config.set(next)
+    }
+
+    pub fn dictionary(&self) -> Dictionary {
+        let d = self.dictionary.get();
+        publish_whisper_prompt(&d);
+        d
+    }
+
+    pub fn set_dictionary(&self, next: Dictionary) -> Result<Dictionary, String> {
+        let d = self.dictionary.set(next)?;
+        publish_whisper_prompt(&d);
+        Ok(d)
+    }
+
+    /// Client for the configured URL; rebuilt only when the URL changes.
+    pub fn client(&self) -> OllamaClient {
+        let url = self.config().ollama_url;
+        let mut c = self.client.lock().unwrap_or_else(|p| p.into_inner());
+        if c.base_url() != url {
+            *c = OllamaClient::new(&url);
         }
-        if let Ok(mut c) = self.config.write() {
-            *c = next.clone();
-        }
-        Ok(next)
+        c.clone()
     }
 
     pub fn dir(&self) -> &PathBuf {
@@ -64,21 +67,28 @@ pub fn init(app: &AppHandle) {
             return;
         }
     };
-    let config: LobaConfig =
-        load_or_seed(&dir.join("config.json"), LobaConfig::default).sanitized();
+    let config = Watched::open(dir.join("config.json"), LobaConfig::default, |c| {
+        c.sanitized()
+    });
+    let dictionary = Watched::open(dir.join("dictionary.json"), Dictionary::seed, |d| {
+        d.normalized()
+    });
+    let cfg = config.get();
     log::info!(
         "L.O.B.A cleanup {} (model {}, budget {} ms, data {})",
-        if config.cleanup_enabled { "on" } else { "off" },
-        config.model,
-        config.timeout_ms,
+        if cfg.cleanup_enabled { "on" } else { "off" },
+        cfg.model,
+        cfg.timeout_ms,
         dir.display()
     );
-    let client = OllamaClient::new(&config.ollama_url);
-    app.manage(Arc::new(LobaState {
+    let state = Arc::new(LobaState {
         dir,
-        config: RwLock::new(config),
-        client: RwLock::new(client),
-    }));
+        client: Mutex::new(OllamaClient::new(&cfg.ollama_url)),
+        config,
+        dictionary,
+    });
+    publish_whisper_prompt(&state.dictionary.get());
+    app.manage(state);
     prewarm(app);
 }
 
@@ -86,8 +96,29 @@ fn state(app: &AppHandle) -> Option<Arc<LobaState>> {
     app.try_state::<Arc<LobaState>>().map(|s| Arc::clone(&s))
 }
 
+// The transcription manager reads the prompt synchronously on its own thread;
+// a plain global keeps it free of any dependency on Tauri state.
+static WHISPER_PROMPT: Lazy<RwLock<Option<String>>> = Lazy::new(|| RwLock::new(None));
+
+fn publish_whisper_prompt(d: &Dictionary) {
+    if let Ok(mut p) = WHISPER_PROMPT.write() {
+        *p = d.whisper_prompt();
+    }
+}
+
+/// Initial prompt for whisper-family models: Handy's custom words (if any)
+/// followed by the L.O.B.A dictionary terms.
+pub fn whisper_initial_prompt(custom_words: &[String]) -> Option<String> {
+    let loba = WHISPER_PROMPT.read().ok().and_then(|p| p.clone());
+    let handy = (!custom_words.is_empty()).then(|| custom_words.join(", "));
+    match (handy, loba) {
+        (Some(h), Some(l)) => Some(format!("{h}, {l}")),
+        (h, l) => h.or(l),
+    }
+}
+
 /// True when dictations will go through the cleanup pass (drives the
-/// "processing" overlay state).
+/// "processing" overlay state and whether Handy's own post-processing runs).
 pub fn cleanup_active(app: &AppHandle) -> bool {
     state(app).is_some_and(|s| s.config().cleanup_enabled)
 }
@@ -115,31 +146,23 @@ pub struct LobaResult {
     pub elapsed_ms: u64,
 }
 
-/// Run the pipeline on a raw transcript. `None` means L.O.B.A is not in play
-/// (disabled or uninitialised) and Handy's own path should run instead.
+/// Run the pipeline on a raw transcript. `None` only if L.O.B.A failed to
+/// initialise, in which case Handy's own path runs untouched.
 pub async fn process(app: &AppHandle, raw: &str) -> Option<LobaResult> {
     let s = state(app)?;
-    let cfg = s.config();
-    if !cfg.cleanup_enabled {
-        return None;
-    }
+    let config = s.config();
+    let dictionary = s.dictionary();
     let client = s.client();
-    let out = cleanup::clean(
-        CleanupJob {
+    let out = pipeline::run(
+        Pipeline {
             client: &client,
-            model: &cfg.model,
-            keep_alive: &cfg.keep_alive,
-            budget: Duration::from_millis(cfg.timeout_ms),
-            context: PromptContext::default(),
+            config: &config,
+            dictionary: &dictionary,
         },
         raw,
     )
     .await;
-    log::info!(
-        "L.O.B.A cleanup: {:?} in {} ms",
-        out.outcome,
-        out.elapsed_ms
-    );
+    log::info!("L.O.B.A pass: {:?} in {} ms", out.outcome, out.elapsed_ms);
     let result = LobaResult {
         text: out.text,
         outcome: out.outcome,

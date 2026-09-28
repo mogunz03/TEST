@@ -442,15 +442,13 @@ pub(crate) async fn process_transcription_output(
         final_text = converted_text;
     }
 
-    // L.O.B.A owns cleanup whenever it is enabled; Handy's provider-based
-    // post-processing only runs when it is switched off.
+    // L.O.B.A runs on every dictation (dictionary always, cleanup when on).
+    // Handy's provider-based post-processing only runs with cleanup off.
     let loba = crate::loba::process(app, &final_text).await;
     if let Some(result) = &loba {
-        if result.text != transcription {
-            post_processed_text = Some(result.text.clone());
-        }
         final_text = result.text.clone();
-    } else if post_process {
+    }
+    if post_process && !crate::loba::cleanup_active(app) {
         if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
@@ -465,7 +463,8 @@ pub(crate) async fn process_transcription_output(
                 }
             }
         }
-    } else if final_text != transcription {
+    }
+    if post_processed_text.is_none() && final_text != transcription {
         post_processed_text = Some(final_text.clone());
     }
 

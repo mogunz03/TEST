@@ -1,7 +1,7 @@
 //! Frontend surface for L.O.B.A.
 
 use super::LobaState;
-use loba_core::LobaConfig;
+use loba_core::{Dictionary, LobaConfig};
 use std::sync::Arc;
 use tauri::State;
 
@@ -35,4 +35,20 @@ pub async fn loba_list_models(state: State<'_, Arc<LobaState>>) -> Result<Vec<St
 #[specta::specta]
 pub fn loba_data_dir(state: State<'_, Arc<LobaState>>) -> String {
     state.dir().display().to_string()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_get_dictionary(state: State<'_, Arc<LobaState>>) -> Dictionary {
+    state.dictionary()
+}
+
+/// Saves `dictionary.json` and refreshes the Whisper prompt immediately.
+#[tauri::command]
+#[specta::specta]
+pub fn loba_set_dictionary(
+    state: State<'_, Arc<LobaState>>,
+    dictionary: Dictionary,
+) -> Result<Dictionary, String> {
+    state.set_dictionary(dictionary)
 }

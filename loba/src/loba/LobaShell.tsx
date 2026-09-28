@@ -2,8 +2,9 @@ import React, { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Home } from "./pages/Home";
 import { Cleanup } from "./pages/Cleanup";
+import { DictionaryPage } from "./pages/DictionaryPage";
 
-type Page = "home" | "cleanup" | "engine";
+type Page = "home" | "dictionary" | "cleanup" | "engine";
 
 interface Section {
   id: Page;
@@ -14,6 +15,7 @@ interface Section {
 // the underlying engine last.
 const SECTIONS: Section[] = [
   { id: "home", labelKey: "nav.home" },
+  { id: "dictionary", labelKey: "nav.dictionary" },
   { id: "cleanup", labelKey: "nav.cleanup" },
   { id: "engine", labelKey: "nav.engine" },
 ];
@@ -86,6 +88,7 @@ export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
               {page === "home" && (
                 <Home onOpenCleanup={() => setPage("cleanup")} />
               )}
+              {page === "dictionary" && <DictionaryPage />}
               {page === "cleanup" && <Cleanup />}
             </div>
           </div>

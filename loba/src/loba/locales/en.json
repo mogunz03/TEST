@@ -2,6 +2,7 @@
   "brand": "L.O.B.A",
   "nav": {
     "home": "Home",
+    "dictionary": "Dictionary",
     "cleanup": "Cleanup",
     "engine": "Engine"
   },
@@ -62,5 +63,15 @@
       "label": "Ollama",
       "note": "Loopback only. Remote hosts are refused."
     }
+  },
+  "dictionary": {
+    "title": "Dictionary",
+    "lede": "Names, jargon, words the recogniser keeps getting wrong. Terms steer Whisper before it listens; “heard as” fixes what slips through, before and after cleanup.",
+    "addPlaceholder": "Add a word, name or acronym",
+    "add": "Add",
+    "empty": "Nothing yet. Start with the word you correct most.",
+    "heardAs": "heard as",
+    "heardPlaceholder": "those, doze",
+    "remove": "Remove {{term}}"
   }
 }

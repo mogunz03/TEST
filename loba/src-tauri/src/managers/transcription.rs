@@ -1307,13 +1307,17 @@ impl TranscriptionManager {
                         // whisper run extension to a non-whisper arch is rejected
                         // with INVALID_ARG, so skip it there and let the fuzzy
                         // post-correction handle custom words instead.
-                        let family = if settings.custom_words.is_empty() || !model_is_whisper {
-                            None
-                        } else {
-                            Some(RunExtension::Whisper(WhisperRunOptions {
-                                initial_prompt: Some(settings.custom_words.join(", ")),
-                                ..Default::default()
-                            }))
+                        // L.O.B.A: the personal dictionary's terms join the prompt.
+                        let initial_prompt =
+                            crate::loba::whisper_initial_prompt(&settings.custom_words);
+                        let family = match initial_prompt {
+                            Some(prompt) if model_is_whisper => {
+                                Some(RunExtension::Whisper(WhisperRunOptions {
+                                    initial_prompt: Some(prompt),
+                                    ..Default::default()
+                                }))
+                            }
+                            _ => None,
                         };
 
                         let run_plan = transcribe_cpp_run_plan(

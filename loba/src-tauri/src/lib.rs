@@ -769,6 +769,8 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_set_config,
             loba::commands::loba_list_models,
             loba::commands::loba_data_dir,
+            loba::commands::loba_get_dictionary,
+            loba::commands::loba_set_dictionary,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,

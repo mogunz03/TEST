@@ -13,6 +13,15 @@ export interface LobaConfig {
   keep_alive: string;
 }
 
+export interface DictionaryEntry {
+  term: string;
+  sounds_like: string[];
+}
+
+export interface Dictionary {
+  entries: DictionaryEntry[];
+}
+
 export const loba = {
   getConfig: () => invoke<LobaConfig>("loba_get_config"),
   setConfig: (config: LobaConfig) =>
@@ -20,4 +29,8 @@ export const loba = {
   /** Rejects when Ollama is not reachable. */
   listModels: () => invoke<string[]>("loba_list_models"),
   dataDir: () => invoke<string>("loba_data_dir"),
+  getDictionary: () => invoke<Dictionary>("loba_get_dictionary"),
+  /** Normalises (trims, dedupes) and returns what was actually saved. */
+  setDictionary: (dictionary: Dictionary) =>
+    invoke<Dictionary>("loba_set_dictionary", { dictionary }),
 };
