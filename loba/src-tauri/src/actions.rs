@@ -721,8 +721,11 @@ impl ShortcutAction for TranscribeAction {
                     return;
                 }
 
-                if samples.is_empty() {
-                    debug!("Recording produced no audio samples; skipping persistence");
+                if crate::loba::too_short(&samples) {
+                    debug!(
+                        "Recording too short ({} samples); treating as an accidental press",
+                        samples.len()
+                    );
                     // Tear down any streaming worker so its channel doesn't leak
                     // and block the next start_stream.
                     tm.cancel_stream();

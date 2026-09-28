@@ -109,7 +109,7 @@ impl ShortcutAction for CommandAction {
             let Some(samples) = rm.stop_recording(&binding_id, generation) else {
                 return finish(&app);
             };
-            if rm.was_cancelled_since(generation) || samples.is_empty() {
+            if rm.was_cancelled_since(generation) || super::too_short(&samples) {
                 return finish(&app);
             }
             utils::show_transcribing_overlay(&app);

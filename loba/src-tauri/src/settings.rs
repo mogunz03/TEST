@@ -860,8 +860,12 @@ pub const SETTINGS_STORE_PATH: &str = "settings_store.json";
 pub fn get_default_settings() -> AppSettings {
     #[cfg(target_os = "windows")]
     let default_shortcut = "ctrl+space";
+    // L.O.B.A: hold ⌘⌥ (both, nothing else) to dictate. Modifier-only chords
+    // are safe here because activation defaults to push-to-talk and
+    // recordings shorter than MIN_DICTATION_MS are dropped — so ⌥⌘I, ⌥⌘Esc
+    // and friends pass through without a stray paste.
     #[cfg(target_os = "macos")]
-    let default_shortcut = "option+space";
+    let default_shortcut = "option+command";
     #[cfg(target_os = "linux")]
     let default_shortcut = "ctrl+space";
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
@@ -899,12 +903,11 @@ pub fn get_default_settings() -> AppSettings {
         },
     );
     // L.O.B.A command mode: hold, say what to do with the selection, release.
-    // ⌥⇧Space would be natural but belongs to Handy's post-process binding;
-    // ⌃Space/⌃⌥Space switch input sources (Pinyin), ⌥E is the French accent
-    // dead key. ⌥⌘/ has no system binding (Xcode's "Add Documentation" is
-    // the one app that uses it); rebind in Home if it clashes.
+    // Dictation owns ⌘⌥, so command mode adds ⌃ to it: same hand position,
+    // one more finger. Passing through ⌘⌥ on the way is harmless — that
+    // blip is shorter than MIN_DICTATION_MS and gets dropped.
     #[cfg(target_os = "macos")]
-    let default_command_shortcut = "option+command+slash";
+    let default_command_shortcut = "ctrl+option+command";
     #[cfg(not(target_os = "macos"))]
     let default_command_shortcut = "ctrl+alt+slash";
     bindings.insert(
@@ -931,7 +934,9 @@ pub fn get_default_settings() -> AppSettings {
     AppSettings {
         settings_schema_version: default_settings_schema_version(),
         bindings,
-        shortcut_activation: ShortcutActivation::default(),
+        // Hold-to-talk: with a modifier-only default, "tap toggles" would lock
+        // recording on every time ⌘⌥ is used as part of another shortcut.
+        shortcut_activation: ShortcutActivation::PushToTalk,
         hold_threshold_ms: default_hold_threshold_ms(),
         audio_feedback: false,
         audio_feedback_volume: default_audio_feedback_volume(),
@@ -1632,15 +1637,13 @@ mod tests {
     }
 
     #[test]
-    fn shortcut_activation_defaults_to_hold_or_toggle_without_legacy_key() {
+    fn shortcut_activation_defaults_to_push_to_talk_without_legacy_key() {
+        // L.O.B.A default: hold-to-talk, required for a modifier-only hotkey.
         let mut settings = get_default_settings();
         let raw = serde_json::json!({ "selected_model": "" });
 
         apply_settings_migrations(&mut settings, &raw);
-        assert_eq!(
-            settings.shortcut_activation,
-            ShortcutActivation::HoldOrToggle
-        );
+        assert_eq!(settings.shortcut_activation, ShortcutActivation::PushToTalk);
     }
 
     #[test]

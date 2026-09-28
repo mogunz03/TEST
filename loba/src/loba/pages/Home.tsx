@@ -5,9 +5,10 @@ import { Keys } from "../Keys";
 import { useLoba } from "../useOllama";
 import { useLastRun } from "../lastRun";
 
-export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
-  onOpenCleanup,
-}) => {
+export const Home: React.FC<{
+  onOpenCleanup: () => void;
+  onOpenShortcuts: () => void;
+}> = ({ onOpenCleanup, onOpenShortcuts }) => {
   const { t } = useTranslation("loba");
   const { settings } = useSettings();
   const { config, ollama } = useLoba();
@@ -41,7 +42,14 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
         />
       </h1>
       <p className="mt-3 text-[15px] leading-6 text-soft max-w-[440px]">
-        {t("home.lede")}
+        {t("home.lede")}{" "}
+        <button
+          type="button"
+          onClick={onOpenShortcuts}
+          className="underline decoration-rule underline-offset-4 hover:text-ink hover:decoration-clay transition-colors cursor-pointer"
+        >
+          {t("home.status.change")}
+        </button>
       </p>
 
       <div className="mt-8 flex items-center gap-2.5 text-[13px]">

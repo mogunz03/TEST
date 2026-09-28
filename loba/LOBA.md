@@ -107,9 +107,27 @@ dictionary rules only — so a terminal command is never "improved". Mappings to
 a style that doesn't exist are dropped on load. **Styles → Check an app**
 waits 3 s, then shows what L.O.B.A sees in whatever app you switched to.
 
+## Shortcuts
+
+**Shortcuts** page: click a shortcut, press the keys, let go. Modifier-only
+chords are allowed.
+
+| Action       | Default (macOS) |
+| ------------ | --------------- |
+| Dictate      | hold **⌘⌥**     |
+| Command mode | hold **⌃⌥⌘**    |
+
+Why this is safe with a modifier-only chord: activation defaults to
+**Hold** (push-to-talk), and any recording under 0.3 s is dropped. So ⌥⌘I,
+⌥⌘Esc etc. in other apps pass through without a stray paste — at worst you
+see the overlay blink. _Tap on/off_ and _Both_ modes are available but not
+recommended with a modifier-only chord (a quick ⌥⌘ shortcut would lock
+recording on). Holding ⌘⌥ for longer while doing something else (⌥⌘-drag
+in Finder) will record; pick a keyed shortcut if that's your habit.
+
 ## Command mode
 
-Select text, hold **⌥⌘/** (rebind in Engine → General), say what to do,
+Select text, hold **⌃⌥⌘** (rebind on the Shortcuts page), say what to do,
 release. Release — not press — triggers the copy: L.O.B.A waits for the
 physical modifiers to come up (a synthetic ⌘C with ⌥⇧ still held is ⌥⇧⌘C to
 the target app), grabs the selection through a marker-checked ⌘C, restores

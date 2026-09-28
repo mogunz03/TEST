@@ -7,8 +7,16 @@ import { Cleanup } from "./pages/Cleanup";
 import { DictionaryPage } from "./pages/DictionaryPage";
 import { StylesPage } from "./pages/StylesPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { ShortcutsPage } from "./pages/ShortcutsPage";
 
-type Page = "home" | "history" | "dictionary" | "styles" | "cleanup" | "engine";
+type Page =
+  | "home"
+  | "history"
+  | "dictionary"
+  | "styles"
+  | "shortcuts"
+  | "cleanup"
+  | "engine";
 
 interface Section {
   id: Page;
@@ -22,6 +30,7 @@ const SECTIONS: Section[] = [
   { id: "history", labelKey: "nav.history" },
   { id: "dictionary", labelKey: "nav.dictionary" },
   { id: "styles", labelKey: "nav.styles" },
+  { id: "shortcuts", labelKey: "nav.shortcuts" },
   { id: "cleanup", labelKey: "nav.cleanup" },
   { id: "engine", labelKey: "nav.engine" },
 ];
@@ -102,11 +111,15 @@ export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
               className="loba-page max-w-[560px] ps-12 pe-8 pt-12 pb-16"
             >
               {page === "home" && (
-                <Home onOpenCleanup={() => setPage("cleanup")} />
+                <Home
+                  onOpenCleanup={() => setPage("cleanup")}
+                  onOpenShortcuts={() => setPage("shortcuts")}
+                />
               )}
               {page === "history" && <HistoryPage />}
               {page === "dictionary" && <DictionaryPage />}
               {page === "styles" && <StylesPage />}
+              {page === "shortcuts" && <ShortcutsPage />}
               {page === "cleanup" && <Cleanup />}
             </div>
           </div>

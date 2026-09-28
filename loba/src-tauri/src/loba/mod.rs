@@ -270,3 +270,12 @@ pub fn record_history(
     }
     let _ = app.emit("loba:history-changed", history_id);
 }
+
+/// Shorter than this and a press was a chord passing through (⌥⌘I while
+/// the dictation hotkey is ⌘⌥), not speech: nothing is transcribed or pasted.
+pub const MIN_DICTATION_MS: u32 = 300;
+
+pub fn too_short(samples: &[f32]) -> bool {
+    let min = crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE * MIN_DICTATION_MS / 1000;
+    samples.len() < min as usize
+}

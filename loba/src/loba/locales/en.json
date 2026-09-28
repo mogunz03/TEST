@@ -5,6 +5,7 @@
     "history": "History",
     "dictionary": "Dictionary",
     "styles": "Styles",
+    "shortcuts": "Shortcuts",
     "cleanup": "Cleanup",
     "engine": "Engine"
   },
@@ -20,7 +21,8 @@
       "checking": "Looking for Ollama…",
       "down": "Ollama isn't running — pasting raw transcripts",
       "missing-model": "{{model}} isn't installed — pasting raw transcripts",
-      "adjust": "Adjust"
+      "adjust": "Adjust",
+      "change": "Change shortcuts"
     },
     "flow": {
       "speak": {
@@ -128,6 +130,28 @@
       "timed_out": "Hit the time budget — pasted as spoken",
       "fallback": "Pasted as spoken ({{detail}})",
       "skipped": "Not rewritten ({{detail}})"
+    }
+  },
+  "shortcuts": {
+    "title": "Shortcuts",
+    "lede": "Click a shortcut, press the keys you want, let go. Modifier-only chords like ⌘⌥ work — hold them, nothing else.",
+    "dictate": "Dictate",
+    "dictateNote": "Speak; let go and the cleaned text is pasted where you're typing.",
+    "command": "Command mode",
+    "commandNote": "Select text, speak an instruction, let go; the selection is rewritten.",
+    "change": "Change the {{name}} shortcut",
+    "listening": "Press keys…",
+    "hint": "Let go to save · Esc cancels",
+    "reset": "Reset to default",
+    "failed": "Couldn't set that shortcut",
+    "mode": {
+      "label": "Dictation",
+      "push_to_talk": "Hold",
+      "toggle": "Tap on / off",
+      "hold_or_toggle": "Both",
+      "push_to_talkNote": "Hold to talk, let go to paste. Taps shorter than 0.3 s are ignored, so ⌥⌘ shortcuts in other apps still work.",
+      "toggleNote": "Tap to start, tap again to paste. Not recommended with a modifier-only shortcut.",
+      "hold_or_toggleNote": "Hold to talk, or tap to keep listening. Not recommended with a modifier-only shortcut."
     }
   }
 }
