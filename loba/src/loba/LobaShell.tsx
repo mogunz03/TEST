@@ -3,8 +3,9 @@ import { useTranslation } from "react-i18next";
 import { Home } from "./pages/Home";
 import { Cleanup } from "./pages/Cleanup";
 import { DictionaryPage } from "./pages/DictionaryPage";
+import { StylesPage } from "./pages/StylesPage";
 
-type Page = "home" | "dictionary" | "cleanup" | "engine";
+type Page = "home" | "dictionary" | "styles" | "cleanup" | "engine";
 
 interface Section {
   id: Page;
@@ -16,6 +17,7 @@ interface Section {
 const SECTIONS: Section[] = [
   { id: "home", labelKey: "nav.home" },
   { id: "dictionary", labelKey: "nav.dictionary" },
+  { id: "styles", labelKey: "nav.styles" },
   { id: "cleanup", labelKey: "nav.cleanup" },
   { id: "engine", labelKey: "nav.engine" },
 ];
@@ -89,6 +91,7 @@ export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
                 <Home onOpenCleanup={() => setPage("cleanup")} />
               )}
               {page === "dictionary" && <DictionaryPage />}
+              {page === "styles" && <StylesPage />}
               {page === "cleanup" && <Cleanup />}
             </div>
           </div>

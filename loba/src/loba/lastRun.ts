@@ -10,6 +10,8 @@ export type Outcome =
 export interface LastRun {
   outcome: Outcome;
   elapsed_ms: number;
+  app: string | null;
+  style: string;
 }
 
 // One listener for the app's lifetime, so the result survives page switches.

@@ -3,6 +3,7 @@
   "nav": {
     "home": "Home",
     "dictionary": "Dictionary",
+    "styles": "Styles",
     "cleanup": "Cleanup",
     "engine": "Engine"
   },
@@ -35,11 +36,12 @@
       }
     },
     "last": {
-      "cleaned": "Last dictation cleaned in {{seconds}} s.",
-      "timed_out": "Last dictation hit the {{seconds}} s budget — pasted as spoken.",
-      "fallback": "Last dictation pasted as spoken ({{detail}}).",
-      "skipped": "Last dictation pasted as spoken ({{detail}})."
-    }
+      "cleaned": "Last dictation → {{app}} · {{style}}, cleaned in {{seconds}} s.",
+      "timed_out": "Last dictation → {{app}} hit the {{seconds}} s budget — pasted as spoken.",
+      "fallback": "Last dictation → {{app}} pasted as spoken ({{detail}}).",
+      "skipped": "Last dictation → {{app}} pasted as spoken ({{detail}})."
+    },
+    "unknownApp": "unknown app"
   },
   "cleanup": {
     "title": "Cleanup",
@@ -73,5 +75,28 @@
     "heardAs": "heard as",
     "heardPlaceholder": "those, doze",
     "remove": "Remove {{term}}"
+  },
+  "styles": {
+    "title": "Styles",
+    "lede": "L.O.B.A notices where you're typing. Chats stay loose, email gets buttoned up, code and terminals get exactly what you said.",
+    "detect": "Check an app",
+    "detecting": "Switch to it now…",
+    "detected": "{{app}} → {{style}} ({{by}})",
+    "unknownApp": "unknown app",
+    "fallback": "default",
+    "voices": "Voices",
+    "default": "default",
+    "rewrites": "Rewrites",
+    "literal": "Literal",
+    "literalNote": "No model pass. Dictionary fixes only — commands and code arrive exactly as spoken.",
+    "tonePlaceholder": "How should text sound here?",
+    "apps": "Apps",
+    "appsNote": "Matched by app name or bundle id.",
+    "appPlaceholder": "App name, e.g. Notion",
+    "titles": "Web apps",
+    "titlesNote": "When the app itself isn't listed, a window title containing this word decides — Gmail in Safari reads as email.",
+    "titlePlaceholder": "Title contains, e.g. Linear",
+    "map": "Map",
+    "removeMapping": "Remove {{key}}"
   }
 }

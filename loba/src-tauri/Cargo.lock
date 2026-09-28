@@ -3359,7 +3359,11 @@ checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 name = "loba-core"
 version = "0.1.0"
 dependencies = [
+ "core-foundation 0.10.1",
  "log",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

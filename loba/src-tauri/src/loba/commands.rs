@@ -1,7 +1,8 @@
 //! Frontend surface for L.O.B.A.
 
 use super::LobaState;
-use loba_core::{Dictionary, LobaConfig};
+use loba_core::styles::Resolved;
+use loba_core::{AppContext, Dictionary, LobaConfig, Styles};
 use std::sync::Arc;
 use tauri::State;
 
@@ -51,4 +52,38 @@ pub fn loba_set_dictionary(
     dictionary: Dictionary,
 ) -> Result<Dictionary, String> {
     state.set_dictionary(dictionary)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_get_styles(state: State<'_, Arc<LobaState>>) -> Styles {
+    state.styles()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_set_styles(state: State<'_, Arc<LobaState>>, styles: Styles) -> Result<Styles, String> {
+    state.set_styles(styles)
+}
+
+#[derive(serde::Serialize, specta::Type)]
+pub struct Probe {
+    pub app: AppContext,
+    pub style: Resolved,
+}
+
+/// What's frontmost after `delay_ms`, and the style it resolves to — lets the
+/// Styles page check a mapping once the user has switched to that app.
+#[tauri::command]
+#[specta::specta]
+pub async fn loba_probe_frontmost(
+    state: State<'_, Arc<LobaState>>,
+    delay_ms: u32,
+) -> Result<Probe, String> {
+    tokio::time::sleep(std::time::Duration::from_millis(delay_ms.min(10_000) as u64)).await;
+    let app = tauri::async_runtime::spawn_blocking(loba_core::frontmost::frontmost)
+        .await
+        .unwrap_or_default();
+    let style = state.styles().resolve(&app);
+    Ok(Probe { app, style })
 }

@@ -771,6 +771,9 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_data_dir,
             loba::commands::loba_get_dictionary,
             loba::commands::loba_set_dictionary,
+            loba::commands::loba_get_styles,
+            loba::commands::loba_set_styles,
+            loba::commands::loba_probe_frontmost,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,

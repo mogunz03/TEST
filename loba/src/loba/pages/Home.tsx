@@ -60,6 +60,8 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
           {t(`home.last.${last.outcome.kind}`, {
             seconds: (last.elapsed_ms / 1000).toFixed(1),
             detail: "detail" in last.outcome ? last.outcome.detail : "",
+            app: last.app ?? t("home.unknownApp"),
+            style: last.style,
           })}
         </p>
       )}

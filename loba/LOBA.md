@@ -76,6 +76,37 @@ Files in `~/Library/Application Support/app.loba.desktop/loba/`:
   "correct" a term back. A rule is literal: `those → DAUZE` rewrites _every_
   "those" you say. Hand edits are picked up on the next dictation.
 
+## App-aware tone
+
+On hotkey-down L.O.B.A notes the frontmost app (NSWorkspace) and its focused
+window title (Accessibility API, 250 ms timeout, off the hotkey thread). At
+cleanup time that resolves to a style in `styles.json`:
+
+```json
+{
+  "default": "neutral",
+  "styles": {
+    "casual": { "tone": "Chat message. Relaxed and short…", "rewrite": true },
+    "formal": { "tone": "Email. Complete sentences…", "rewrite": true },
+    "literal": { "tone": "", "rewrite": false }
+  },
+  "apps": {
+    "WeChat": "casual",
+    "Slack": "casual",
+    "Mail": "formal",
+    "Code": "literal",
+    "Terminal": "literal"
+  },
+  "window_titles": { "Gmail": "formal" }
+}
+```
+
+Order: app name / bundle id → window-title substring (how Gmail in a browser
+reads as formal) → `default`. `rewrite: false` skips the LLM entirely —
+dictionary rules only — so a terminal command is never "improved". Mappings to
+a style that doesn't exist are dropped on load. **Styles → Check an app**
+waits 3 s, then shows what L.O.B.A sees in whatever app you switched to.
+
 ## Build
 
 CI builds an ad-hoc-signed `.dmg` on every push touching `loba/`

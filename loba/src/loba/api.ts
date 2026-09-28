@@ -22,6 +22,30 @@ export interface Dictionary {
   entries: DictionaryEntry[];
 }
 
+export interface Style {
+  tone: string;
+  /** false = literal: dictionary only, no LLM. */
+  rewrite: boolean;
+}
+
+export interface Styles {
+  default: string;
+  styles: Record<string, Style>;
+  apps: Record<string, string>;
+  window_titles: Record<string, string>;
+}
+
+export interface AppContext {
+  name: string | null;
+  bundle_id: string | null;
+  window_title: string | null;
+}
+
+export interface Probe {
+  app: AppContext;
+  style: { id: string; style: Style; matched_by: string | null };
+}
+
 export const loba = {
   getConfig: () => invoke<LobaConfig>("loba_get_config"),
   setConfig: (config: LobaConfig) =>
@@ -33,4 +57,8 @@ export const loba = {
   /** Normalises (trims, dedupes) and returns what was actually saved. */
   setDictionary: (dictionary: Dictionary) =>
     invoke<Dictionary>("loba_set_dictionary", { dictionary }),
+  getStyles: () => invoke<Styles>("loba_get_styles"),
+  setStyles: (styles: Styles) => invoke<Styles>("loba_set_styles", { styles }),
+  probeFrontmost: (delayMs: number) =>
+    invoke<Probe>("loba_probe_frontmost", { delayMs }),
 };

@@ -8,7 +8,8 @@ mod watched;
 
 use loba_core::cleanup::Outcome;
 use loba_core::pipeline::{self, Pipeline};
-use loba_core::{Dictionary, LobaConfig, OllamaClient};
+use loba_core::styles::Resolved;
+use loba_core::{AppContext, Dictionary, LobaConfig, OllamaClient, Styles};
 use once_cell::sync::Lazy;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
@@ -19,7 +20,11 @@ pub struct LobaState {
     dir: PathBuf,
     config: Watched<LobaConfig>,
     dictionary: Watched<Dictionary>,
+    styles: Watched<Styles>,
     client: Mutex<OllamaClient>,
+    /// Where the user was when they pressed the hotkey. Taken by the next
+    /// pipeline run, so it can never leak into a later dictation.
+    target: Mutex<Option<AppContext>>,
 }
 
 impl LobaState {
@@ -41,6 +46,18 @@ impl LobaState {
         let d = self.dictionary.set(next)?;
         publish_whisper_prompt(&d);
         Ok(d)
+    }
+
+    pub fn styles(&self) -> Styles {
+        self.styles.get()
+    }
+
+    pub fn set_styles(&self, next: Styles) -> Result<Styles, String> {
+        self.styles.set(next)
+    }
+
+    fn take_target(&self) -> Option<AppContext> {
+        self.target.lock().unwrap_or_else(|p| p.into_inner()).take()
     }
 
     /// Client for the configured URL; rebuilt only when the URL changes.
@@ -73,6 +90,7 @@ pub fn init(app: &AppHandle) {
     let dictionary = Watched::open(dir.join("dictionary.json"), Dictionary::seed, |d| {
         d.normalized()
     });
+    let styles = Watched::open(dir.join("styles.json"), Styles::seed, |s| s.normalized());
     let cfg = config.get();
     log::info!(
         "L.O.B.A cleanup {} (model {}, budget {} ms, data {})",
@@ -86,10 +104,12 @@ pub fn init(app: &AppHandle) {
         client: Mutex::new(OllamaClient::new(&cfg.ollama_url)),
         config,
         dictionary,
+        styles,
+        target: Mutex::new(None),
     });
     publish_whisper_prompt(&state.dictionary.get());
+    prewarm(&state);
     app.manage(state);
-    prewarm(app);
 }
 
 fn state(app: &AppHandle) -> Option<Arc<LobaState>> {
@@ -123,10 +143,22 @@ pub fn cleanup_active(app: &AppHandle) -> bool {
     state(app).is_some_and(|s| s.config().cleanup_enabled)
 }
 
-/// Fire-and-forget model load. Called on hotkey press so the 8B weights are
-/// resident by the time speech ends; a cold load alone would eat the budget.
-pub fn prewarm(app: &AppHandle) {
+/// Hotkey went down. Two things happen off the hotkey thread:
+/// - note the frontmost app now, while the user is still looking at it;
+/// - start loading the cleanup model, so its weights are resident by the
+///   time speech ends (a cold 8B load alone would eat the budget).
+pub fn on_record_start(app: &AppHandle) {
     let Some(s) = state(app) else { return };
+    let for_capture = Arc::clone(&s);
+    std::thread::spawn(move || {
+        let ctx = loba_core::frontmost::frontmost();
+        log::debug!("L.O.B.A target: {:?}", ctx.name);
+        *for_capture.target.lock().unwrap_or_else(|p| p.into_inner()) = Some(ctx);
+    });
+    prewarm(&s);
+}
+
+fn prewarm(s: &LobaState) {
     let cfg = s.config();
     if !cfg.cleanup_enabled {
         return;
@@ -144,6 +176,8 @@ pub struct LobaResult {
     pub text: String,
     pub outcome: Outcome,
     pub elapsed_ms: u64,
+    pub app: AppContext,
+    pub style: Resolved,
 }
 
 /// Run the pipeline on a raw transcript. `None` only if L.O.B.A failed to
@@ -153,20 +187,35 @@ pub async fn process(app: &AppHandle, raw: &str) -> Option<LobaResult> {
     let config = s.config();
     let dictionary = s.dictionary();
     let client = s.client();
+    // Normally captured at hotkey-down; a history retry has none, and then
+    // the frontmost app is L.O.B.A itself, which resolves to the default.
+    let app_ctx = s
+        .take_target()
+        .unwrap_or_else(loba_core::frontmost::frontmost);
+    let style = s.styles().resolve(&app_ctx);
     let out = pipeline::run(
         Pipeline {
             client: &client,
             config: &config,
             dictionary: &dictionary,
+            style: &style,
         },
         raw,
     )
     .await;
-    log::info!("L.O.B.A pass: {:?} in {} ms", out.outcome, out.elapsed_ms);
+    log::info!(
+        "L.O.B.A pass: {:?} in {} ms (app {:?}, style {})",
+        out.outcome,
+        out.elapsed_ms,
+        app_ctx.name,
+        style.id
+    );
     let result = LobaResult {
         text: out.text,
         outcome: out.outcome,
         elapsed_ms: out.elapsed_ms,
+        app: app_ctx,
+        style,
     };
     announce(app, &result);
     Some(result)
@@ -176,6 +225,8 @@ pub async fn process(app: &AppHandle, raw: &str) -> Option<LobaResult> {
 struct RanEvent<'a> {
     outcome: &'a Outcome,
     elapsed_ms: u64,
+    app: Option<&'a str>,
+    style: &'a str,
 }
 
 /// Tell the window how the last dictation went, so a silent fallback is
@@ -186,6 +237,8 @@ fn announce(app: &AppHandle, result: &LobaResult) {
         RanEvent {
             outcome: &result.outcome,
             elapsed_ms: result.elapsed_ms,
+            app: result.app.name.as_deref(),
+            style: &result.style.id,
         },
     );
 }

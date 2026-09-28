@@ -19,3 +19,10 @@ specta = { version = "=2.0.0-rc.22", features = ["derive"] }
 [dev-dependencies]
 tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
 tempfile = "3"
+
+# Frontmost app + focused window title. Same versions Handy already links.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = "0.3"
+objc2-app-kit = "0.3"
+core-foundation = "0.10"
