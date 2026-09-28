@@ -83,6 +83,8 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
     {
       hour: "2-digit",
       minute: "2-digit",
+      // A fixed-width 24 h stamp keeps the text column from shifting.
+      hour12: false,
     },
   );
 
@@ -93,8 +95,8 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
   };
 
   return (
-    <article className="group grid grid-cols-[3.25rem_1fr] gap-x-3 py-3 border-b border-rule last:border-b-0">
-      <time className="pt-[3px] text-[12px] text-soft tabular-nums">
+    <article className="group grid grid-cols-[3rem_1fr] gap-x-3 py-3 border-b border-rule last:border-b-0">
+      <time className="pt-[3px] text-[12px] text-soft tabular-nums whitespace-nowrap">
         {time}
       </time>
       <div className="min-w-0">
@@ -123,15 +125,6 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
         </button>
 
         <div className="mt-1 flex items-center gap-4 text-[12px] text-soft">
-          <span
-            className={`inline-flex items-center gap-1 transition-opacity ${
-              copied ? "opacity-100 text-moss" : "opacity-0"
-            }`}
-            aria-live="polite"
-          >
-            <Check size={12} />
-            {copied === "raw" ? t("history.copiedRaw") : t("history.copied")}
-          </span>
           {changed && (
             <button
               type="button"
@@ -141,6 +134,15 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
               {showRaw ? t("history.hideRaw") : t("history.showRaw")}
             </button>
           )}
+          <span
+            className={`inline-flex items-center gap-1 transition-opacity ${
+              copied ? "opacity-100 text-moss" : "opacity-0"
+            }`}
+            aria-live="polite"
+          >
+            <Check size={12} />
+            {copied === "raw" ? t("history.copiedRaw") : t("history.copied")}
+          </span>
         </div>
 
         {showRaw && (

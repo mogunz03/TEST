@@ -44,7 +44,7 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
         {t("home.lede")}
       </p>
 
-      <div className="mt-10 flex items-center gap-2.5 text-[13px]">
+      <div className="mt-8 flex items-center gap-2.5 text-[13px]">
         <span className={`loba-dot ${tone.color}`} data-live={tone.live} />
         <span>{t(tone.key, { model: config?.model ?? "" })}</span>
         <button
@@ -74,7 +74,7 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
         <Fix lines={[`ollama pull ${config.model}`]} />
       )}
 
-      <ol className="mt-14 grid grid-cols-[auto_1fr] gap-x-5 gap-y-4 text-[14px]">
+      <ol className="mt-10 grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 text-[14px] leading-6">
         {(["speak", "clean", "paste"] as const).map((step, i) => (
           <React.Fragment key={step}>
             <span className="loba-display text-[15px] text-soft tabular-nums">
@@ -95,7 +95,7 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
         ))}
       </ol>
 
-      <section className="mt-14 pt-6 border-t border-rule">
+      <section className="mt-10 pt-6 border-t border-rule">
         <h2 className="loba-label">{t("home.command.label")}</h2>
         <p className="mt-3 text-[15px] leading-7">
           <Trans
