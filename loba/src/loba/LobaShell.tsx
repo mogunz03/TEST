@@ -1,4 +1,6 @@
-import React, { useState, type ReactNode } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
+import { listen } from "@tauri-apps/api/event";
+import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Home } from "./pages/Home";
 import { Cleanup } from "./pages/Cleanup";
@@ -32,6 +34,16 @@ interface Props {
 export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
   const { t } = useTranslation("loba");
   const [page, setPage] = useState<Page>("home");
+
+  // Command mode never pastes on failure, so say why instead of doing nothing.
+  useEffect(() => {
+    const un = listen<string>("loba:command-failed", (e) =>
+      toast.error(t("home.command.failed"), { description: e.payload }),
+    );
+    return () => {
+      un.then((f) => f());
+    };
+  }, [t]);
 
   return (
     <div className="h-screen flex bg-paper text-ink select-none cursor-default">

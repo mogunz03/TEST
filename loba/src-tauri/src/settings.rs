@@ -897,6 +897,25 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_post_process_shortcut.to_string(),
         },
     );
+    // L.O.B.A command mode: hold, say what to do with the selection, release.
+    // ⌥⇧Space would be natural but belongs to Handy's post-process binding;
+    // ⌃Space/⌃⌥Space switch input sources (Pinyin), ⌥E is the French accent
+    // dead key. ⌥⌘/ has no system binding (Xcode's "Add Documentation" is
+    // the one app that uses it); rebind in Home if it clashes.
+    #[cfg(target_os = "macos")]
+    let default_command_shortcut = "option+command+slash";
+    #[cfg(not(target_os = "macos"))]
+    let default_command_shortcut = "ctrl+alt+slash";
+    bindings.insert(
+        "loba_command".to_string(),
+        ShortcutBinding {
+            id: "loba_command".to_string(),
+            name: "Command Mode".to_string(),
+            description: "Speak an instruction to rewrite the selected text.".to_string(),
+            default_binding: default_command_shortcut.to_string(),
+            current_binding: default_command_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {

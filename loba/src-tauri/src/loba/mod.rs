@@ -3,6 +3,7 @@
 //! Seam: `actions::process_transcription_output` calls [`process`] between
 //! transcription and paste. Hotkey, capture and injection code is untouched.
 
+pub mod command;
 pub mod commands;
 mod watched;
 

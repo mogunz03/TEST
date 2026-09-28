@@ -7,9 +7,11 @@
 //! none may withhold it.
 
 pub mod cleanup;
+pub mod command;
 pub mod config;
 pub mod dictionary;
 pub mod frontmost;
+pub mod modifiers;
 pub mod ollama;
 pub mod pipeline;
 pub mod prompt;

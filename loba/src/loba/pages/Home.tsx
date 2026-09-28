@@ -12,6 +12,7 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
   const { settings } = useSettings();
   const { config, ollama } = useLoba();
   const binding = settings?.bindings?.transcribe?.current_binding;
+  const commandBinding = settings?.bindings?.loba_command?.current_binding;
   const last = useLastRun();
 
   const tone = !config?.cleanup_enabled
@@ -93,6 +94,33 @@ export const Home: React.FC<{ onOpenCleanup: () => void }> = ({
           </React.Fragment>
         ))}
       </ol>
+
+      <section className="mt-14 pt-6 border-t border-rule">
+        <h2 className="loba-label">{t("home.command.label")}</h2>
+        <p className="mt-3 text-[15px] leading-7">
+          <Trans
+            t={t}
+            i18nKey="home.command.body"
+            components={{
+              keys: (
+                <Keys
+                  binding={commandBinding}
+                  className="mx-0.5 -translate-y-[1px]"
+                />
+              ),
+            }}
+          />
+        </p>
+        <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-soft">
+          {(
+            t("home.command.examples", { returnObjects: true }) as string[]
+          ).map((ex) => (
+            <li key={ex} className="italic">
+              “{ex}”
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 };

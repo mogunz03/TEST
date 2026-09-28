@@ -136,7 +136,7 @@ pub fn accept(raw: &str, answer: &str) -> Result<String, String> {
     Ok(text)
 }
 
-fn strip_think(s: &str) -> &str {
+pub(crate) fn strip_think(s: &str) -> &str {
     let t = s.trim_start();
     if let Some(rest) = t.strip_prefix("<think>") {
         if let Some(end) = rest.find("</think>") {
@@ -149,7 +149,7 @@ fn strip_think(s: &str) -> &str {
 
 /// Drop quotes or a code fence the model wrapped around the whole answer,
 /// unless the speaker's own words were quoted that way.
-fn strip_wrapping(s: &str, raw: &str) -> String {
+pub(crate) fn strip_wrapping(s: &str, raw: &str) -> String {
     let mut t = s.trim();
     if let Some(inner) = t.strip_prefix("```").and_then(|r| r.strip_suffix("```")) {
         t = inner

@@ -15,6 +15,7 @@ const GLYPHS: Record<string, string> = {
   escape: "esc",
   enter: "↩",
   return: "↩",
+  slash: "/",
 };
 
 const glyph = (part: string) => {

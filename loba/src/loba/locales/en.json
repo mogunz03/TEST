@@ -41,7 +41,18 @@
       "fallback": "Last dictation → {{app}} pasted as spoken ({{detail}}).",
       "skipped": "Last dictation → {{app}} pasted as spoken ({{detail}})."
     },
-    "unknownApp": "unknown app"
+    "unknownApp": "unknown app",
+    "command": {
+      "label": "Command mode",
+      "body": "Select text, hold <keys/> and say what to do with it. Let go — the selection is replaced. Nothing selected? It writes at the cursor.",
+      "examples": [
+        "make this shorter",
+        "translate to French",
+        "改成正式一点",
+        "turn this into a list"
+      ],
+      "failed": "Command didn't run"
+    }
   },
   "cleanup": {
     "title": "Cleanup",

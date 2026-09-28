@@ -107,6 +107,20 @@ dictionary rules only — so a terminal command is never "improved". Mappings to
 a style that doesn't exist are dropped on load. **Styles → Check an app**
 waits 3 s, then shows what L.O.B.A sees in whatever app you switched to.
 
+## Command mode
+
+Select text, hold **⌥⌘/** (rebind in Engine → General), say what to do,
+release. Release — not press — triggers the copy: L.O.B.A waits for the
+physical modifiers to come up (a synthetic ⌘C with ⌥⇧ still held is ⌥⇧⌘C to
+the target app), grabs the selection through a marker-checked ⌘C, restores
+your clipboard, then asks the model. The answer is pasted over the selection.
+No selection → the answer is inserted at the cursor.
+
+Failure (timeout — 15 s by default, `command_timeout_ms` — server down, empty
+answer, Esc) pastes nothing and shows why; your selection is untouched.
+Clipboard restore is text-only: an image on the clipboard before a command is
+not preserved.
+
 ## Build
 
 CI builds an ad-hoc-signed `.dmg` on every push touching `loba/`
