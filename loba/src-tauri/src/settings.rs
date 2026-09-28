@@ -546,8 +546,9 @@ fn default_autostart_enabled() -> bool {
     false
 }
 
+/// Off: L.O.B.A makes no network calls on its own (no update pings).
 fn default_update_checks_enabled() -> bool {
-    true
+    false
 }
 
 fn default_show_whats_new_on_update() -> bool {

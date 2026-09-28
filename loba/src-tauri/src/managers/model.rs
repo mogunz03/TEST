@@ -784,7 +784,7 @@ impl ModelManager {
                 accuracy_score: 0.80,
                 speed_score: 0.85,
                 supports_translation: false,
-                is_recommended: true,
+                is_recommended: false,
                 supported_languages: parakeet_v3_languages,
                 supports_language_selection: false,
                 is_custom: false,
@@ -934,8 +934,8 @@ impl ModelManager {
             "sense-voice-int8".to_string(),
             ModelInfo {
                 id: "sense-voice-int8".to_string(),
-                name: "SenseVoice".to_string(),
-                description: "Very fast. Chinese, English, Japanese, Korean, Cantonese."
+                name: "SenseVoice Small (ONNX)".to_string(),
+                description: "Mandarin-first, very fast. Chinese, Cantonese, English, Japanese, Korean; auto language detect. No French — use Whisper for FR."
                     .to_string(),
                 filename: "sense-voice-int8".to_string(),
                 source: ModelSource::Url {
@@ -954,7 +954,7 @@ impl ModelManager {
                 accuracy_score: 0.65,
                 speed_score: 0.95,
                 supports_translation: false,
-                is_recommended: false,
+                is_recommended: true,
                 supported_languages: sense_voice_languages,
                 supports_language_selection: true,
                 is_custom: false,

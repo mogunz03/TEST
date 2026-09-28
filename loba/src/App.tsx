@@ -29,6 +29,7 @@ import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
+import { LobaShell } from "@/loba/LobaShell";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
 
 type OnboardingStep = "accessibility" | "model" | "done";
@@ -350,33 +351,39 @@ function App() {
   } else if (onboardingStep === "model") {
     content = <Onboarding onModelSelected={handleModelSelected} />;
   } else {
-    content = (
-      <div
-        dir={direction}
-        className="h-screen flex flex-col select-none cursor-default"
-      >
-        <ErrorBoundary context="What's New">
-          <WhatsNewGate />
-        </ErrorBoundary>
-        {/* Main content area that takes remaining space */}
+    // Handy's settings surface, now the "Engine" page inside the L.O.B.A shell.
+    const engine = (
+      <div className="h-full flex flex-col bg-background text-text">
         <div className="flex-1 flex overflow-hidden">
           <Sidebar
             activeSection={currentSection}
             onSectionChange={setCurrentSection}
           />
-          {/* Scrollable content area */}
           <div className="flex-1 flex flex-col overflow-hidden">
             <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
               <div className="flex flex-col items-center p-4 gap-4">
-                <AccessibilityPermissions />
-                <SecureInputWarning />
                 {renderSettingsContent(currentSection, setOnboardingPreview)}
               </div>
             </div>
           </div>
         </div>
-        {/* Fixed footer at bottom */}
         <Footer />
+      </div>
+    );
+    content = (
+      <div dir={direction}>
+        <ErrorBoundary context="What's New">
+          <WhatsNewGate />
+        </ErrorBoundary>
+        <LobaShell
+          engine={engine}
+          banners={
+            <>
+              <AccessibilityPermissions />
+              <SecureInputWarning />
+            </>
+          }
+        />
       </div>
     );
   }

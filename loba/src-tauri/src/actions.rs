@@ -397,6 +397,8 @@ pub(crate) struct ProcessedTranscription {
     pub final_text: String,
     pub post_processed_text: Option<String>,
     pub post_process_prompt: Option<String>,
+    /// Set when the L.O.B.A pipeline handled cleanup.
+    pub loba: Option<crate::loba::LobaResult>,
 }
 
 /// Resolve the persisted language *intent* into the language the currently-loaded
@@ -440,7 +442,15 @@ pub(crate) async fn process_transcription_output(
         final_text = converted_text;
     }
 
-    if post_process {
+    // L.O.B.A owns cleanup whenever it is enabled; Handy's provider-based
+    // post-processing only runs when it is switched off.
+    let loba = crate::loba::process(app, &final_text).await;
+    if let Some(result) = &loba {
+        if result.text != transcription {
+            post_processed_text = Some(result.text.clone());
+        }
+        final_text = result.text.clone();
+    } else if post_process {
         if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
@@ -463,6 +473,7 @@ pub(crate) async fn process_transcription_output(
         final_text,
         post_processed_text,
         post_process_prompt,
+        loba,
     }
 }
 
@@ -470,6 +481,9 @@ impl ShortcutAction for TranscribeAction {
     fn start(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
         let start_time = Instant::now();
         debug!("TranscribeAction::start called for binding: {}", binding_id);
+
+        // Load the cleanup model while the user speaks.
+        crate::loba::prewarm(app);
 
         // Load model in the background
         let tm = app.state::<Arc<TranscriptionManager>>();
@@ -781,7 +795,7 @@ impl ShortcutAction for TranscribeAction {
                                 utils::redact_text(&transcription)
                             );
 
-                            if post_process {
+                            if post_process || crate::loba::cleanup_active(&ah) {
                                 if use_streaming_overlay {
                                     tm.emit_stream_working(StreamWorkKind::Polishing);
                                 } else {
@@ -812,7 +826,7 @@ impl ShortcutAction for TranscribeAction {
                                 if let Err(err) = hm.save_entry(
                                     file_name,
                                     transcription,
-                                    post_process,
+                                    post_process || processed.loba.is_some(),
                                     processed.post_processed_text.clone(),
                                     processed.post_process_prompt.clone(),
                                 ) {

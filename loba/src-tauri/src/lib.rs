@@ -11,6 +11,7 @@ mod commands;
 mod helpers;
 mod input;
 mod llm_client;
+mod loba;
 mod managers;
 mod memory;
 mod overlay;
@@ -764,6 +765,10 @@ pub fn run(cli_args: CliArgs) {
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,
+            loba::commands::loba_get_config,
+            loba::commands::loba_set_config,
+            loba::commands::loba_list_models,
+            loba::commands::loba_data_dir,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
@@ -943,7 +948,7 @@ pub fn run(cli_args: CliArgs) {
             // for portable mode (redirects WebView2 cache to portable Data dir)
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-                    .title("Handy")
+                    .title("L.O.B.A")
                     .inner_size(680.0, 570.0)
                     .min_inner_size(680.0, 570.0)
                     .resizable(true)
@@ -1009,6 +1014,7 @@ pub fn run(cli_args: CliArgs) {
             app.manage(TranscriptionCoordinator::new(app_handle.clone()));
 
             initialize_core_logic(&app_handle);
+            loba::init(&app_handle);
 
             // Secure Input monitor (macOS): detects stuck secure input that
             // silently blocks keyed shortcuts, warns the user, and activates

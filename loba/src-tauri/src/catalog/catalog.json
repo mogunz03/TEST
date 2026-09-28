@@ -35,7 +35,7 @@
         {"filename": "parakeet-unified-en-0.6b-F32.gguf", "quant": "F32", "size_bytes": 2473323520, "sha256": "81d3a8c7676324a4dae977dac0f5900dc1468755fdf3b5369261bb759f17fdf3"}
       ],
       "default_quant": "Q8_0",
-      "recommended": true,
+      "recommended": false,
       "recommended_rank": 1
     },
     {
@@ -68,7 +68,7 @@
         {"filename": "nemotron-3.5-asr-streaming-0.6b-F32.gguf", "quant": "F32", "size_bytes": 2552277984, "sha256": "fbbc82e8e1084301a670fbc4d79c69c0c8980da506352fd83e74a182f38f5b78"}
       ],
       "default_quant": "Q8_0",
-      "recommended": true,
+      "recommended": false,
       "recommended_rank": 2
     },
     {
@@ -101,7 +101,7 @@
         {"filename": "canary-180m-flash-F32.gguf", "quant": "F32", "size_bytes": 756498112, "sha256": "f42fce02dc5279545cd540f0e5d51e36b9335b69e11fd98de6e08cc1250fd7ad"}
       ],
       "default_quant": "Q8_0",
-      "recommended": true,
+      "recommended": false,
       "recommended_rank": 3
     },
     {
@@ -134,7 +134,7 @@
         {"filename": "cohere-transcribe-03-2026-F16.gguf", "quant": "F16", "size_bytes": 4106644992, "sha256": "65ea095ba78ed938a613cc950da0599b29e16bb5a22a968d7b1fd99d71f13784"}
       ],
       "default_quant": "Q5_K_M",
-      "recommended": true,
+      "recommended": false,
       "recommended_rank": 4
     },
     {
@@ -167,7 +167,7 @@
         {"filename": "whisper-medium-F32.gguf", "quant": "F32", "size_bytes": 3057437088, "sha256": "d716aa436e8d1d3164898d1fd6f4bde0f7cbbb7059b8c276b18f78cbca2faf6b"}
       ],
       "default_quant": "Q8_0",
-      "recommended": true,
+      "recommended": false,
       "recommended_rank": 5
     },
     {
@@ -2101,8 +2101,8 @@
         {"filename": "whisper-large-v3-turbo-F16.gguf", "quant": "F16", "size_bytes": 1625935520, "sha256": "e1d0144e9afc9f479d9e51fc92c7dea9dc36059655eeb3819f16ad2de779046a"}
       ],
       "default_quant": "Q8_0",
-      "recommended": false,
-      "recommended_rank": null
+      "recommended": true,
+      "recommended_rank": 0
     },
     {
       "id": "handy-computer/Breeze-ASR-25-gguf",

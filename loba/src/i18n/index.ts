@@ -16,11 +16,27 @@ const localeModules = import.meta.glob<{ default: Record<string, unknown> }>(
 );
 
 // Build resources from discovered locale files
-const resources: Record<string, { translation: Record<string, unknown> }> = {};
+const resources: Record<
+  string,
+  { translation: Record<string, unknown>; loba?: Record<string, unknown> }
+> = {};
 for (const [path, module] of Object.entries(localeModules)) {
   const langCode = path.match(/\.\/locales\/(.+)\/translation\.json/)?.[1];
   if (langCode) {
     resources[langCode] = { translation: module.default };
+  }
+}
+
+// L.O.B.A strings live in their own namespace so upstream locale files stay
+// untouched; languages without a loba file fall back to English.
+const lobaModules = import.meta.glob<{ default: Record<string, unknown> }>(
+  "../loba/locales/*.json",
+  { eager: true },
+);
+for (const [path, module] of Object.entries(lobaModules)) {
+  const langCode = path.match(/\/locales\/(.+)\.json$/)?.[1];
+  if (langCode && resources[langCode]) {
+    resources[langCode].loba = module.default;
   }
 }
 

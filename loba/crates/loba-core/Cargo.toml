@@ -1,0 +1,21 @@
+[package]
+name = "loba-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "L.O.B.A post-transcription pipeline: cleanup, dictionary, app-aware tone, command mode."
+
+# Deliberately free of Tauri so the pipeline builds and tests in seconds on any
+# host. src-tauri only wires it to the app.
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json"] }
+tokio = { version = "1.43.0", features = ["time"] }
+log = "0.4"
+specta = { version = "=2.0.0-rc.22", features = ["derive"] }
+
+[dev-dependencies]
+tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
+tempfile = "3"

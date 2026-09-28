@@ -1,0 +1,134 @@
+/* L.O.B.A surface. Paper and ink, one warm accent. System fonts only —
+   the app never fetches a stylesheet, so type costs zero network. */
+
+:root {
+  --loba-paper: #f5f2ec;
+  --loba-sheet: #fcfaf6;
+  --loba-ink: #1d1b18;
+  --loba-soft: #6f6a62;
+  --loba-rule: rgb(29 27 24 / 0.09);
+  --loba-clay: #b4502b;
+  --loba-clay-wash: rgb(180 80 43 / 0.09);
+  --loba-moss: #5d7a4a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --loba-paper: #171614;
+    --loba-sheet: #1e1d1a;
+    --loba-ink: #ebe6dd;
+    --loba-soft: #9a948a;
+    --loba-rule: rgb(235 230 221 / 0.09);
+    --loba-clay: #e07c55;
+    --loba-clay-wash: rgb(224 124 85 / 0.12);
+    --loba-moss: #95b27f;
+  }
+}
+
+:root[data-theme="dark"] {
+  --loba-paper: #171614;
+  --loba-sheet: #1e1d1a;
+  --loba-ink: #ebe6dd;
+  --loba-soft: #9a948a;
+  --loba-rule: rgb(235 230 221 / 0.09);
+  --loba-clay: #e07c55;
+  --loba-clay-wash: rgb(224 124 85 / 0.12);
+  --loba-moss: #95b27f;
+}
+
+@theme inline {
+  --color-paper: var(--loba-paper);
+  --color-sheet: var(--loba-sheet);
+  --color-ink: var(--loba-ink);
+  --color-soft: var(--loba-soft);
+  --color-rule: var(--loba-rule);
+  --color-clay: var(--loba-clay);
+  --color-clay-wash: var(--loba-clay-wash);
+  --color-moss: var(--loba-moss);
+  --font-display: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+}
+
+.loba-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1.12;
+}
+
+/* Section labels: small caps read as a margin note, not a header bar. */
+.loba-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--loba-soft);
+}
+
+/* A keycap with weight: the 2px underside is the whole trick. */
+.loba-key {
+  display: inline-flex;
+  align-items: center;
+  min-width: 1.9em;
+  height: 1.9em;
+  padding: 0 0.55em;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--loba-sheet);
+  border: 1px solid var(--loba-rule);
+  box-shadow: inset 0 -2px 0 var(--loba-rule);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Live dot. Breathes only while something is actually listening. */
+.loba-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.loba-dot[data-live="true"] {
+  animation: loba-breathe 2.6s ease-in-out infinite;
+}
+@keyframes loba-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loba-dot[data-live="true"] {
+    animation: none;
+  }
+}
+
+/* Pages ease in from 4px below — enough to register as arrival, not motion. */
+.loba-page {
+  animation: loba-arrive 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes loba-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loba-page {
+    animation: none;
+  }
+}
+
+.loba-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--loba-rule);
+  padding: 6px 0;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+.loba-input:focus {
+  border-bottom-color: var(--loba-clay);
+}

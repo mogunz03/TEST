@@ -1,0 +1,66 @@
+{
+  "brand": "L.O.B.A",
+  "nav": {
+    "home": "Home",
+    "cleanup": "Cleanup",
+    "engine": "Engine"
+  },
+  "footer": {
+    "offline": "Runs on this Mac. Nothing leaves it."
+  },
+  "home": {
+    "headline": "Hold <keys/> and talk.",
+    "lede": "Let go and your words land in whatever app you're in — without the ums, the restarts, or the “no wait, I mean”.",
+    "status": {
+      "ready": "Cleaning with {{model}}",
+      "off": "Cleanup is off — raw transcripts paste as spoken",
+      "checking": "Looking for Ollama…",
+      "down": "Ollama isn't running — pasting raw transcripts",
+      "missing-model": "{{model}} isn't installed — pasting raw transcripts",
+      "adjust": "Adjust"
+    },
+    "flow": {
+      "speak": {
+        "title": "Speak",
+        "body": "Mandarin, English, French — mixed in one sentence is fine."
+      },
+      "clean": {
+        "title": "Clean",
+        "body": "A local model trims fillers and fixes punctuation. Never translates."
+      },
+      "paste": {
+        "title": "Paste",
+        "body": "If cleanup takes longer than {{seconds}} s, the raw text goes in instead."
+      }
+    },
+    "last": {
+      "cleaned": "Last dictation cleaned in {{seconds}} s.",
+      "timed_out": "Last dictation hit the {{seconds}} s budget — pasted as spoken.",
+      "fallback": "Last dictation pasted as spoken ({{detail}}).",
+      "skipped": "Last dictation pasted as spoken ({{detail}})."
+    }
+  },
+  "cleanup": {
+    "title": "Cleanup",
+    "lede": "A local Ollama model tidies each dictation before it's pasted. Your words, minus the noise.",
+    "enabled": {
+      "label": "Clean up dictations",
+      "note": "Off pastes exactly what the speech model heard."
+    },
+    "model": {
+      "label": "Model",
+      "note": "Any model you've pulled into Ollama.",
+      "down": "Ollama isn't reachable. Start it with “ollama serve”.",
+      "missing": "Not installed yet. Run “ollama pull {{model}}”."
+    },
+    "budget": {
+      "label": "Time budget",
+      "note": "Past this, the raw transcript is pasted and the model's answer is dropped.",
+      "value": "{{seconds}} s"
+    },
+    "server": {
+      "label": "Ollama",
+      "note": "Loopback only. Remote hosts are refused."
+    }
+  }
+}
