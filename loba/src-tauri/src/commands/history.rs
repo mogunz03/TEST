@@ -102,8 +102,11 @@ pub async fn retry_history_entry_transcription(
             processed.post_processed_text,
             processed.post_process_prompt,
         )
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    if let Some(loba) = &processed.loba {
+        crate::loba::record_history(&app, &history_manager, id, loba);
+    }
+    Ok(())
 }
 
 #[tauri::command]

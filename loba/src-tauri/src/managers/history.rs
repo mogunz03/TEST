@@ -31,7 +31,34 @@ static MIGRATIONS: &[M] = &[
     M::up("ALTER TABLE transcription_history ADD COLUMN post_processed_text TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_prompt TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_requested BOOLEAN NOT NULL DEFAULT 0;"),
+    // L.O.B.A: where each dictation went and what the pipeline did. A side
+    // table keeps Handy's row shape (and every existing query) unchanged.
+    M::up(
+        "CREATE TABLE IF NOT EXISTS loba_meta (
+            history_id INTEGER PRIMARY KEY,
+            app TEXT,
+            style TEXT,
+            outcome TEXT NOT NULL,
+            detail TEXT,
+            elapsed_ms INTEGER NOT NULL DEFAULT 0
+        );",
+    ),
 ];
+
+/// One row of the L.O.B.A history panel: the Handy entry joined with the
+/// pipeline's metadata (absent for entries made before L.O.B.A ran).
+#[derive(Clone, Debug, Serialize, Deserialize, Type)]
+pub struct LobaHistoryRow {
+    pub id: i64,
+    pub timestamp: i64,
+    pub raw: String,
+    pub cleaned: Option<String>,
+    pub app: Option<String>,
+    pub style: Option<String>,
+    pub outcome: Option<String>,
+    pub detail: Option<String>,
+    pub elapsed_ms: Option<i64>,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type)]
 pub struct PaginatedHistory {
@@ -190,6 +217,55 @@ impl HistoryManager {
         }
 
         Ok(())
+    }
+
+    /// Attach L.O.B.A metadata to a saved entry.
+    pub fn save_loba_meta(
+        &self,
+        history_id: i64,
+        app: Option<&str>,
+        style: &str,
+        outcome: &str,
+        detail: Option<&str>,
+        elapsed_ms: u64,
+    ) -> Result<()> {
+        self.get_connection()?.execute(
+            "INSERT OR REPLACE INTO loba_meta (history_id, app, style, outcome, detail, elapsed_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![history_id, app, style, outcome, detail, elapsed_ms as i64],
+        )?;
+        Ok(())
+    }
+
+    /// Newest `limit` entries with their L.O.B.A metadata. Failed
+    /// transcriptions (empty text) are left out: nothing to copy.
+    pub fn loba_recent(&self, limit: usize) -> Result<Vec<LobaHistoryRow>> {
+        let conn = self.get_connection()?;
+        let mut stmt = conn.prepare(
+            "SELECT h.id, h.timestamp, h.transcription_text, h.post_processed_text,
+                    m.app, m.style, m.outcome, m.detail, m.elapsed_ms
+             FROM transcription_history h
+             LEFT JOIN loba_meta m ON m.history_id = h.id
+             WHERE h.transcription_text != ''
+             ORDER BY h.timestamp DESC, h.id DESC
+             LIMIT ?1",
+        )?;
+        let rows = stmt
+            .query_map(params![limit as i64], |row| {
+                Ok(LobaHistoryRow {
+                    id: row.get(0)?,
+                    timestamp: row.get(1)?,
+                    raw: row.get(2)?,
+                    cleaned: row.get(3)?,
+                    app: row.get(4)?,
+                    style: row.get(5)?,
+                    outcome: row.get(6)?,
+                    detail: row.get(7)?,
+                    elapsed_ms: row.get(8)?,
+                })
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(rows)
     }
 
     fn get_connection(&self) -> Result<Connection> {

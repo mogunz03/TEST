@@ -2,6 +2,7 @@
   "brand": "L.O.B.A",
   "nav": {
     "home": "Home",
+    "history": "History",
     "dictionary": "Dictionary",
     "styles": "Styles",
     "cleanup": "Cleanup",
@@ -109,5 +110,24 @@
     "titlePlaceholder": "Title contains, e.g. Linear",
     "map": "Map",
     "removeMapping": "Remove {{key}}"
+  },
+  "history": {
+    "title": "History",
+    "lede": "Your last 50 dictations. Click any line to copy it.",
+    "empty": "Nothing yet. Hold the hotkey and say something.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copiedRaw": "Raw copied",
+    "copyRaw": "Copy the raw transcript",
+    "showRaw": "Show raw",
+    "hideRaw": "Hide raw",
+    "outcome": {
+      "cleaned": "Cleaned",
+      "timed_out": "Hit the time budget — pasted as spoken",
+      "fallback": "Pasted as spoken ({{detail}})",
+      "skipped": "Not rewritten ({{detail}})"
+    }
   }
 }

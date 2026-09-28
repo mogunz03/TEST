@@ -243,3 +243,30 @@ fn announce(app: &AppHandle, result: &LobaResult) {
         },
     );
 }
+
+/// Persist what the pipeline did for this history entry, then nudge the
+/// history panel (after the write, so it never renders a row without it).
+pub fn record_history(
+    app: &AppHandle,
+    hm: &crate::managers::history::HistoryManager,
+    history_id: i64,
+    result: &LobaResult,
+) {
+    let (outcome, detail) = match &result.outcome {
+        Outcome::Cleaned => ("cleaned", None),
+        Outcome::TimedOut => ("timed_out", None),
+        Outcome::Skipped(d) => ("skipped", Some(d.as_str())),
+        Outcome::Fallback(d) => ("fallback", Some(d.as_str())),
+    };
+    if let Err(e) = hm.save_loba_meta(
+        history_id,
+        result.app.name.as_deref(),
+        &result.style.id,
+        outcome,
+        detail,
+        result.elapsed_ms,
+    ) {
+        log::error!("Failed to save L.O.B.A history metadata: {e}");
+    }
+    let _ = app.emit("loba:history-changed", history_id);
+}

@@ -774,6 +774,8 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_get_styles,
             loba::commands::loba_set_styles,
             loba::commands::loba_probe_frontmost,
+            loba::commands::loba_history,
+            loba::commands::loba_copy,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,

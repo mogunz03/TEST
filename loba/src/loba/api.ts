@@ -46,6 +46,18 @@ export interface Probe {
   style: { id: string; style: Style; matched_by: string | null };
 }
 
+export interface HistoryRow {
+  id: number;
+  timestamp: number;
+  raw: string;
+  cleaned: string | null;
+  app: string | null;
+  style: string | null;
+  outcome: "cleaned" | "timed_out" | "fallback" | "skipped" | null;
+  detail: string | null;
+  elapsed_ms: number | null;
+}
+
 export const loba = {
   getConfig: () => invoke<LobaConfig>("loba_get_config"),
   setConfig: (config: LobaConfig) =>
@@ -61,4 +73,6 @@ export const loba = {
   setStyles: (styles: Styles) => invoke<Styles>("loba_set_styles", { styles }),
   probeFrontmost: (delayMs: number) =>
     invoke<Probe>("loba_probe_frontmost", { delayMs }),
+  history: (limit = 50) => invoke<HistoryRow[]>("loba_history", { limit }),
+  copy: (text: string) => invoke<void>("loba_copy", { text }),
 };

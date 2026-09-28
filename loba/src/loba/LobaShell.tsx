@@ -6,8 +6,9 @@ import { Home } from "./pages/Home";
 import { Cleanup } from "./pages/Cleanup";
 import { DictionaryPage } from "./pages/DictionaryPage";
 import { StylesPage } from "./pages/StylesPage";
+import { HistoryPage } from "./pages/HistoryPage";
 
-type Page = "home" | "dictionary" | "styles" | "cleanup" | "engine";
+type Page = "home" | "history" | "dictionary" | "styles" | "cleanup" | "engine";
 
 interface Section {
   id: Page;
@@ -18,6 +19,7 @@ interface Section {
 // the underlying engine last.
 const SECTIONS: Section[] = [
   { id: "home", labelKey: "nav.home" },
+  { id: "history", labelKey: "nav.history" },
   { id: "dictionary", labelKey: "nav.dictionary" },
   { id: "styles", labelKey: "nav.styles" },
   { id: "cleanup", labelKey: "nav.cleanup" },
@@ -102,6 +104,7 @@ export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
               {page === "home" && (
                 <Home onOpenCleanup={() => setPage("cleanup")} />
               )}
+              {page === "history" && <HistoryPage />}
               {page === "dictionary" && <DictionaryPage />}
               {page === "styles" && <StylesPage />}
               {page === "cleanup" && <Cleanup />}

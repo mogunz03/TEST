@@ -87,3 +87,24 @@ pub async fn loba_probe_frontmost(
     let style = state.styles().resolve(&app);
     Ok(Probe { app, style })
 }
+
+/// The history panel: newest dictations first, raw next to cleaned.
+#[tauri::command]
+#[specta::specta]
+pub fn loba_history(
+    history: State<'_, Arc<crate::managers::history::HistoryManager>>,
+    limit: Option<u32>,
+) -> Result<Vec<crate::managers::history::LobaHistoryRow>, String> {
+    history
+        .loba_recent(limit.unwrap_or(50).min(500) as usize)
+        .map_err(|e| e.to_string())
+}
+
+/// One-click copy from the history panel, via the native pasteboard (the
+/// webview has no clipboard capability, and doesn't need one).
+#[tauri::command]
+#[specta::specta]
+pub fn loba_copy(app: tauri::AppHandle, text: String) -> Result<(), String> {
+    use tauri_plugin_clipboard_manager::ClipboardExt;
+    app.clipboard().write_text(text).map_err(|e| e.to_string())
+}

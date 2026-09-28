@@ -26,11 +26,11 @@ git diff <vendor-commit> -- loba/src-tauri/src/shortcut loba/src-tauri/src/audio
 
 ## Layout
 
-| Path                  | What                                                                     |
-| --------------------- | ------------------------------------------------------------------------ |
-| `crates/loba-core/`   | The pipeline. No Tauri; `cargo test` runs in seconds.                    |
-| `src-tauri/src/loba/` | Wiring: state, Tauri commands, the seam in `actions.rs`.                 |
-| `src/loba/`           | The UI shell (Home, Cleanup, …; Handy's settings live under **Engine**). |
+| Path                  | What                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `crates/loba-core/`   | The pipeline. No Tauri; `cargo test` runs in seconds.                                        |
+| `src-tauri/src/loba/` | Wiring: state, Tauri commands, the seam in `actions.rs`.                                     |
+| `src/loba/`           | The UI shell: Home, History, Dictionary, Styles, Cleanup; Handy's settings under **Engine**. |
 
 ## Speech models
 
@@ -120,6 +120,16 @@ Failure (timeout — 15 s by default, `command_timeout_ms` — server down, empt
 answer, Esc) pastes nothing and shows why; your selection is untouched.
 Clipboard restore is text-only: an image on the clipboard before a command is
 not preserved.
+
+## History
+
+The last 50 dictations (Handy's `history_limit`, now defaulting to 50),
+newest first, grouped by day. Each row shows the destination app and style,
+a dot for what the pipeline did (green cleaned · orange fell back · grey not
+rewritten), the pasted text — click it to copy — and, when cleanup changed
+anything, the raw transcript one click away with its own copy button.
+Metadata lives in a side table (`loba_meta`) so Handy's schema and queries are
+unchanged.
 
 ## Build
 

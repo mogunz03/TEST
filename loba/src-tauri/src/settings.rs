@@ -610,8 +610,9 @@ fn default_auto_submit() -> bool {
     false
 }
 
+/// L.O.B.A keeps the last 50 dictations for the history panel.
 fn default_history_limit() -> usize {
-    5
+    50
 }
 
 fn default_recording_retention_period() -> RecordingRetentionPeriod {
