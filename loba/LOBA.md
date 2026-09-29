@@ -156,13 +156,22 @@ CI builds an ad-hoc-signed `.dmg` on every push touching `loba/`
 It is not notarized: first launch needs right-click → Open, or
 `xattr -dr com.apple.quarantine /Applications/L.O.B.A.app`.
 
-Locally:
+Locally, one command:
 
 ```sh
 cd loba
-bun install
-CMAKE_POLICY_VERSION_MINIMUM=3.5 bun run tauri build --target aarch64-apple-darwin --bundles app,dmg
+./scripts/build-mac.sh          # add --keep to keep the build tree for faster rebuilds
 ```
+
+It checks free space first (needs ~6 GB — measured: a lean build uses 2.7 GB; if short it lists exactly which
+caches are safe to clear and stops), builds natively without LTO, copies the
+DMG to `~/Downloads`, then deletes `src-tauri/target`. It also ignores conda
+and Homebrew's Rust, which break native builds.
+
+One-time setup: `xcode-select --install`, rustup (`~/.cargo/bin`, not
+Homebrew's `rust`), `bun`, `brew install cmake`. Full Xcode is optional —
+without it the Apple Intelligence bridge builds as a stub, which L.O.B.A
+doesn't use.
 
 ## Offline
 
