@@ -26,23 +26,23 @@ git diff <vendor-commit> -- loba/src-tauri/src/shortcut loba/src-tauri/src/audio
 
 ## Layout
 
-| Path                  | What                                                                                         |
-| --------------------- | -------------------------------------------------------------------------------------------- |
-| `crates/loba-core/`   | The pipeline. No Tauri; `cargo test` runs in seconds.                                        |
-| `src-tauri/src/loba/` | Wiring: state, Tauri commands, the seam in `actions.rs`.                                     |
-| `src/loba/`           | The UI shell: Home, History, Dictionary, Styles, Cleanup; Handy's settings under **Engine**. |
+| Path                  | What                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `crates/loba-core/`   | The pipeline. No Tauri; `cargo test` runs in seconds.                                                              |
+| `src-tauri/src/loba/` | Wiring: state, Tauri commands, the seam in `actions.rs`.                                                           |
+| `src/loba/`           | The UI: Home, History, Dictionary, Styles, and Settings (General, Cleanup, and Handy's own settings under Engine). |
 
 ## Speech models
 
 - **Whisper large-v3-turbo** (GGUF, Metal) is the recommended default: auto
   language detect, handles Mandarin/English/French in one session.
-- **SenseVoice Small (ONNX)** is selectable in Engine → Models, for Mandarin-heavy
-  dictation. It covers zh / yue / en / ja / ko only — **no French**.
+- **SenseVoice Small (ONNX)** is selectable in Settings → Engine → Models, for Mandarin-heavy
+  dictation. It covers zh / yue / en / ja / ko only. **No French.**
 - Code-switching inside one utterance: Whisper detects one language per 30 s
   window. Embedded words from another language usually come through in their
   own script; long clause-level switches can come out transliterated or
   translated, and no cleanup pass can recover words the ASR lost. Leave the
-  language on _Auto_ — forcing one hurts mixed speech more than it helps.
+  language on _Auto_. Forcing one hurts mixed speech more than it helps.
 
 ## Cleanup (Ollama)
 
@@ -63,8 +63,8 @@ ollama pull qwen3:8b
 
 Files in `~/Library/Application Support/app.loba.desktop/loba/`:
 
-- `config.json` — `cleanup_enabled`, `model`, `timeout_ms`, `ollama_url`, `keep_alive`.
-- `dictionary.json` — your terms and how they get misheard:
+- `config.json`: `cleanup_enabled`, `model`, `timeout_ms`, `ollama_url`, `keep_alive`.
+- `dictionary.json`: your terms and how they get misheard:
 
   ```json
   { "entries": [{ "term": "DAUZE", "sounds_like": ["those"] }] }
@@ -102,39 +102,53 @@ cleanup time that resolves to a style in `styles.json`:
 ```
 
 Order: app name / bundle id → window-title substring (how Gmail in a browser
-reads as formal) → `default`. `rewrite: false` skips the LLM entirely —
-dictionary rules only — so a terminal command is never "improved". Mappings to
+reads as formal) → `default`. `rewrite: false` skips the LLM entirely
+(dictionary rules only), so a terminal command is never "improved". Mappings to
 a style that doesn't exist are dropped on load. **Styles → Check an app**
 waits 3 s, then shows what L.O.B.A sees in whatever app you switched to.
 
 ## Shortcuts
 
-**Shortcuts** page: click a shortcut, press the keys, let go. Modifier-only
-chords are allowed.
+Both shortcuts show on Home and under Settings → General, each with a
+**Change** button. Change opens a dialog that listens: press the keys, let
+go, and they come back as keycaps. Nothing is saved until **Save**, so you
+can try as many times as you like. Modifier-only chords (⌘⇧, ⌘⌥) work.
+A single plain key is refused because it would fire while typing, and so is
+a chord the other shortcut already uses. Esc or Cancel leaves the old one in
+place; **Reset to** puts the default back.
 
 | Action       | Default (macOS) |
 | ------------ | --------------- |
 | Dictate      | hold **⌘⌥**     |
 | Command mode | hold **⌃⌥⌘**    |
 
-Why this is safe with a modifier-only chord: activation defaults to
-**Hold** (push-to-talk), and any recording under 0.3 s is dropped. So ⌥⌘I,
-⌥⌘Esc etc. in other apps pass through without a stray paste — at worst you
-see the overlay blink. _Tap on/off_ and _Both_ modes are available but not
-recommended with a modifier-only chord (a quick ⌥⌘ shortcut would lock
-recording on). Holding ⌘⌥ for longer while doing something else (⌥⌘-drag
-in Finder) will record; pick a keyed shortcut if that's your habit.
+Why a modifier-only chord is safe here: dictation defaults to **Holding**
+(push-to-talk), and any recording under 0.3 s is dropped. So ⌥⌘I, ⌥⌘Esc and
+the like pass through to other apps without a stray paste. At worst the
+overlay blinks. _Tapping_ and _Either_ are available but a bad match for a
+modifier-only chord, since a quick ⌥⌘ shortcut would lock recording on.
+Holding ⌘⌥ longer while doing something else (⌥⌘-drag in Finder) will
+record; pick a keyed shortcut if that's your habit.
+
+## Home
+
+A greeting, four running totals (words, time saved, dictations, day
+streak), the two shortcuts with Change buttons, whether cleanup is working
+(with the exact terminal lines to fix it when it isn't), and the last four
+dictations, one click to copy. Totals live in `stats.json` next to the other
+files, so they survive History's 50-entry limit. Time saved assumes 40 wpm
+typing against 130 wpm speaking. Command-mode answers don't count.
 
 ## Command mode
 
-Select text, hold **⌃⌥⌘** (rebind on the Shortcuts page), say what to do,
-release. Release — not press — triggers the copy: L.O.B.A waits for the
+Select text, hold **⌃⌥⌘** (change it under Settings → General), say what to do,
+release. Release, not press, triggers the copy: L.O.B.A waits for the
 physical modifiers to come up (a synthetic ⌘C with ⌥⇧ still held is ⌥⇧⌘C to
 the target app), grabs the selection through a marker-checked ⌘C, restores
 your clipboard, then asks the model. The answer is pasted over the selection.
 No selection → the answer is inserted at the cursor.
 
-Failure (timeout — 15 s by default, `command_timeout_ms` — server down, empty
+Failure (timeout, 15 s by default via `command_timeout_ms`; server down; empty
 answer, Esc) pastes nothing and shows why; your selection is untouched.
 Clipboard restore is text-only: an image on the clipboard before a command is
 not preserved.
@@ -144,7 +158,7 @@ not preserved.
 The last 50 dictations (Handy's `history_limit`, now defaulting to 50),
 newest first, grouped by day. Each row shows the destination app and style,
 a dot for what the pipeline did (green cleaned · orange fell back · grey not
-rewritten), the pasted text — click it to copy — and, when cleanup changed
+rewritten), the pasted text (click it to copy) and, when cleanup changed
 anything, the raw transcript one click away with its own copy button.
 Metadata lives in a side table (`loba_meta`) so Handy's schema and queries are
 unchanged.
@@ -163,13 +177,13 @@ cd loba
 ./scripts/build-mac.sh          # add --keep to keep the build tree for faster rebuilds
 ```
 
-It checks free space first (needs ~6 GB — measured: a lean build uses 2.7 GB; if short it lists exactly which
+It checks free space first (needs ~6 GB; a lean build measured 2.7 GB. If short it lists exactly which
 caches are safe to clear and stops), builds natively without LTO, copies the
 DMG to `~/Downloads`, then deletes `src-tauri/target`. It also ignores conda
 and Homebrew's Rust, which break native builds.
 
 One-time setup: `xcode-select --install`, rustup (`~/.cargo/bin`, not
-Homebrew's `rust`), `bun`, `brew install cmake`. Full Xcode is optional —
+Homebrew's `rust`), `bun`, `brew install cmake`. Full Xcode is optional:
 without it the Apple Intelligence bridge builds as a stub, which L.O.B.A
 doesn't use.
 
@@ -177,4 +191,4 @@ doesn't use.
 
 No telemetry, no accounts. The updater has no endpoints and update checks are
 off by default. The only network use is the model download you start yourself
-in onboarding / Engine → Models.
+in onboarding or Settings → Engine → Models.

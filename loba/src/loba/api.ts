@@ -58,6 +58,14 @@ export interface HistoryRow {
   elapsed_ms: number | null;
 }
 
+export interface StatsView {
+  dictations: number;
+  words: number;
+  days: number;
+  streak: number;
+  minutes_saved: number;
+}
+
 export const loba = {
   getConfig: () => invoke<LobaConfig>("loba_get_config"),
   setConfig: (config: LobaConfig) =>
@@ -75,4 +83,5 @@ export const loba = {
     invoke<Probe>("loba_probe_frontmost", { delayMs }),
   history: (limit = 50) => invoke<HistoryRow[]>("loba_history", { limit }),
   copy: (text: string) => invoke<void>("loba_copy", { text }),
+  stats: () => invoke<StatsView>("loba_get_stats"),
 };

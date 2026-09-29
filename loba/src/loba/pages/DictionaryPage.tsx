@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import { loba, type Dictionary, type DictionaryEntry } from "../api";
-import { PageTitle } from "../controls";
+import { Empty, PageTitle } from "../controls";
 
 const splitHeard = (s: string) =>
   s
@@ -54,10 +54,10 @@ export const DictionaryPage: React.FC = () => {
           e.preventDefault();
           add();
         }}
-        className="flex items-center gap-3 mb-4"
+        className="flex items-stretch gap-2 mb-5"
       >
         <input
-          className="loba-input text-[15px] select-text"
+          className="loba-input text-[13.5px] select-text"
           placeholder={t("dictionary.addPlaceholder")}
           value={draft}
           spellCheck={false}
@@ -66,17 +66,15 @@ export const DictionaryPage: React.FC = () => {
         <button
           type="submit"
           disabled={!draft.trim()}
-          className="text-[13px] font-medium text-clay disabled:text-soft disabled:opacity-50 transition-opacity cursor-pointer disabled:cursor-default"
+          className="loba-btn loba-btn-primary !h-auto px-4"
         >
           {t("dictionary.add")}
         </button>
       </form>
 
-      {rows.length === 0 && (
-        <p className="py-8 text-[13px] text-soft">{t("dictionary.empty")}</p>
-      )}
+      {rows.length === 0 && <Empty>{t("dictionary.empty")}</Empty>}
 
-      <ul>
+      <ul className="loba-card divide-y divide-line empty:hidden">
         {rows.map(({ entry, index }) => (
           <EntryRow
             key={`${entry.term}-${index}`}
@@ -120,21 +118,21 @@ const EntryRow: React.FC<{
 
   return (
     <li
-      className={`group grid grid-cols-[minmax(0,11rem)_1fr_auto] items-baseline gap-x-5 py-3 border-b border-rule last:border-b-0 rounded-sm transition-colors duration-[1200ms] ${
-        highlight ? "bg-clay-wash" : "bg-transparent"
+      className={`group grid grid-cols-[minmax(0,11rem)_1fr_auto] items-center gap-x-5 px-5 py-2.5 first:rounded-t-[14px] last:rounded-b-[14px] transition-colors duration-[1200ms] ${
+        highlight ? "bg-raised" : "bg-transparent"
       }`}
     >
       <span
-        className="text-[15px] font-medium truncate select-text"
+        className="text-[13.5px] font-medium text-ink truncate select-text"
         title={entry.term}
       >
         {entry.term}
       </span>
-      <label className="flex items-baseline gap-2 min-w-0 text-[13px]">
-        <span className="shrink-0 text-soft">{t("dictionary.heardAs")}</span>
+      <label className="flex items-center gap-2 min-w-0 text-[12.5px]">
+        <span className="shrink-0 text-faint">{t("dictionary.heardAs")}</span>
         <input
           ref={heardRef}
-          className="loba-input !border-transparent focus:!border-clay py-0 text-[13px] select-text"
+          className="loba-input !bg-transparent !border-transparent hover:!border-line focus:!border-steel !py-1 !px-2 text-[12.5px] select-text"
           placeholder={t("dictionary.heardPlaceholder")}
           value={heard}
           spellCheck={false}
@@ -147,7 +145,7 @@ const EntryRow: React.FC<{
         type="button"
         onClick={onRemove}
         aria-label={t("dictionary.remove", { term: entry.term })}
-        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-soft hover:text-clay transition-opacity cursor-pointer"
+        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-faint hover:text-ink transition-opacity cursor-pointer"
       >
         <X size={14} />
       </button>

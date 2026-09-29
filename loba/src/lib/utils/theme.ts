@@ -26,11 +26,9 @@ const isTheme = (value: unknown): value is Theme =>
 /** Apply a theme to the document root and remember it for the next launch. */
 export const applyTheme = (theme: Theme): void => {
   const root = document.documentElement;
-  if (theme === "system") {
-    delete root.dataset.theme;
-  } else {
-    root.dataset.theme = theme;
-  }
+  // L.O.B.A has one look (cold black); the stored preference is kept so the
+  // Engine's appearance setting still round-trips, but it isn't applied.
+  root.dataset.theme = "dark";
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {

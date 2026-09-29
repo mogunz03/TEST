@@ -857,6 +857,7 @@ impl ShortcutAction for TranscribeAction {
                                         return;
                                     }
 
+                                    let counted = final_text.clone();
                                     let pasted = match utils::paste(final_text, ah_clone.clone()) {
                                         Ok(()) => {
                                             debug!(
@@ -874,6 +875,7 @@ impl ShortcutAction for TranscribeAction {
                                     utils::hide_recording_overlay(&ah_clone);
                                     set_tray_state(&ah_clone, TrayIconState::Idle);
                                     if pasted {
+                                        crate::loba::count_dictation(&ah_clone, &counted);
                                         crate::loba::on_pasted(&ah_clone);
                                     }
                                 })

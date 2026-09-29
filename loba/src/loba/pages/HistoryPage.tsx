@@ -3,13 +3,13 @@ import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { Check, Copy } from "lucide-react";
 import { loba, type HistoryRow } from "../api";
-import { PageTitle } from "../controls";
+import { Empty, PageTitle } from "../controls";
 
 const DOT: Record<string, string> = {
-  cleaned: "text-moss",
-  timed_out: "text-clay",
-  fallback: "text-clay",
-  skipped: "text-soft",
+  cleaned: "text-ok",
+  timed_out: "text-warn",
+  fallback: "text-warn",
+  skipped: "text-faint",
 };
 
 const dayKey = (ts: number) => new Date(ts * 1000).toDateString();
@@ -50,22 +50,28 @@ export const HistoryPage: React.FC = () => {
     });
   };
 
+  // Group into days, each day one card.
+  const days: { key: string; ts: number; rows: HistoryRow[] }[] = [];
+  for (const row of rows) {
+    const key = dayKey(row.timestamp);
+    const last = days[days.length - 1];
+    if (last?.key === key) last.rows.push(row);
+    else days.push({ key, ts: row.timestamp, rows: [row] });
+  }
+
   return (
     <div>
       <PageTitle title={t("history.title")} lede={t("history.lede")} />
-      {rows.length === 0 && (
-        <p className="py-8 text-[13px] text-soft">{t("history.empty")}</p>
-      )}
-      {rows.map((row, i) => (
-        <React.Fragment key={row.id}>
-          {(i === 0 ||
-            dayKey(rows[i - 1].timestamp) !== dayKey(row.timestamp)) && (
-            <h2 className="loba-label mt-8 mb-1 first:mt-0">
-              {dayLabel(row.timestamp)}
-            </h2>
-          )}
-          <Item row={row} />
-        </React.Fragment>
+      {rows.length === 0 && <Empty>{t("history.empty")}</Empty>}
+      {days.map((day) => (
+        <section key={day.key} className="mt-7 first:mt-0">
+          <h2 className="loba-label mb-2 ps-1">{dayLabel(day.ts)}</h2>
+          <div className="loba-card divide-y divide-line">
+            {day.rows.map((row) => (
+              <Item key={row.id} row={row} />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );
@@ -95,15 +101,15 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
   };
 
   return (
-    <article className="group grid grid-cols-[3rem_1fr] gap-x-3 py-3 border-b border-rule last:border-b-0">
-      <time className="pt-[3px] text-[12px] text-soft tabular-nums whitespace-nowrap">
+    <article className="group grid grid-cols-[3rem_1fr] gap-x-3 px-5 py-3.5">
+      <time className="pt-[3px] text-[12px] text-faint tabular-nums whitespace-nowrap">
         {time}
       </time>
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-[12px] text-soft">
+        <div className="flex items-center gap-2 text-[11.5px] text-faint">
           {row.outcome && (
             <span
-              className={`loba-dot ${DOT[row.outcome] ?? "text-soft"}`}
+              className={`loba-dot ${DOT[row.outcome] ?? "text-faint"}`}
               title={t(`history.outcome.${row.outcome}`, {
                 detail: row.detail ?? "",
               })}
@@ -118,13 +124,13 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
         <button
           type="button"
           onClick={() => copy("final")}
-          className="mt-1 w-full text-start text-[14.5px] leading-6 whitespace-pre-wrap break-words cursor-copy rounded-sm hover:bg-clay-wash/60 -mx-1 px-1 transition-colors"
+          className="mt-1 w-full text-start text-[13.5px] leading-[21px] text-ink whitespace-pre-wrap break-words cursor-copy rounded-[6px] hover:bg-raised -mx-1.5 px-1.5 py-0.5 transition-colors"
           title={t("history.copy")}
         >
           {final}
         </button>
 
-        <div className="mt-1 flex items-center gap-4 text-[12px] text-soft">
+        <div className="mt-1 flex items-center gap-4 text-[11.5px] text-soft empty:hidden">
           {changed && (
             <button
               type="button"
@@ -136,7 +142,7 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
           )}
           <span
             className={`inline-flex items-center gap-1 transition-opacity ${
-              copied ? "opacity-100 text-moss" : "opacity-0"
+              copied ? "opacity-100 text-ok" : "opacity-0"
             }`}
             aria-live="polite"
           >
@@ -146,7 +152,7 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
         </div>
 
         {showRaw && (
-          <div className="mt-2 flex items-start gap-2 ps-3 border-s-2 border-rule">
+          <div className="mt-2 flex items-start gap-2 rounded-[9px] bg-void border border-line px-3 py-2">
             <p className="flex-1 text-[13px] leading-5 text-soft whitespace-pre-wrap break-words select-text">
               {row.raw}
             </p>

@@ -67,6 +67,73 @@ pub fn loba_set_styles(state: State<'_, Arc<LobaState>>, styles: Styles) -> Resu
 }
 
 #[derive(serde::Serialize, specta::Type)]
+pub struct StatsView {
+    pub dictations: u32,
+    pub words: u32,
+    pub days: u32,
+    /// Consecutive days up to today (or yesterday, so a streak doesn't read
+    /// as broken before the first dictation of the morning).
+    pub streak: u32,
+    pub minutes_saved: f64,
+}
+
+/// Running totals for Home.
+#[tauri::command]
+#[specta::specta]
+pub fn loba_get_stats(state: State<'_, Arc<LobaState>>) -> StatsView {
+    let s = state.stats();
+    let today = chrono::Local::now().date_naive();
+    StatsView {
+        dictations: s.dictations.min(u32::MAX as u64) as u32,
+        words: s.words.min(u32::MAX as u64) as u32,
+        days: s.days.len() as u32,
+        streak: streak(&s.days, today),
+        minutes_saved: s.minutes_saved(),
+    }
+}
+
+fn streak(days: &[String], today: chrono::NaiveDate) -> u32 {
+    let parsed: Vec<chrono::NaiveDate> = days
+        .iter()
+        .filter_map(|d| chrono::NaiveDate::parse_from_str(d, "%Y-%m-%d").ok())
+        .collect();
+    let Some(&last) = parsed.last() else { return 0 };
+    if (today - last).num_days() > 1 {
+        return 0;
+    }
+    let mut n = 1;
+    for w in parsed.windows(2).rev() {
+        if (w[1] - w[0]).num_days() == 1 {
+            n += 1;
+        } else {
+            break;
+        }
+    }
+    n
+}
+
+#[cfg(test)]
+mod tests {
+    use super::streak;
+    use chrono::NaiveDate;
+
+    fn d(s: &str) -> NaiveDate {
+        NaiveDate::parse_from_str(s, "%Y-%m-%d").unwrap()
+    }
+
+    #[test]
+    fn streak_counts_back_from_today_or_yesterday() {
+        let days: Vec<String> = ["2026-09-20", "2026-09-27", "2026-09-28"]
+            .map(String::from)
+            .to_vec();
+        assert_eq!(streak(&days, d("2026-09-28")), 2);
+        assert_eq!(streak(&days, d("2026-09-29")), 2);
+        assert_eq!(streak(&days, d("2026-09-30")), 0);
+        assert_eq!(streak(&[], d("2026-09-30")), 0);
+    }
+}
+
+#[derive(serde::Serialize, specta::Type)]
 pub struct Probe {
     pub app: AppContext,
     pub style: Resolved,

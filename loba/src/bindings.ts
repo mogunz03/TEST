@@ -1003,6 +1003,12 @@ async lobaCopy(text: string) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * Running totals for Home.
+ */
+async lobaGetStats() : Promise<StatsView> {
+    return await TAURI_INVOKE("loba_get_stats");
 }
 }
 
@@ -1256,6 +1262,12 @@ export type ShortcutActivation =
 "hold_or_toggle"
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
+export type StatsView = { dictations: number; words: number; days: number; 
+/**
+ * Consecutive days up to today (or yesterday, so a streak doesn't read
+ * as broken before the first dictation of the morning).
+ */
+streak: number; minutes_saved: number }
 /**
  * Phase of the streaming overlay card, emitted to drive its UI state.
  */

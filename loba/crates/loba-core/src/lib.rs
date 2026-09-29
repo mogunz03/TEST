@@ -15,6 +15,7 @@ pub mod modifiers;
 pub mod ollama;
 pub mod pipeline;
 pub mod prompt;
+pub mod stats;
 pub mod styles;
 
 pub use cleanup::{clean, Cleaned, CleanupJob, Outcome};

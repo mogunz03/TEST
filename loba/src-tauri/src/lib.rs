@@ -776,6 +776,7 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_probe_frontmost,
             loba::commands::loba_history,
             loba::commands::loba_copy,
+            loba::commands::loba_get_stats,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,
@@ -956,8 +957,8 @@ pub fn run(cli_args: CliArgs) {
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
                     .title("L.O.B.A")
-                    .inner_size(680.0, 570.0)
-                    .min_inner_size(680.0, 570.0)
+                    .inner_size(960.0, 680.0)
+                    .min_inner_size(780.0, 560.0)
                     .resizable(true)
                     .maximizable(true)
                     .visible(false);

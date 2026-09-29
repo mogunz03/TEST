@@ -5,61 +5,98 @@
     "history": "History",
     "dictionary": "Dictionary",
     "styles": "Styles",
-    "shortcuts": "Shortcuts",
-    "cleanup": "Cleanup",
-    "engine": "Engine"
+    "settings": "Settings"
   },
-  "footer": {
+  "sidebar": {
+    "ready": "Cleanup on",
+    "off": "Cleanup off",
+    "checking": "Looking for Ollama",
+    "problem": "Pasting raw text",
+    "offNote": "Pasting what you said",
     "offline": "Runs on this Mac. Nothing leaves it."
   },
+  "command": {
+    "failed": "Command didn't run"
+  },
   "home": {
-    "headline": "Hold <keys/> and talk.",
-    "lede": "Let go and your words land in whatever app you're in — without the ums, the restarts, or the “no wait, I mean”.",
-    "status": {
-      "ready": "Cleaning with {{model}}",
-      "off": "Cleanup is off — raw transcripts paste as spoken",
-      "checking": "Looking for Ollama…",
-      "down": "Ollama isn't running — pasting raw transcripts",
-      "missing-model": "{{model}} isn't installed — pasting raw transcripts",
-      "adjust": "Adjust",
-      "change": "Change shortcuts"
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
     },
-    "flow": {
-      "speak": {
-        "title": "Speak",
-        "body": "Mandarin, English, French — mixed in one sentence is fine."
-      },
-      "clean": {
-        "title": "Clean",
-        "body": "A local model trims fillers and fixes punctuation. Never translates."
-      },
-      "paste": {
-        "title": "Paste",
-        "body": "If cleanup takes longer than {{seconds}} s, the raw text goes in instead."
-      }
+    "sub": {
+      "first": "Hold the shortcut, talk, let go. Your words land wherever the cursor is.",
+      "returning_one": "You've talked instead of typed on {{count}} day so far.",
+      "returning_other": "You've talked instead of typed on {{count}} days so far."
     },
-    "last": {
-      "cleaned": "Last dictation → {{app}} · {{style}}, cleaned in {{seconds}} s.",
-      "timed_out": "Last dictation → {{app}} hit the {{seconds}} s budget — pasted as spoken.",
-      "fallback": "Last dictation → {{app}} pasted as spoken ({{detail}}).",
-      "skipped": "Last dictation → {{app}} pasted as spoken ({{detail}})."
+    "stats": {
+      "words": "Words dictated",
+      "saved": "Time saved",
+      "dictations": "Dictations",
+      "streak": "Streak",
+      "minutes": "{{value}} min",
+      "hours": "{{value}} h",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
     },
-    "unknownApp": "unknown app",
+    "hotkey": {
+      "title": "Dictate",
+      "push_to_talk": "Hold to talk, let go to paste.",
+      "toggle": "Tap to start, tap again to paste.",
+      "hold_or_toggle": "Hold to talk, or tap to keep listening."
+    },
     "command": {
-      "label": "Command mode",
-      "body": "Select text, hold <keys/> and say what to do with it. Let go — the selection is replaced. Nothing selected? It writes at the cursor.",
+      "title": "Command mode",
+      "body": "Select text, hold, say what to change. Nothing selected and it writes at the cursor.",
+      "examplesLead": "Things to say in command mode:",
       "examples": [
         "make this shorter",
         "translate to French",
         "改成正式一点",
         "turn this into a list"
-      ],
-      "failed": "Command didn't run"
+      ]
+    },
+    "status": {
+      "ready": "Cleaning with {{model}}",
+      "off": "Cleanup is off. Text pastes as you said it.",
+      "checking": "Looking for Ollama…",
+      "down": "Ollama isn't running, so text pastes raw.",
+      "missing-model": "{{model}} isn't installed, so text pastes raw.",
+      "adjust": "Adjust"
+    },
+    "last": {
+      "cleaned": "Last: {{app}}, {{seconds}} s",
+      "timed_out": "Last: {{app}}, ran out of time, pasted raw",
+      "fallback": "Last: {{app}}, pasted raw",
+      "skipped": "Last: {{app}}, pasted as said"
+    },
+    "unknownApp": "unknown app",
+    "recent": {
+      "title": "Recent",
+      "all": "All history",
+      "empty": "Nothing yet. Hold this and say something:"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "cleanup": "Cleanup",
+      "engine": "Engine"
+    },
+    "shortcuts": "Keyboard shortcuts",
+    "app": "App",
+    "sound": {
+      "label": "Sounds",
+      "note": "A tone when recording starts and stops, and a low note when the text lands."
+    },
+    "login": {
+      "label": "Open at login",
+      "note": "Starts in the menu bar, ready for the shortcut."
     }
   },
   "cleanup": {
-    "title": "Cleanup",
-    "lede": "A local Ollama model tidies each dictation before it's pasted. Your words, minus the noise.",
+    "lede": "A model running in Ollama on this Mac tidies each dictation before it's pasted. It drops the ums and the restarts. It won't translate.",
     "enabled": {
       "label": "Clean up dictations",
       "note": "Off pastes exactly what the speech model heard."
@@ -67,91 +104,106 @@
     "model": {
       "label": "Model",
       "note": "Any model you've pulled into Ollama.",
-      "down": "Ollama isn't reachable. Start it with “ollama serve”.",
-      "missing": "Not installed yet. Run “ollama pull {{model}}”."
+      "down": "Can't reach Ollama. Start it with “ollama serve”.",
+      "missing": "Not installed. Run “ollama pull {{model}}”."
     },
     "budget": {
-      "label": "Time budget",
-      "note": "Past this, the raw transcript is pasted and the model's answer is dropped.",
+      "label": "Time limit",
+      "note": "If the model is slower than this, the raw transcript goes in instead.",
       "value": "{{seconds}} s"
     },
     "server": {
+      "group": "Connection",
       "label": "Ollama",
-      "note": "Loopback only. Remote hosts are refused."
+      "note": "Only this Mac. Remote addresses are refused."
     }
   },
   "dictionary": {
     "title": "Dictionary",
-    "lede": "Names, jargon, words the recogniser keeps getting wrong. Terms steer Whisper before it listens; “heard as” fixes what slips through, before and after cleanup.",
+    "lede": "Names, jargon, the words it keeps getting wrong. Terms are handed to Whisper before it listens. “Heard as” fixes whatever still slips through.",
     "addPlaceholder": "Add a word, name or acronym",
     "add": "Add",
-    "empty": "Nothing yet. Start with the word you correct most.",
+    "empty": "Nothing here yet. Start with the word you correct most.",
     "heardAs": "heard as",
     "heardPlaceholder": "those, doze",
     "remove": "Remove {{term}}"
   },
   "styles": {
     "title": "Styles",
-    "lede": "L.O.B.A notices where you're typing. Chats stay loose, email gets buttoned up, code and terminals get exactly what you said.",
+    "lede": "L.O.B.A checks which app you're in. Chats stay loose, email gets tidied up, and code or terminals get exactly what you said.",
     "detect": "Check an app",
     "detecting": "Switch to it now…",
-    "detected": "{{app}} → {{style}} ({{by}})",
+    "detected": "{{app}} uses {{style}} (matched {{by}})",
     "unknownApp": "unknown app",
-    "fallback": "default",
+    "fallback": "by default",
     "voices": "Voices",
     "default": "default",
     "rewrites": "Rewrites",
-    "literal": "Literal",
-    "literalNote": "No model pass. Dictionary fixes only — commands and code arrive exactly as spoken.",
+    "literal": "As said",
+    "literalNote": "No model. Dictionary fixes only, so commands and code arrive untouched.",
     "tonePlaceholder": "How should text sound here?",
     "apps": "Apps",
-    "appsNote": "Matched by app name or bundle id.",
+    "appsNote": "Matched by app name or bundle ID.",
     "appPlaceholder": "App name, e.g. Notion",
     "titles": "Web apps",
-    "titlesNote": "When the app itself isn't listed, a window title containing this word decides — Gmail in Safari reads as email.",
+    "titlesNote": "For apps that live in a browser tab. If the window title contains this word, the style applies. That's how Gmail in Safari gets email tone.",
     "titlePlaceholder": "Title contains, e.g. Linear",
-    "map": "Map",
+    "map": "Add",
     "removeMapping": "Remove {{key}}"
   },
   "history": {
     "title": "History",
-    "lede": "Your last 50 dictations. Click any line to copy it.",
-    "empty": "Nothing yet. Hold the hotkey and say something.",
+    "lede": "Your last 50 dictations. Click one to copy it.",
+    "empty": "Nothing yet. Hold the shortcut and say something.",
     "today": "Today",
     "yesterday": "Yesterday",
     "copy": "Copy",
     "copied": "Copied",
-    "copiedRaw": "Raw copied",
+    "copiedRaw": "Raw text copied",
     "copyRaw": "Copy the raw transcript",
-    "showRaw": "Show raw",
-    "hideRaw": "Hide raw",
+    "showRaw": "Show what you said",
+    "hideRaw": "Hide",
     "outcome": {
       "cleaned": "Cleaned",
-      "timed_out": "Hit the time budget — pasted as spoken",
-      "fallback": "Pasted as spoken ({{detail}})",
+      "timed_out": "Ran out of time, pasted raw",
+      "fallback": "Pasted raw ({{detail}})",
       "skipped": "Not rewritten ({{detail}})"
     }
   },
   "shortcuts": {
-    "title": "Shortcuts",
-    "lede": "Click a shortcut, press the keys you want, let go. Modifier-only chords like ⌘⌥ work — hold them, nothing else.",
-    "dictate": "Dictate",
-    "dictateNote": "Speak; let go and the cleaned text is pasted where you're typing.",
-    "command": "Command mode",
-    "commandNote": "Select text, speak an instruction, let go; the selection is rewritten.",
-    "change": "Change the {{name}} shortcut",
-    "listening": "Press keys…",
-    "hint": "Let go to save · Esc cancels",
-    "reset": "Reset to default",
-    "failed": "Couldn't set that shortcut",
+    "transcribe": {
+      "name": "Dictate",
+      "note": "Talk, let go, and the text is pasted where you're typing."
+    },
+    "loba_command": {
+      "name": "Command mode",
+      "note": "Select text, say what to change, let go. The selection is rewritten."
+    },
+    "change": "Change",
+    "changeNamed": "Change the {{name}} shortcut",
     "mode": {
-      "label": "Dictation",
-      "push_to_talk": "Hold",
-      "toggle": "Tap on / off",
-      "hold_or_toggle": "Both",
-      "push_to_talkNote": "Hold to talk, let go to paste. Taps shorter than 0.3 s are ignored, so ⌥⌘ shortcuts in other apps still work.",
-      "toggleNote": "Tap to start, tap again to paste. Not recommended with a modifier-only shortcut.",
-      "hold_or_toggleNote": "Hold to talk, or tap to keep listening. Not recommended with a modifier-only shortcut."
+      "label": "Dictate by",
+      "push_to_talk": "Holding",
+      "toggle": "Tapping",
+      "hold_or_toggle": "Either",
+      "push_to_talkNote": "Hold to talk, let go to paste. Presses under 0.3 s are ignored, so other ⌥⌘ shortcuts still work.",
+      "toggleNote": "Tap once to start and again to paste. Avoid this with a modifier-only shortcut like ⌘⌥.",
+      "hold_or_toggleNote": "Hold to talk, or tap to keep listening. Avoid this with a modifier-only shortcut like ⌘⌥."
+    },
+    "dialog": {
+      "title": "New {{name}} shortcut",
+      "body": "Press the keys you want and let go. Modifiers on their own work too, like ⌘⇧.",
+      "waiting": "Waiting for keys",
+      "holding": "Let go to keep this",
+      "captured": "Got it. Save, or press something else.",
+      "problem": {
+        "plain": "A single key would fire while you type. Add a modifier.",
+        "taken": "{{other}} already uses this.",
+        "failed": "Couldn't set that shortcut. Try another."
+      },
+      "reset": "Reset to",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   }
 }

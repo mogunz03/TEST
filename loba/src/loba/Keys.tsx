@@ -23,18 +23,45 @@ const glyph = (part: string) => {
   return GLYPHS[key] ?? (key.length === 1 ? key.toUpperCase() : part);
 };
 
+// macOS writes chords in this order: ⌃⌥⇧⌘, then the key.
+const ORDER = [
+  "ctrl",
+  "control",
+  "option",
+  "alt",
+  "shift",
+  "command",
+  "cmd",
+  "meta",
+  "super",
+];
+const rank = (part: string) => {
+  const i = ORDER.indexOf(part.toLowerCase().replace(/_(left|right)$/, ""));
+  return i === -1 ? ORDER.length : i;
+};
+
 /** "option+shift+space" rendered as physical keycaps. */
-export const Keys: React.FC<{ binding?: string; className?: string }> = ({
-  binding,
-  className = "",
-}) => {
+export const Keys: React.FC<{
+  binding?: string;
+  className?: string;
+  large?: boolean;
+  pressed?: boolean;
+}> = ({ binding, className = "", large = false, pressed = false }) => {
   if (!binding) return null;
+  const parts = binding
+    .split("+")
+    .filter(Boolean)
+    .sort((a, b) => rank(a) - rank(b));
   return (
     <span
-      className={`inline-flex items-center gap-1 align-middle ${className}`}
+      className={`inline-flex items-center align-middle ${large ? "gap-2" : "gap-1"} ${className}`}
     >
-      {binding.split("+").map((part, i) => (
-        <kbd key={i} className="loba-key">
+      {parts.map((part, i) => (
+        <kbd
+          key={i}
+          className={`loba-key transition-transform duration-75 ${large ? "loba-key-lg" : ""}`}
+          data-pressed={pressed}
+        >
           {glyph(part)}
         </kbd>
       ))}

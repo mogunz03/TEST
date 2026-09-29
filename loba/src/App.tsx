@@ -300,7 +300,7 @@ function App() {
   // unreachable) are silently swallowed and the wizard just appears to "blink".
   const toaster = (
     <Toaster
-      theme="system"
+      theme="dark"
       toastOptions={{
         unstyled: true,
         classNames: {

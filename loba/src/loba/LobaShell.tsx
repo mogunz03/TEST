@@ -2,41 +2,33 @@ import React, { useEffect, useState, type ReactNode } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import {
+  BookText,
+  History,
+  House,
+  MessagesSquare,
+  Settings2,
+  type LucideIcon,
+} from "lucide-react";
+import HandyTextLogo from "@/components/icons/HandyTextLogo";
 import { Home } from "./pages/Home";
-import { Cleanup } from "./pages/Cleanup";
 import { DictionaryPage } from "./pages/DictionaryPage";
 import { StylesPage } from "./pages/StylesPage";
 import { HistoryPage } from "./pages/HistoryPage";
-import { ShortcutsPage } from "./pages/ShortcutsPage";
+import { SettingsPage, type SettingsTab } from "./pages/SettingsPage";
+import { useLoba } from "./useOllama";
 
-type Page =
-  | "home"
-  | "history"
-  | "dictionary"
-  | "styles"
-  | "shortcuts"
-  | "cleanup"
-  | "engine";
+type Page = "home" | "history" | "dictionary" | "styles" | "settings";
 
-interface Section {
-  id: Page;
-  labelKey: string;
-}
-
-// Order is the order a new user needs them: talk first, tune second,
-// the underlying engine last.
-const SECTIONS: Section[] = [
-  { id: "home", labelKey: "nav.home" },
-  { id: "history", labelKey: "nav.history" },
-  { id: "dictionary", labelKey: "nav.dictionary" },
-  { id: "styles", labelKey: "nav.styles" },
-  { id: "shortcuts", labelKey: "nav.shortcuts" },
-  { id: "cleanup", labelKey: "nav.cleanup" },
-  { id: "engine", labelKey: "nav.engine" },
+const NAV: { id: Page; icon: LucideIcon }[] = [
+  { id: "home", icon: House },
+  { id: "history", icon: History },
+  { id: "dictionary", icon: BookText },
+  { id: "styles", icon: MessagesSquare },
 ];
 
 interface Props {
-  /** Handy's full settings surface, kept one click away under "Engine". */
+  /** Handy's full settings surface, under Settings → Engine. */
   engine: ReactNode;
   /** Permission / secure-input banners that must stay visible everywhere. */
   banners: ReactNode;
@@ -45,86 +37,134 @@ interface Props {
 export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
   const { t } = useTranslation("loba");
   const [page, setPage] = useState<Page>("home");
+  const [tab, setTab] = useState<SettingsTab>("general");
 
   // Command mode never pastes on failure, so say why instead of doing nothing.
   useEffect(() => {
     const un = listen<string>("loba:command-failed", (e) =>
-      toast.error(t("home.command.failed"), { description: e.payload }),
+      toast.error(t("command.failed"), { description: e.payload }),
     );
     return () => {
       un.then((f) => f());
     };
   }, [t]);
 
+  const openSettings = (next: SettingsTab) => {
+    setTab(next);
+    setPage("settings");
+  };
+
   return (
-    <div className="h-screen flex bg-paper text-ink select-none cursor-default">
-      <nav className="w-44 shrink-0 flex flex-col pt-7 pb-5 ps-6 pe-3">
-        <span className="loba-display text-[19px] tracking-[0.06em] mb-9">
-          {t("brand")}
-        </span>
-        <ul className="flex flex-col gap-0.5">
-          {SECTIONS.map((s) => {
-            const active = s.id === page;
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => setPage(s.id)}
-                  className={`group w-full flex items-center gap-2.5 py-1.5 text-[14px] text-start transition-colors duration-150 cursor-pointer ${
-                    active ? "text-ink" : "text-soft hover:text-ink"
-                  }`}
-                >
-                  {/* The active mark is a dot, not a filled pill: the
-                      sidebar stays a list of words. */}
-                  <span
-                    className={`h-[5px] w-[5px] rounded-full transition-all duration-200 ${
-                      active
-                        ? "bg-clay scale-100"
-                        : "bg-transparent scale-50 group-hover:bg-rule group-hover:scale-100"
-                    }`}
-                  />
-                  {t(s.labelKey)}
-                </button>
-              </li>
-            );
-          })}
+    <div className="loba-root h-screen flex bg-void text-ink select-none cursor-default">
+      <nav className="w-[208px] shrink-0 flex flex-col px-3 pt-6 pb-3">
+        <div className="px-3 mb-7 text-ink">
+          <HandyTextLogo height={22} />
+        </div>
+        <ul className="flex flex-col gap-px">
+          {NAV.map((item) => (
+            <NavItem
+              key={item.id}
+              icon={item.icon}
+              label={t(`nav.${item.id}`)}
+              active={page === item.id}
+              onClick={() => setPage(item.id)}
+            />
+          ))}
         </ul>
-        <p className="mt-auto text-[11px] leading-4 text-soft">
-          {t("footer.offline")}
-        </p>
+
+        <div className="mt-auto flex flex-col gap-2">
+          <StatusCard onOpen={() => openSettings("cleanup")} />
+          <ul>
+            <NavItem
+              icon={Settings2}
+              label={t("nav.settings")}
+              active={page === "settings"}
+              onClick={() => setPage("settings")}
+            />
+          </ul>
+        </div>
       </nav>
 
-      <main className="flex-1 min-w-0 flex flex-col border-s border-rule bg-sheet">
+      {/* The working surface is one step lighter than the frame and inset,
+          so the sidebar reads as the room and this as the desk. */}
+      <main className="flex-1 min-w-0 my-2 me-2 flex flex-col rounded-[14px] bg-base border border-line overflow-hidden">
         <div className="flex flex-col gap-3 px-4 pt-4 empty:hidden">
           {banners}
         </div>
-        {page === "engine" ? (
-          <div key="engine" className="loba-page flex-1 min-h-0">
-            {engine}
-          </div>
+        {page === "settings" ? (
+          <SettingsPage tab={tab} onTab={setTab} engine={engine} />
         ) : (
-          <div className="flex-1 overflow-y-auto">
-            {/* Content sits left of centre with a wide margin, like a page
-                of notes — not a centred dashboard column. */}
+          <div className="loba-scroll flex-1 overflow-y-auto">
             <div
               key={page}
-              className="loba-page max-w-[560px] ps-12 pe-8 pt-12 pb-16"
+              className="loba-page max-w-[680px] mx-auto px-10 pt-9 pb-14"
             >
               {page === "home" && (
                 <Home
-                  onOpenCleanup={() => setPage("cleanup")}
-                  onOpenShortcuts={() => setPage("shortcuts")}
+                  onOpenHistory={() => setPage("history")}
+                  onOpenCleanup={() => openSettings("cleanup")}
                 />
               )}
               {page === "history" && <HistoryPage />}
               {page === "dictionary" && <DictionaryPage />}
               {page === "styles" && <StylesPage />}
-              {page === "shortcuts" && <ShortcutsPage />}
-              {page === "cleanup" && <Cleanup />}
             </div>
           </div>
         )}
       </main>
     </div>
+  );
+};
+
+const NavItem: React.FC<{
+  icon: LucideIcon;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}> = ({ icon: Icon, label, active, onClick }) => (
+  <li>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={`w-full h-[32px] flex items-center gap-2.5 px-3 rounded-[8px] text-[13px] text-start transition-colors duration-150 cursor-pointer ${
+        active ? "bg-raised text-ink" : "text-soft hover:text-ink hover:bg-card"
+      }`}
+    >
+      <Icon size={15} strokeWidth={active ? 2 : 1.7} />
+      {label}
+    </button>
+  </li>
+);
+
+/** Where Typeless shows your plan, this shows whether cleanup is working. */
+const StatusCard: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+  const { t } = useTranslation("loba");
+  const { config, ollama } = useLoba();
+  if (!config) return null;
+  const [color, key] = !config.cleanup_enabled
+    ? ["text-faint", "off"]
+    : ollama.kind === "ready"
+      ? ["text-ok", "ready"]
+      : ollama.kind === "checking"
+        ? ["text-faint", "checking"]
+        : ["text-warn", "problem"];
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="mx-1 rounded-[11px] border border-line bg-base px-3 py-2.5 text-start hover:border-line-strong transition-colors cursor-pointer"
+    >
+      <div className="flex items-center gap-2 text-[12px] text-ink">
+        <span className={`loba-dot ${color}`} data-live={key === "ready"} />
+        {t(`sidebar.${key}`)}
+      </div>
+      <div className="mt-1 text-[11px] leading-4 text-faint truncate">
+        {config.cleanup_enabled ? config.model : t("sidebar.offNote")}
+      </div>
+      <div className="mt-2 pt-2 border-t border-line text-[10.5px] leading-[14px] text-faint">
+        {t("sidebar.offline")}
+      </div>
+    </button>
   );
 };

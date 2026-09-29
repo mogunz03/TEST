@@ -1,18 +1,19 @@
-/* Handy colour tokens, retuned to the L.O.B.A palette (see src/loba/loba.css) */
+/* Handy colour tokens, retuned to L.O.B.A's cold blacks (see src/loba/loba.css).
+   The app always runs dark; the light values only matter if that changes. */
 
 :root {
   /* Palette source of truth. Each themed color is defined once as a
      light/dark pair; the active tokens below and the `data-theme` overrides
      in App.css reference these, so a hex value lives in exactly one place. */
   --light-color-text: #0f0f0f;
-  --light-color-background: #fcfaf6;
-  --light-color-logo-primary: #e9a887; /* L.O.B.A clay, at Handy's pink lightness */
-  --light-color-logo-stroke: #1d1b18;
+  --light-color-background: #f4f5f7;
+  --light-color-logo-primary: #5f6b7b;
+  --light-color-logo-stroke: #0d0f12;
 
-  --dark-color-text: #fbfbfb;
-  --dark-color-background: #1e1d1a;
-  --dark-color-logo-primary: #e07c55;
-  --dark-color-logo-stroke: #f3dccf;
+  --dark-color-text: #e9ecf0;
+  --dark-color-background: #0d0f12;
+  --dark-color-logo-primary: #74819a;
+  --dark-color-logo-stroke: #d7dde5;
 
   /* Semantic status colors. First used by SecureInputWarning; intended to
      replace the ad-hoc yellow-500/red-500 usages (e.g. ui/Alert.tsx) over
@@ -23,9 +24,9 @@
   --dark-color-error: #f87171;
 
   /* Tokens that do not change between light and dark */
-  --color-background-ui: #b4502b;
+  --color-background-ui: #2f353e;
   --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #808080;
+  --color-mid-gray: #7d848f;
 
   /* Active palette — defaults to light, follows the OS via the media query
      below, or is forced by `data-theme` (see the overrides below). */

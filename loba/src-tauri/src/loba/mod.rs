@@ -9,6 +9,7 @@ mod watched;
 
 use loba_core::cleanup::Outcome;
 use loba_core::pipeline::{self, Pipeline};
+use loba_core::stats::Stats;
 use loba_core::styles::Resolved;
 use loba_core::{AppContext, Dictionary, LobaConfig, OllamaClient, Styles};
 use once_cell::sync::Lazy;
@@ -22,6 +23,7 @@ pub struct LobaState {
     config: Watched<LobaConfig>,
     dictionary: Watched<Dictionary>,
     styles: Watched<Styles>,
+    stats: Watched<Stats>,
     client: Mutex<OllamaClient>,
     /// Where the user was when they pressed the hotkey. Taken by the next
     /// pipeline run, so it can never leak into a later dictation.
@@ -55,6 +57,18 @@ impl LobaState {
 
     pub fn set_styles(&self, next: Styles) -> Result<Styles, String> {
         self.styles.set(next)
+    }
+
+    pub fn stats(&self) -> Stats {
+        self.stats.get()
+    }
+
+    fn count(&self, text: &str) {
+        let mut s = self.stats.get();
+        s.record(text, &chrono::Local::now().format("%Y-%m-%d").to_string());
+        if let Err(e) = self.stats.set(s) {
+            log::warn!("Could not save stats: {e}");
+        }
     }
 
     fn take_target(&self) -> Option<AppContext> {
@@ -92,6 +106,7 @@ pub fn init(app: &AppHandle) {
         d.normalized()
     });
     let styles = Watched::open(dir.join("styles.json"), Styles::seed, |s| s.normalized());
+    let stats = Watched::open(dir.join("stats.json"), Stats::default, |s| s);
     let cfg = config.get();
     log::info!(
         "L.O.B.A cleanup {} (model {}, budget {} ms, data {})",
@@ -106,6 +121,7 @@ pub fn init(app: &AppHandle) {
         config,
         dictionary,
         styles,
+        stats,
         target: Mutex::new(None),
     });
     publish_whisper_prompt(&state.dictionary.get());
@@ -278,6 +294,15 @@ pub const MIN_DICTATION_MS: u32 = 300;
 pub fn too_short(samples: &[f32]) -> bool {
     let min = crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE * MIN_DICTATION_MS / 1000;
     samples.len() < min as usize
+}
+
+/// A dictation was pasted: add it to Home's totals. Command-mode answers
+/// aren't dictations and don't count.
+pub fn count_dictation(app: &AppHandle, text: &str) {
+    if let Some(s) = state(app) {
+        s.count(text);
+        let _ = app.emit("loba:stats-changed", ());
+    }
 }
 
 /// Text landed: settle the menu bar glyph and play the settle sound on the

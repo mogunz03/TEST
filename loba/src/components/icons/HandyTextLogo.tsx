@@ -1,9 +1,9 @@
 import React from "react";
 
 /**
- * L.O.B.A wordmark (replaces Handy's logo everywhere it was used: onboarding
- * and the Engine sidebar). The app icon's stroke — a scribble settling into
- * a line — then the clay full stop, then the name in the system serif.
+ * L.O.B.A wordmark (replaces Handy's logo everywhere it was used). The app
+ * icon's stroke, a scribble settling into a line, then the full stop, then
+ * the name in the system sans.
  */
 const HandyTextLogo = ({
   width,
@@ -32,15 +32,15 @@ const HandyTextLogo = ({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="61" cy="32" r="5.4" fill="var(--loba-clay, #b4502b)" />
+      <circle cx="61" cy="32" r="5.4" fill="var(--loba-steel, #b9c4d2)" />
       <text
         x="82"
         y="44"
         fill="currentColor"
-        fontFamily='ui-serif, "New York", "Iowan Old Style", Georgia, serif'
-        fontSize="36"
-        fontWeight="500"
-        letterSpacing="2"
+        fontFamily='-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif'
+        fontSize="34"
+        fontWeight="600"
+        letterSpacing="3"
       >
         L.O.B.A
       </text>
