@@ -279,3 +279,22 @@ pub fn too_short(samples: &[f32]) -> bool {
     let min = crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE * MIN_DICTATION_MS / 1000;
     samples.len() < min as usize
 }
+
+/// Text landed: settle the menu bar glyph and play the settle sound on the
+/// frame where the full stop drops in, so eye and ear get one event.
+pub fn on_pasted(app: &AppHandle) {
+    crate::tray::play_settle(app);
+    // play_settle's frames: 40 ms lead-in, then 120 ms per frame; the full
+    // stop appears on the third. With Reduce Motion there is no animation to
+    // sync to, so the sound plays straight away.
+    let delay = if loba_core::frontmost::reduce_motion() {
+        0
+    } else {
+        40 + 2 * 120
+    };
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(delay));
+        crate::audio_feedback::play_feedback_sound(&app, crate::audio_feedback::SoundType::Settle);
+    });
+}

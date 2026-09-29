@@ -34,6 +34,9 @@ export const SoundPicker: React.FC<SoundPickerProps> = ({
   const handlePlayBothSounds = async () => {
     await playTestSound("start");
     await playTestSound("stop");
+    // L.O.B.A: the landing sound, after the same beat a real paste takes.
+    await new Promise((r) => setTimeout(r, 350));
+    await playTestSound("settle");
   };
 
   return (

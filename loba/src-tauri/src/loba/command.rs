@@ -157,7 +157,7 @@ impl ShortcutAction for CommandAction {
                         };
                         finish(&ah);
                         if pasted {
-                            crate::tray::play_settle(&ah);
+                            crate::loba::on_pasted(&ah);
                         }
                     });
                     // If the closure never runs, nothing else resets the phase.

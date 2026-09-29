@@ -272,6 +272,11 @@ impl SoundTheme {
     pub fn to_stop_path(self) -> String {
         format!("resources/{}_stop.wav", self.as_str())
     }
+
+    /// L.O.B.A: played when a dictation lands (see `loba::on_pasted`).
+    pub fn to_settle_path(self) -> String {
+        format!("resources/{}_settle.wav", self.as_str())
+    }
 }
 
 /// UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`

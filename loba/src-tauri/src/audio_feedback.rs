@@ -12,6 +12,8 @@ use tauri::{AppHandle, Manager};
 pub enum SoundType {
     Start,
     Stop,
+    /// L.O.B.A: text landed. Quieter than Start/Stop; a confirmation, not a cue.
+    Settle,
 }
 
 fn resolve_sound_path(
@@ -33,8 +35,10 @@ fn get_sound_path(settings: &AppSettings, sound_type: SoundType) -> String {
     match (settings.sound_theme, sound_type) {
         (SoundTheme::Custom, SoundType::Start) => "custom_start.wav".to_string(),
         (SoundTheme::Custom, SoundType::Stop) => "custom_stop.wav".to_string(),
+        (SoundTheme::Custom, SoundType::Settle) => "custom_settle.wav".to_string(),
         (_, SoundType::Start) => settings.sound_theme.to_start_path(),
         (_, SoundType::Stop) => settings.sound_theme.to_stop_path(),
+        (_, SoundType::Settle) => settings.sound_theme.to_settle_path(),
     }
 }
 
@@ -50,7 +54,14 @@ pub fn play_feedback_sound(app: &AppHandle, sound_type: SoundType) {
     if !settings.audio_feedback {
         return;
     }
+    let optional = matches!(sound_type, SoundType::Settle);
     if let Some(path) = resolve_sound_path(app, &settings, sound_type) {
+        // A custom theme may not provide a settle sound; that's silence, not
+        // an error (and never another theme's sound mixed in).
+        if optional && !path.exists() {
+            debug!("No settle sound at '{}'; skipping", path.display());
+            return;
+        }
         play_sound_async(app, path);
     }
 }
@@ -67,7 +78,11 @@ pub fn play_feedback_sound_blocking(app: &AppHandle, sound_type: SoundType) {
 
 pub fn play_test_sound(app: &AppHandle, sound_type: SoundType) {
     let settings = settings::get_settings(app);
+    let optional = matches!(sound_type, SoundType::Settle);
     if let Some(path) = resolve_sound_path(app, &settings, sound_type) {
+        if optional && !path.exists() {
+            return;
+        }
         play_sound_blocking(app, &path);
     }
 }
@@ -139,4 +154,18 @@ fn play_audio_file(
     sink.sleep_until_end();
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::settings::SoundTheme;
+
+    #[test]
+    fn built_in_themes_ship_a_settle_sound() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for theme in [SoundTheme::Marimba, SoundTheme::Pop] {
+            let path = theme.to_settle_path();
+            assert!(root.join(&path).is_file(), "missing {path}");
+        }
+    }
 }

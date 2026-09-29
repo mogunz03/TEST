@@ -874,7 +874,7 @@ impl ShortcutAction for TranscribeAction {
                                     utils::hide_recording_overlay(&ah_clone);
                                     set_tray_state(&ah_clone, TrayIconState::Idle);
                                     if pasted {
-                                        crate::tray::play_settle(&ah_clone);
+                                        crate::loba::on_pasted(&ah_clone);
                                     }
                                 })
                                 .unwrap_or_else(|e| {
