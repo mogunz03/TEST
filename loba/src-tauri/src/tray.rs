@@ -93,7 +93,7 @@ struct TrayInner {
     next_seq: u64,
     /// Sequence number of the request that produced `desired`.
     desired_seq: u64,
-    /// A recording-pulse ticker thread is alive (see [`start_pulse`]).
+    /// A tray-pulse ticker thread is alive (see [`start_pulse`]).
     pulse_running: bool,
 }
 
@@ -220,60 +220,110 @@ pub fn get_icon_path(theme: AppTheme, state: TrayIconState, warning: bool) -> &'
 /// Sets the recording state shown by the tray (icon + Cancel/model menu).
 pub fn set_tray_state(app: &AppHandle, state: TrayIconState) {
     sync_tray_with(app, |inner| inner.icon_state = state);
-    if state == TrayIconState::Recording {
+    if animates(state) {
         start_pulse(app);
     }
 }
 
-/// Recording glyph frames: index 0 is the static icon, 1..=3 draw the stroke
-/// and the full stop in. Played 0,1,2,3,2,1 — a breath, not a blink.
-const PULSE_FRAMES: [(&str, [&str; 4]); 3] = [
-    (
-        "resources/tray_recording.png",
-        [
+/// An animated tray glyph: the static icon it replaces, its frames, and the
+/// order they play in.
+struct PulseSet {
+    base: &'static str,
+    frames: &'static [&'static str],
+    sequence: &'static [usize],
+}
+
+/// Recording *breathes* (stroke and full stop swell and settle, 0-1-2-3-2-1);
+/// transcribing *turns* (the open full stop spins as a ¾ arc, 0-1-2-3).
+/// Different motions so the two states stay distinct at 22 px. Recording's
+/// frame 0 is its static icon; transcribing's static full ring is only the
+/// Reduce Motion / fallback look.
+static PULSE_SETS: [PulseSet; 6] = [
+    PulseSet {
+        base: "resources/tray_recording.png",
+        frames: &[
             "resources/tray_recording.png",
             "resources/tray_recording_p1.png",
             "resources/tray_recording_p2.png",
             "resources/tray_recording_p3.png",
         ],
-    ),
-    (
-        "resources/tray_recording_dark.png",
-        [
+        sequence: &[0, 1, 2, 3, 2, 1],
+    },
+    PulseSet {
+        base: "resources/tray_recording_dark.png",
+        frames: &[
             "resources/tray_recording_dark.png",
             "resources/tray_recording_dark_p1.png",
             "resources/tray_recording_dark_p2.png",
             "resources/tray_recording_dark_p3.png",
         ],
-    ),
-    (
-        "resources/recording.png",
-        [
+        sequence: &[0, 1, 2, 3, 2, 1],
+    },
+    PulseSet {
+        base: "resources/recording.png",
+        frames: &[
             "resources/recording.png",
             "resources/recording_p1.png",
             "resources/recording_p2.png",
             "resources/recording_p3.png",
         ],
-    ),
+        sequence: &[0, 1, 2, 3, 2, 1],
+    },
+    PulseSet {
+        base: "resources/tray_transcribing.png",
+        frames: &[
+            "resources/tray_transcribing_p1.png",
+            "resources/tray_transcribing_p2.png",
+            "resources/tray_transcribing_p3.png",
+            "resources/tray_transcribing_p4.png",
+        ],
+        sequence: &[0, 1, 2, 3],
+    },
+    PulseSet {
+        base: "resources/tray_transcribing_dark.png",
+        frames: &[
+            "resources/tray_transcribing_dark_p1.png",
+            "resources/tray_transcribing_dark_p2.png",
+            "resources/tray_transcribing_dark_p3.png",
+            "resources/tray_transcribing_dark_p4.png",
+        ],
+        sequence: &[0, 1, 2, 3],
+    },
+    PulseSet {
+        base: "resources/transcribing.png",
+        frames: &[
+            "resources/transcribing_p1.png",
+            "resources/transcribing_p2.png",
+            "resources/transcribing_p3.png",
+            "resources/transcribing_p4.png",
+        ],
+        sequence: &[0, 1, 2, 3],
+    },
 ];
-const PULSE_SEQUENCE: [usize; 6] = [0, 1, 2, 3, 2, 1];
 const PULSE_TICK: std::time::Duration = std::time::Duration::from_millis(190);
 
-/// The frame set a displayed icon path belongs to, if it's a recording glyph.
-fn pulse_frames_for(path: &str) -> Option<&'static [&'static str; 4]> {
-    PULSE_FRAMES
-        .iter()
-        .find(|(_, frames)| frames.contains(&path))
-        .map(|(_, frames)| frames)
+fn animates(state: TrayIconState) -> bool {
+    matches!(
+        state,
+        TrayIconState::Recording | TrayIconState::Transcribing
+    )
 }
 
-/// Animate the recording glyph while the tray stays in `Recording`.
+/// The animated set a displayed icon path belongs to (its base or any frame).
+fn pulse_set_for(path: &str) -> Option<&'static PulseSet> {
+    PULSE_SETS
+        .iter()
+        .find(|set| set.base == path || set.frames.contains(&path))
+}
+
+/// Animate the tray glyph while the state is Recording or Transcribing.
 ///
 /// Each tick swaps only `desired.icon_path` and claims a sequence number in
-/// the *same* critical section that checks `icon_state` is still Recording.
-/// A state change claims its own number after updating `icon_state`, so a
-/// tick can never overwrite a newer snapshot: once recording ends the next
-/// tick sees it and exits, restoring nothing (the state change already did).
+/// the *same* critical section that checks the state still animates and the
+/// displayed set is still the one this frame belongs to. A state change
+/// claims its own number after updating `icon_state`, so a tick can never
+/// overwrite a newer snapshot: Recording → Transcribing switches sets on the
+/// next tick, and Idle stops the ticker without touching the icon.
 fn start_pulse(app: &AppHandle) {
     if loba_core::frontmost::reduce_motion() {
         return;
@@ -293,25 +343,33 @@ fn start_pulse(app: &AppHandle) {
         let Some(state) = app.try_state::<TrayState>() else {
             return;
         };
+        let mut current: Option<&'static PulseSet> = None;
         let mut step = 0usize;
         loop {
             std::thread::sleep(PULSE_TICK);
-            step = (step + 1) % PULSE_SEQUENCE.len();
 
-            // Which frame set is showing (theme / warning may have changed)?
-            let frames = {
+            // Which set is showing (state, theme or warning may have changed)?
+            let set = {
                 let mut inner = state.lock();
-                if inner.icon_state != TrayIconState::Recording {
+                if !animates(inner.icon_state) {
                     inner.pulse_running = false;
                     return;
                 }
                 inner
                     .desired
                     .as_ref()
-                    .and_then(|d| pulse_frames_for(d.icon_path))
+                    .and_then(|d| pulse_set_for(d.icon_path))
             };
-            let Some(frames) = frames else { continue };
-            let path = frames[PULSE_SEQUENCE[step]];
+            let Some(set) = set else { continue };
+            if current.is_none_or(|c| c.base != set.base) {
+                // New set: start from its first frame after the static icon
+                // (or frame 0 for a set whose static icon isn't a frame).
+                current = Some(set);
+                step = 0;
+            } else {
+                step = (step + 1) % set.sequence.len();
+            }
+            let path = set.frames[set.sequence[step]];
 
             // Decode outside the lock, once per frame.
             if !state.lock().icons.contains_key(path) {
@@ -333,15 +391,15 @@ fn start_pulse(app: &AppHandle) {
 
             let schedule = {
                 let mut inner = state.lock();
-                if inner.icon_state != TrayIconState::Recording {
+                if !animates(inner.icon_state) {
                     inner.pulse_running = false;
                     return;
                 }
                 let same_set = inner
                     .desired
                     .as_ref()
-                    .and_then(|d| pulse_frames_for(d.icon_path))
-                    .is_some_and(|f| std::ptr::eq(f, frames));
+                    .and_then(|d| pulse_set_for(d.icon_path))
+                    .is_some_and(|s| s.base == set.base);
                 if !same_set {
                     continue;
                 }
@@ -856,17 +914,22 @@ mod tests {
     }
 
     #[test]
-    fn pulse_frames_exist_and_start_on_the_static_glyph() {
+    fn pulse_frames_exist_and_map_back_to_their_set() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        for (base, frames) in super::PULSE_FRAMES {
-            assert_eq!(frames[0], base, "frame 0 must be the static icon");
-            for f in frames {
+        for set in &super::PULSE_SETS {
+            assert!(root.join(set.base).is_file(), "missing base {}", set.base);
+            for f in set.frames {
                 assert!(root.join(f).is_file(), "missing pulse frame {f}");
+                assert_eq!(super::pulse_set_for(f).unwrap().base, set.base);
             }
-            assert!(super::pulse_frames_for(base).is_some());
+            assert!(set.sequence.iter().all(|&i| i < set.frames.len()));
+            assert_eq!(super::pulse_set_for(set.base).unwrap().base, set.base);
         }
-        assert!(super::pulse_frames_for("resources/tray_idle.png").is_none());
-        assert!(super::pulse_frames_for("resources/tray_transcribing.png").is_none());
+        // Recording's static icon is its first frame: no jump on the first tick.
+        assert_eq!(super::PULSE_SETS[0].frames[0], super::PULSE_SETS[0].base);
+        assert!(super::pulse_set_for("resources/tray_idle.png").is_none());
+        assert!(super::animates(TrayIconState::Transcribing));
+        assert!(!super::animates(TrayIconState::Idle));
     }
 
     #[test]
