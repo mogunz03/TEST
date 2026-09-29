@@ -908,14 +908,97 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
- * Checks if the Mac is a laptop by detecting battery presence
- * 
- * This uses pmset to check for battery information.
- * Returns true if a battery is detected (laptop), false otherwise (desktop)
+ * Stub implementation for non-macOS platforms
+ * Always returns false since laptop detection is macOS-specific
  */
 async isLaptop() : Promise<Result<boolean, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("is_laptop") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaGetConfig() : Promise<LobaConfig> {
+    return await TAURI_INVOKE("loba_get_config");
+},
+async lobaSetConfig(config: LobaConfig) : Promise<Result<LobaConfig, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_set_config", { config }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Installed Ollama models. `Err` doubles as the "Ollama not running" signal.
+ */
+async lobaListModels() : Promise<Result<string[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_list_models") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaDataDir() : Promise<string> {
+    return await TAURI_INVOKE("loba_data_dir");
+},
+async lobaGetDictionary() : Promise<Dictionary> {
+    return await TAURI_INVOKE("loba_get_dictionary");
+},
+/**
+ * Saves `dictionary.json` and refreshes the Whisper prompt immediately.
+ */
+async lobaSetDictionary(dictionary: Dictionary) : Promise<Result<Dictionary, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_set_dictionary", { dictionary }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaGetStyles() : Promise<Styles> {
+    return await TAURI_INVOKE("loba_get_styles");
+},
+async lobaSetStyles(styles: Styles) : Promise<Result<Styles, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_set_styles", { styles }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * What's frontmost after `delay_ms`, and the style it resolves to — lets the
+ * Styles page check a mapping once the user has switched to that app.
+ */
+async lobaProbeFrontmost(delayMs: number) : Promise<Result<Probe, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_probe_frontmost", { delayMs }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The history panel: newest dictations first, raw next to cleaned.
+ */
+async lobaHistory(limit: number | null) : Promise<Result<LobaHistoryRow[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_history", { limit }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * One-click copy from the history panel, via the native pasteboard (the
+ * webview has no clipboard capability, and doesn't need one).
+ */
+async lobaCopy(text: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_copy", { text }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -942,6 +1025,10 @@ streamTextEvent: "stream-text-event"
 
 /** user-defined types **/
 
+/**
+ * What was frontmost when the user started speaking.
+ */
+export type AppContext = { name: string | null; bundle_id: string | null; window_title: string | null }
 /**
  * The container-level `serde(default)` (backed by the `Default` impl below)
  * guarantees every field — including ones added in the future — falls back to
@@ -1011,6 +1098,7 @@ export type AvailableAccelerators = { transcribe: string[]; ort: string[]; gpu_d
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+export type Dictionary = { entries?: Entry[] }
 export type EngineType = 
 /**
  * Any GGML/GGUF model loaded through transcribe-cpp (Whisper, Parakeet,
@@ -1018,6 +1106,16 @@ export type EngineType =
  * the file, so this one variant covers the whole transcribe-cpp family.
  */
 "TranscribeCpp" | "Parakeet" | "Moonshine" | "MoonshineStreaming" | "SenseVoice" | "GigaAM" | "Canary" | "Cohere"
+export type Entry = { 
+/**
+ * Canonical spelling, pasted exactly as written.
+ */
+term: string; 
+/**
+ * What the recogniser writes instead. Matched as whole words,
+ * case-insensitively; a space matches any run of whitespace.
+ */
+sounds_like?: string[] }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
@@ -1036,6 +1134,27 @@ export type KeyboardDiagnosticReport = { secure_input_enabled: boolean; culprit_
 key_down: number; key_up: number; flags_changed: number; mouse: number; duration_ms: number }
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
+export type LobaConfig = { 
+/**
+ * Master switch for the cleanup pass. Off = raw transcript (after the
+ * dictionary) goes straight to paste.
+ */
+cleanup_enabled: boolean; ollama_url: string; model: string; 
+/**
+ * Hard ceiling for the cleanup round trip. Past it, the raw transcript
+ * is pasted and the LLM answer is discarded.
+ */
+timeout_ms: number; command_timeout_ms: number; 
+/**
+ * Keep the model resident this long after each call (Ollama `keep_alive`).
+ * A cold 8B load alone can blow the 4 s budget.
+ */
+keep_alive: string }
+/**
+ * One row of the L.O.B.A history panel: the Handy entry joined with the
+ * pipeline's metadata (absent for entries made before L.O.B.A ran).
+ */
+export type LobaHistoryRow = { id: number; timestamp: number; raw: string; cleaned: string | null; app: string | null; style: string | null; outcome: string | null; detail: string | null; elapsed_ms: number | null }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
@@ -1077,7 +1196,13 @@ export type PaginatedHistory = { entries: HistoryEntry[]; has_more: boolean }
 export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_shift_v" | "external_script"
 export type PermissionAccess = "allowed" | "denied" | "unknown"
 export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean }
+export type Probe = { app: AppContext; style: Resolved }
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
+export type Resolved = { id: string; style: Style; 
+/**
+ * Which key matched, for the history panel ("Slack", "title: Gmail").
+ */
+matched_by: string | null }
 export type SecretMap = Partial<{ [key in string]: string }>
 export type SecureInputStatus = { 
 /**
@@ -1163,6 +1288,26 @@ export type StreamTextEvent = { committed: string; tentative: string }
  * Semantic kind of "working" phase, used to localize the spinner label.
  */
 export type StreamWorkKind = "transcribing" | "polishing"
+export type Style = { 
+/**
+ * Tone guidance appended to the cleanup prompt.
+ */
+tone?: string; 
+/**
+ * `false` = literal: no LLM at all, only dictionary rules. For editors
+ * and terminals, where a "helpful" rewrite breaks commands and code.
+ */
+rewrite?: boolean }
+export type Styles = { default?: string; styles?: Partial<{ [key in string]: Style }>; 
+/**
+ * App name ("WeChat") or bundle id ("com.tencent.xinWeChat") → style id.
+ */
+apps?: Partial<{ [key in string]: string }>; 
+/**
+ * Window-title substring → style id. Consulted when the app itself has
+ * no mapping, which is how Gmail-in-Safari reads as formal.
+ */
+window_titles?: Partial<{ [key in string]: string }> }
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes Handy already ships.

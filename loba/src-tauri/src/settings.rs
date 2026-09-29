@@ -943,7 +943,8 @@ pub fn get_default_settings() -> AppSettings {
         // recording on every time ⌘⌥ is used as part of another shortcut.
         shortcut_activation: ShortcutActivation::PushToTalk,
         hold_threshold_ms: default_hold_threshold_ms(),
-        audio_feedback: false,
+        // L.O.B.A: on, so the start/stop/settle cues are heard out of the box.
+        audio_feedback: true,
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),
         start_hidden: default_start_hidden(),
