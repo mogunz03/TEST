@@ -857,18 +857,25 @@ impl ShortcutAction for TranscribeAction {
                                         return;
                                     }
 
-                                    match utils::paste(final_text, ah_clone.clone()) {
-                                        Ok(()) => debug!(
-                                            "Text pasted successfully in {:?}",
-                                            paste_time.elapsed()
-                                        ),
+                                    let pasted = match utils::paste(final_text, ah_clone.clone()) {
+                                        Ok(()) => {
+                                            debug!(
+                                                "Text pasted successfully in {:?}",
+                                                paste_time.elapsed()
+                                            );
+                                            true
+                                        }
                                         Err(e) => {
                                             error!("Failed to paste transcription: {}", e);
                                             let _ = ah_clone.emit("paste-error", ());
+                                            false
                                         }
-                                    }
+                                    };
                                     utils::hide_recording_overlay(&ah_clone);
                                     set_tray_state(&ah_clone, TrayIconState::Idle);
+                                    if pasted {
+                                        crate::tray::play_settle(&ah_clone);
+                                    }
                                 })
                                 .unwrap_or_else(|e| {
                                     error!("Failed to run paste on main thread: {:?}", e);

@@ -95,6 +95,9 @@ struct TrayInner {
     desired_seq: u64,
     /// A tray-pulse ticker thread is alive (see [`start_pulse`]).
     pulse_running: bool,
+    /// Bumped by every [`play_settle`] and every state change; a settle
+    /// animation only writes while its generation is current.
+    settle_gen: u64,
 }
 
 /// Tauri managed state owning the tray's desired/applied snapshots.
@@ -112,6 +115,7 @@ impl TrayState {
             next_seq: 0,
             desired_seq: 0,
             pulse_running: false,
+            settle_gen: 0,
         }))
     }
 
@@ -219,7 +223,11 @@ pub fn get_icon_path(theme: AppTheme, state: TrayIconState, warning: bool) -> &'
 
 /// Sets the recording state shown by the tray (icon + Cancel/model menu).
 pub fn set_tray_state(app: &AppHandle, state: TrayIconState) {
-    sync_tray_with(app, |inner| inner.icon_state = state);
+    sync_tray_with(app, |inner| {
+        inner.icon_state = state;
+        // Any state change cancels a settle in flight.
+        inner.settle_gen += 1;
+    });
     if animates(state) {
         start_pulse(app);
     }
@@ -413,6 +421,126 @@ fn start_pulse(app: &AppHandle) {
             };
             if schedule {
                 post_apply(&app);
+            }
+        }
+    });
+}
+
+/// Idle glyph "settle": plays once after a dictation lands — the stroke
+/// calms into its line and the full stop drops in (with a slight overshoot),
+/// then the static idle icon returns. At rest the icon never moves.
+static SETTLE_SETS: [(&str, [&str; 4]); 3] = [
+    (
+        "resources/tray_idle.png",
+        [
+            "resources/tray_idle_s1.png",
+            "resources/tray_idle_s2.png",
+            "resources/tray_idle_s3.png",
+            "resources/tray_idle_s4.png",
+        ],
+    ),
+    (
+        "resources/tray_idle_dark.png",
+        [
+            "resources/tray_idle_dark_s1.png",
+            "resources/tray_idle_dark_s2.png",
+            "resources/tray_idle_dark_s3.png",
+            "resources/tray_idle_dark_s4.png",
+        ],
+    ),
+    (
+        "resources/handy.png",
+        [
+            "resources/handy_s1.png",
+            "resources/handy_s2.png",
+            "resources/handy_s3.png",
+            "resources/handy_s4.png",
+        ],
+    ),
+];
+const SETTLE_TICK: std::time::Duration = std::time::Duration::from_millis(120);
+
+fn settle_frames_for(path: &str) -> Option<(&'static str, &'static [&'static str; 4])> {
+    SETTLE_SETS
+        .iter()
+        .find(|(base, frames)| *base == path || frames.contains(&path))
+        .map(|(base, frames)| (*base, frames))
+}
+
+/// Call after a dictation or command was pasted (never on cancel or error:
+/// the settle means "done"). No-op unless the tray is idle and showing a
+/// plain idle glyph — the Secure Input warning icon is left alone.
+pub fn play_settle(app: &AppHandle) {
+    if loba_core::frontmost::reduce_motion() {
+        return;
+    }
+    let Some(state) = app.try_state::<TrayState>() else {
+        return;
+    };
+    let gen = {
+        let mut inner = state.lock();
+        inner.settle_gen += 1;
+        inner.settle_gen
+    };
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let Some(state) = app.try_state::<TrayState>() else {
+            return;
+        };
+        // The Idle sync that preceded us may still be computing its snapshot.
+        std::thread::sleep(std::time::Duration::from_millis(40));
+        let Some((base, frames)) = ({
+            let inner = state.lock();
+            inner
+                .desired
+                .as_ref()
+                .and_then(|d| settle_frames_for(d.icon_path))
+        }) else {
+            return;
+        };
+
+        for path in frames.iter().copied().chain(std::iter::once(base)) {
+            if !state.lock().icons.contains_key(path) {
+                match load_tray_icon(
+                    app.path()
+                        .resolve(path, tauri::path::BaseDirectory::Resource),
+                ) {
+                    Ok(image) => {
+                        state.lock().icons.insert(path, image);
+                    }
+                    Err(err) => {
+                        warn!("Tray settle skipped, frame '{path}' failed to load: {err}");
+                        return;
+                    }
+                }
+            }
+            // Same rule as the pulse ticker: check, swap and claim a sequence
+            // number in one critical section, so a newer state always wins.
+            let schedule = {
+                let mut inner = state.lock();
+                let still_ours = inner.settle_gen == gen
+                    && inner.icon_state == TrayIconState::Idle
+                    && inner
+                        .desired
+                        .as_ref()
+                        .and_then(|d| settle_frames_for(d.icon_path))
+                        .is_some_and(|(b, _)| b == base);
+                if !still_ours {
+                    return;
+                }
+                inner.next_seq += 1;
+                let seq = inner.next_seq;
+                if let Some(desired) = inner.desired.as_mut() {
+                    desired.icon_path = path;
+                }
+                inner.desired_seq = seq;
+                !std::mem::replace(&mut inner.pending, true)
+            };
+            if schedule {
+                post_apply(&app);
+            }
+            if path != base {
+                std::thread::sleep(SETTLE_TICK);
             }
         }
     });
@@ -930,6 +1058,20 @@ mod tests {
         assert!(super::pulse_set_for("resources/tray_idle.png").is_none());
         assert!(super::animates(TrayIconState::Transcribing));
         assert!(!super::animates(TrayIconState::Idle));
+    }
+
+    #[test]
+    fn settle_frames_exist_and_end_on_the_idle_glyph() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for (base, frames) in &super::SETTLE_SETS {
+            assert!(root.join(base).is_file(), "missing base {base}");
+            for f in frames {
+                assert!(root.join(f).is_file(), "missing settle frame {f}");
+                assert_eq!(super::settle_frames_for(f).unwrap().0, *base);
+            }
+            assert_eq!(super::settle_frames_for(base).unwrap().0, *base);
+        }
+        assert!(super::settle_frames_for("resources/tray_idle_warning.png").is_none());
     }
 
     #[test]

@@ -147,11 +147,18 @@ impl ShortcutAction for CommandAction {
                 Ok(text) => {
                     let ah = app.clone();
                     let queued = app.run_on_main_thread(move || {
-                        if let Err(e) = utils::paste(text, ah.clone()) {
-                            log::error!("L.O.B.A command paste failed: {e}");
-                            let _ = ah.emit("paste-error", ());
-                        }
+                        let pasted = match utils::paste(text, ah.clone()) {
+                            Ok(()) => true,
+                            Err(e) => {
+                                log::error!("L.O.B.A command paste failed: {e}");
+                                let _ = ah.emit("paste-error", ());
+                                false
+                            }
+                        };
                         finish(&ah);
+                        if pasted {
+                            crate::tray::play_settle(&ah);
+                        }
                     });
                     // If the closure never runs, nothing else resets the phase.
                     if let Err(e) = queued {
