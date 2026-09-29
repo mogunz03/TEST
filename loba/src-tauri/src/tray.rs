@@ -93,6 +93,8 @@ struct TrayInner {
     next_seq: u64,
     /// Sequence number of the request that produced `desired`.
     desired_seq: u64,
+    /// A recording-pulse ticker thread is alive (see [`start_pulse`]).
+    pulse_running: bool,
 }
 
 /// Tauri managed state owning the tray's desired/applied snapshots.
@@ -109,6 +111,7 @@ impl TrayState {
             icons: HashMap::new(),
             next_seq: 0,
             desired_seq: 0,
+            pulse_running: false,
         }))
     }
 
@@ -217,6 +220,144 @@ pub fn get_icon_path(theme: AppTheme, state: TrayIconState, warning: bool) -> &'
 /// Sets the recording state shown by the tray (icon + Cancel/model menu).
 pub fn set_tray_state(app: &AppHandle, state: TrayIconState) {
     sync_tray_with(app, |inner| inner.icon_state = state);
+    if state == TrayIconState::Recording {
+        start_pulse(app);
+    }
+}
+
+/// Recording glyph frames: index 0 is the static icon, 1..=3 draw the stroke
+/// and the full stop in. Played 0,1,2,3,2,1 — a breath, not a blink.
+const PULSE_FRAMES: [(&str, [&str; 4]); 3] = [
+    (
+        "resources/tray_recording.png",
+        [
+            "resources/tray_recording.png",
+            "resources/tray_recording_p1.png",
+            "resources/tray_recording_p2.png",
+            "resources/tray_recording_p3.png",
+        ],
+    ),
+    (
+        "resources/tray_recording_dark.png",
+        [
+            "resources/tray_recording_dark.png",
+            "resources/tray_recording_dark_p1.png",
+            "resources/tray_recording_dark_p2.png",
+            "resources/tray_recording_dark_p3.png",
+        ],
+    ),
+    (
+        "resources/recording.png",
+        [
+            "resources/recording.png",
+            "resources/recording_p1.png",
+            "resources/recording_p2.png",
+            "resources/recording_p3.png",
+        ],
+    ),
+];
+const PULSE_SEQUENCE: [usize; 6] = [0, 1, 2, 3, 2, 1];
+const PULSE_TICK: std::time::Duration = std::time::Duration::from_millis(190);
+
+/// The frame set a displayed icon path belongs to, if it's a recording glyph.
+fn pulse_frames_for(path: &str) -> Option<&'static [&'static str; 4]> {
+    PULSE_FRAMES
+        .iter()
+        .find(|(_, frames)| frames.contains(&path))
+        .map(|(_, frames)| frames)
+}
+
+/// Animate the recording glyph while the tray stays in `Recording`.
+///
+/// Each tick swaps only `desired.icon_path` and claims a sequence number in
+/// the *same* critical section that checks `icon_state` is still Recording.
+/// A state change claims its own number after updating `icon_state`, so a
+/// tick can never overwrite a newer snapshot: once recording ends the next
+/// tick sees it and exits, restoring nothing (the state change already did).
+fn start_pulse(app: &AppHandle) {
+    if loba_core::frontmost::reduce_motion() {
+        return;
+    }
+    let Some(state) = app.try_state::<TrayState>() else {
+        return;
+    };
+    {
+        let mut inner = state.lock();
+        if inner.pulse_running {
+            return;
+        }
+        inner.pulse_running = true;
+    }
+    let app = app.clone();
+    std::thread::spawn(move || {
+        let Some(state) = app.try_state::<TrayState>() else {
+            return;
+        };
+        let mut step = 0usize;
+        loop {
+            std::thread::sleep(PULSE_TICK);
+            step = (step + 1) % PULSE_SEQUENCE.len();
+
+            // Which frame set is showing (theme / warning may have changed)?
+            let frames = {
+                let mut inner = state.lock();
+                if inner.icon_state != TrayIconState::Recording {
+                    inner.pulse_running = false;
+                    return;
+                }
+                inner
+                    .desired
+                    .as_ref()
+                    .and_then(|d| pulse_frames_for(d.icon_path))
+            };
+            let Some(frames) = frames else { continue };
+            let path = frames[PULSE_SEQUENCE[step]];
+
+            // Decode outside the lock, once per frame.
+            if !state.lock().icons.contains_key(path) {
+                match load_tray_icon(
+                    app.path()
+                        .resolve(path, tauri::path::BaseDirectory::Resource),
+                ) {
+                    Ok(image) => {
+                        state.lock().icons.insert(path, image);
+                    }
+                    Err(err) => {
+                        // Missing frames: stay on the static glyph.
+                        warn!("Tray pulse disabled, frame '{path}' failed to load: {err}");
+                        state.lock().pulse_running = false;
+                        return;
+                    }
+                }
+            }
+
+            let schedule = {
+                let mut inner = state.lock();
+                if inner.icon_state != TrayIconState::Recording {
+                    inner.pulse_running = false;
+                    return;
+                }
+                let same_set = inner
+                    .desired
+                    .as_ref()
+                    .and_then(|d| pulse_frames_for(d.icon_path))
+                    .is_some_and(|f| std::ptr::eq(f, frames));
+                if !same_set {
+                    continue;
+                }
+                inner.next_seq += 1;
+                let seq = inner.next_seq;
+                if let Some(desired) = inner.desired.as_mut() {
+                    desired.icon_path = path;
+                }
+                inner.desired_seq = seq;
+                !std::mem::replace(&mut inner.pending, true)
+            };
+            if schedule {
+                post_apply(&app);
+            }
+        }
+    });
 }
 
 /// Re-syncs the tray after something other than the recording state changed
@@ -712,6 +853,20 @@ mod tests {
     #[test]
     fn tray_icon_resolution_failure_is_returned_instead_of_panicking() {
         assert!(load_tray_icon(Err(tauri::Error::UnknownPath)).is_err());
+    }
+
+    #[test]
+    fn pulse_frames_exist_and_start_on_the_static_glyph() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        for (base, frames) in super::PULSE_FRAMES {
+            assert_eq!(frames[0], base, "frame 0 must be the static icon");
+            for f in frames {
+                assert!(root.join(f).is_file(), "missing pulse frame {f}");
+            }
+            assert!(super::pulse_frames_for(base).is_some());
+        }
+        assert!(super::pulse_frames_for("resources/tray_idle.png").is_none());
+        assert!(super::pulse_frames_for("resources/tray_transcribing.png").is_none());
     }
 
     #[test]

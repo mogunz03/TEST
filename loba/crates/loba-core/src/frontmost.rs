@@ -17,6 +17,23 @@ pub fn frontmost() -> AppContext {
     AppContext::default()
 }
 
+/// System Settings → Accessibility → Display → Reduce motion. Animated
+/// affordances (the pulsing menu bar glyph) stay still when this is on.
+#[cfg(target_os = "macos")]
+pub fn reduce_motion() -> bool {
+    objc2::rc::autoreleasepool(|_| {
+        #[allow(unused_unsafe)]
+        unsafe {
+            objc2_app_kit::NSWorkspace::sharedWorkspace().accessibilityDisplayShouldReduceMotion()
+        }
+    })
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn reduce_motion() -> bool {
+    false
+}
+
 #[cfg(target_os = "macos")]
 mod mac {
     use super::AppContext;
