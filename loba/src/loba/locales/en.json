@@ -90,6 +90,10 @@
       "label": "Sounds",
       "note": "A tone when recording starts and stops, and a low note when the text lands."
     },
+    "quiet": {
+      "label": "Quiet while dictating",
+      "note": "Mutes music and videos while you hold the shortcut, then turns them back on. If your Mac was already muted, it stays muted."
+    },
     "login": {
       "label": "Open at login",
       "note": "Starts in the menu bar, ready for the shortcut."

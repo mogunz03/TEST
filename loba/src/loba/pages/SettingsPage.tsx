@@ -104,6 +104,13 @@ const General: React.FC = () => {
             onChange={(v) => updateSetting("audio_feedback", v)}
           />
         </Row>
+        <Row label={t("settings.quiet.label")} note={t("settings.quiet.note")}>
+          <Switch
+            label={t("settings.quiet.label")}
+            checked={getSetting("mute_while_recording") ?? false}
+            onChange={(v) => updateSetting("mute_while_recording", v)}
+          />
+        </Row>
         <Row label={t("settings.login.label")} note={t("settings.login.note")}>
           <Switch
             label={t("settings.login.label")}

@@ -130,6 +130,12 @@ modifier-only chord, since a quick ⌥⌘ shortcut would lock recording on.
 Holding ⌘⌥ longer while doing something else (⌥⌘-drag in Finder) will
 record; pick a keyed shortcut if that's your habit.
 
+**Quiet while dictating** (Settings → General, off by default) mutes the
+Mac's output while the mic is open, so music or a video doesn't bleed into
+the recording, then restores it. A Mac that was already muted stays muted.
+This is Handy's own mute, unchanged; L.O.B.A only puts the switch where
+you'd look for it.
+
 ## Home
 
 A greeting, four running totals (words, time saved, dictations, day
