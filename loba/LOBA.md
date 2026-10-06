@@ -176,17 +176,34 @@ CI builds an ad-hoc-signed `.dmg` on every push touching `loba/`
 It is not notarized: first launch needs right-click → Open, or
 `xattr -dr com.apple.quarantine /Applications/L.O.B.A.app`.
 
-Locally, one command:
+Locally, two commands:
 
 ```sh
 cd loba
 ./scripts/build-mac.sh          # add --keep to keep the build tree for faster rebuilds
+./scripts/install-mac.sh        # replaces /Applications/L.O.B.A.app and opens it
 ```
 
-It checks free space first (needs ~6 GB; a lean build measured 2.7 GB. If short it lists exactly which
-caches are safe to clear and stops), builds natively without LTO, copies the
-DMG to `~/Downloads`, then deletes `src-tauri/target`. It also ignores conda
-and Homebrew's Rust, which break native builds.
+`build-mac.sh` checks free space first (needs ~6 GB; a lean build measured
+2.7 GB. If short it lists exactly which caches are safe to clear and stops),
+builds natively without LTO, signs the app, puts the DMG in `~/Downloads`,
+then deletes `src-tauri/target`. It also ignores conda and Homebrew's Rust,
+which break native builds.
+
+Signing: macOS remembers Accessibility and Input Monitoring per signature,
+and an ad-hoc signature changes on every build, so each rebuild used to lose
+those permissions. The first local build creates a self-signed certificate,
+**L.O.B.A Local Signing**, in your login keychain and signs every build with
+it from then on. macOS asks once whether `codesign` may use the key: choose
+**Always Allow**. Grant Accessibility once after the first signed install and
+it stays granted. The certificate is for running your own builds only; it
+can't notarize, and the CI build stays ad-hoc.
+
+`install-mac.sh` takes the newest DMG in `~/Downloads`, detaches any older
+L.O.B.A volume still mounted (same name, easy to drag from by mistake),
+replaces the app, clears quarantine and opens it. `--reset` also clears
+L.O.B.A's permission entries, for when the permission screen sits on
+"Waiting" even though the switch is on.
 
 One-time setup: `xcode-select --install`, rustup (`~/.cargo/bin`, not
 Homebrew's `rust`), `bun`, `brew install cmake`. Full Xcode is optional:
