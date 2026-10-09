@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Build L.O.B.A.dmg on an Apple Silicon Mac, lean on disk.
 #
-#   ./scripts/build-mac.sh          build, put the DMG in ~/Downloads, delete the build tree
-#   ./scripts/build-mac.sh --keep   same, but keep src-tauri/target for faster rebuilds
+#   ./scripts/build-mac.sh            build, put the DMG in ~/Downloads, delete the build tree
+#   ./scripts/build-mac.sh --keep     same, but keep src-tauri/target for faster rebuilds
+#   ./scripts/build-mac.sh --release  sign with your Developer ID and have Apple notarize it,
+#                                     for giving to other people (setup: LOBA.md > Release)
 #
 # Why it's lean:
 # - native build (no --target): one build tree, shared deps compiled once
@@ -14,7 +16,15 @@ set -euo pipefail
 
 NEED_GB=6
 KEEP=0
-[[ "${1:-}" == "--keep" ]] && KEEP=1
+RELEASE=0
+for arg in "$@"; do
+  case "$arg" in
+    --keep) KEEP=1 ;;
+    --release) RELEASE=1 ;;
+    *) printf 'Unknown option: %s\n' "$arg" >&2; exit 2 ;;
+  esac
+done
+NOTARY_PROFILE="${LOBA_NOTARY_PROFILE:-LOBA_NOTARY}"
 
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
@@ -71,11 +81,15 @@ fi
 say "$free_gb GB free. Building…"
 
 # --- signing identity -------------------------------------------------------
-# macOS ties Accessibility and Input Monitoring to an app's signature. Tauri's
-# default ad-hoc signature changes on every build, so each rebuild looked like
-# a new app and lost its permissions. A local self-signed certificate gives
-# every build the same identity. It never leaves this Mac and is only for
-# running your own build; it can't notarize or distribute anything.
+# Release: a "Developer ID Application" certificate from your Apple Developer
+# account, plus notarization credentials stored in the keychain. Checked
+# before the build so a missing piece costs seconds, not a full compile.
+#
+# Local: macOS ties Accessibility and Input Monitoring to an app's signature,
+# and Tauri's ad-hoc signature changes on every build, so each rebuild looked
+# like a new app and lost its permissions. A self-signed certificate made on
+# this Mac gives every build the same identity. It never leaves this Mac and
+# can't notarize anything.
 SIGN_NAME="L.O.B.A Local Signing"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
@@ -99,12 +113,37 @@ ensure_identity() {
   return $ok
 }
 
-SIGN_WITH="-"
-if ensure_identity; then
-  SIGN_WITH="$SIGN_NAME"
+if (( RELEASE )); then
+  SIGN_WITH="${LOBA_DEVELOPER_ID:-$(security find-identity -v -p codesigning 2>/dev/null |
+    sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1)}"
+  [[ -n "$SIGN_WITH" ]] || fail "No \"Developer ID Application\" certificate in your keychain.
+See LOBA.md > Release for the one-time setup."
+  xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 ||
+    fail "No notarization credentials saved as \"$NOTARY_PROFILE\".
+Run once:  xcrun notarytool store-credentials $NOTARY_PROFILE --apple-id YOU@EXAMPLE.COM --team-id TEAMID
+(it asks for an app-specific password from account.apple.com)."
+  say "Release build, signing as: $SIGN_WITH"
 else
-  printf '\033[33mCould not create the signing certificate; using ad-hoc signing.\nPermissions will need granting again after each rebuild.\033[0m\n'
+  SIGN_WITH="-"
+  if ensure_identity; then
+    SIGN_WITH="$SIGN_NAME"
+  else
+    printf '\033[33mCould not create the signing certificate; using ad-hoc signing.\nPermissions will need granting again after each rebuild.\033[0m\n'
+  fi
 fi
+
+# Submit a file to Apple and wait. Prints Apple's log and stops if rejected.
+notarize() {
+  local file="$1" out id
+  say "Notarizing $(basename "$file") (usually 1 to 5 minutes)…"
+  out=$(xcrun notarytool submit "$file" --keychain-profile "$NOTARY_PROFILE" --wait 2>&1) || true
+  printf '%s\n' "$out" | tail -4
+  if ! printf '%s\n' "$out" | grep -q "status: Accepted"; then
+    id=$(printf '%s\n' "$out" | sed -n 's/^ *id: //p' | head -1)
+    [[ -n "$id" ]] && xcrun notarytool log "$id" --keychain-profile "$NOTARY_PROFILE" || true
+    fail "Apple did not accept $(basename "$file"); the log above says which file and why."
+  fi
+}
 
 # --- build -----------------------------------------------------------------
 bun install --frozen-lockfile
@@ -117,7 +156,27 @@ CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 \
 app=$(ls -d "$TARGET"/release/bundle/macos/*.app 2>/dev/null | head -1 || true)
 [[ -n "$app" ]] || fail "Build finished but no .app was produced; see the output above."
 
-if [[ "$SIGN_WITH" != "-" ]]; then
+if (( RELEASE )); then
+  # Sign inside-out, every Mach-O file on its own: --deep skips libraries
+  # kept under Resources, and notarization rejects any unsigned binary.
+  # Hardened runtime and a secure timestamp on each are Apple's requirements.
+  say "Signing every binary in the app…"
+  main_exe="$app/Contents/MacOS/$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$app/Contents/Info.plist")"
+  while IFS= read -r f; do
+    [[ "$f" == "$main_exe" ]] && continue
+    file -b "$f" | grep -q "Mach-O" || continue
+    codesign --force --options runtime --timestamp --sign "$SIGN_WITH" "$f"
+  done < <(find "$app/Contents" -type f | awk '{ print gsub("/", "/"), $0 }' | sort -rn | cut -d' ' -f2-)
+  codesign --force --options runtime --timestamp --entitlements src-tauri/Entitlements.plist \
+    --sign "$SIGN_WITH" "$app"
+  codesign --verify --deep --strict --verbose=2 "$app" || fail "The signed app didn't verify."
+
+  appzip="$(mktemp -d)/L.O.B.A.zip"
+  ditto -c -k --keepParent "$app" "$appzip"
+  notarize "$appzip"
+  rm -f "$appzip"
+  xcrun stapler staple "$app" || fail "Couldn't staple the notarization ticket to the app."
+elif [[ "$SIGN_WITH" != "-" ]]; then
   say "Signing with \"$SIGN_NAME\"…"
   # The first time, macOS asks whether codesign may use the key: choose
   # "Always Allow" so later builds don't ask again.
@@ -146,7 +205,16 @@ rm -f "$out"
 hdiutil create -quiet -volname "$name" -srcfolder "$stage" -ov -format UDZO "$out" ||
   fail "Couldn't create the DMG."
 rm -rf "$stage"
-say "DMG: $out  ($(( ($(date +%s) - start) / 60 )) min, signed: $SIGN_WITH)"
+
+if (( RELEASE )); then
+  codesign --force --timestamp --sign "$SIGN_WITH" "$out"
+  notarize "$out"
+  xcrun stapler staple "$out" || fail "Couldn't staple the notarization ticket to the DMG."
+  # What Gatekeeper will say on someone else's Mac.
+  spctl -a -vv -t exec "$app" 2>&1 | sed 's/^/  app: /'
+  spctl -a -vv -t open --context context:primary-signature "$out" 2>&1 | sed 's/^/  dmg: /'
+fi
+say "DMG: $out  ($(( ($(date +%s) - start) / 60 )) min, signed: $SIGN_WITH$( (( RELEASE )) && echo ', notarized'))"
 
 # --- clean up --------------------------------------------------------------
 if (( KEEP )); then

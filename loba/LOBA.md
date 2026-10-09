@@ -210,6 +210,46 @@ Homebrew's `rust`), `bun`, `brew install cmake`. Full Xcode is optional:
 without it the Apple Intelligence bridge builds as a stub, which L.O.B.A
 doesn't use.
 
+## Release (for other people's Macs)
+
+A build from your own Mac only opens on someone else's after they override
+Gatekeeper. For a download page, the app has to carry Apple's notarization:
+
+```sh
+./scripts/build-mac.sh --release
+```
+
+That signs every binary with your **Developer ID Application** certificate
+(hardened runtime, secure timestamp), sends the app to Apple, staples the
+ticket to it, builds the DMG, then signs, notarizes and staples the DMG as
+well. It ends by printing what Gatekeeper will say on another Mac; you want
+`source=Notarized Developer ID` for both.
+
+One-time setup:
+
+1. Join the Apple Developer Program (developer.apple.com, 99 USD a year).
+2. Xcode → Settings → Accounts → your team → Manage Certificates → **+** →
+   **Developer ID Application**. Check it landed:
+   `security find-identity -v -p codesigning`.
+3. At account.apple.com → Sign-In and Security → App-Specific Passwords,
+   make one called "L.O.B.A notary", then store it in the keychain:
+
+   ```sh
+   xcrun notarytool store-credentials LOBA_NOTARY --apple-id YOU@EXAMPLE.COM --team-id TEAMID
+   ```
+
+   The Team ID is the 10 characters in brackets after your name in step 2.
+
+The script reads both from the keychain and never sees the password. To
+pick a specific certificate or profile, set `LOBA_DEVELOPER_ID` or
+`LOBA_NOTARY_PROFILE`. If Apple rejects a submission, the script prints
+Apple's log, which names the file and the reason.
+
+This is distribution outside the Mac App Store. The App Store requires the
+app sandbox, which doesn't allow a global hotkey that types into other apps,
+so L.O.B.A ships the way Typeless and Handy do: a notarized DMG from your own
+site.
+
 ## Offline
 
 No telemetry, no accounts. The updater has no endpoints and update checks are
