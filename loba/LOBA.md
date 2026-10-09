@@ -57,13 +57,22 @@ ollama pull qwen3:8b
 - Thinking is disabled (`think: false`) and the model is preloaded the moment
   the hotkey goes down, so its weights are resident by the time you stop
   speaking.
+- **Edit level** (Settings → Cleanup). _Light_ keeps your wording: fillers,
+  false starts and self-corrections go, punctuation is fixed, spoken lists
+  become lists. _Polished_ rewrites for clarity the way Typeless does:
+  tighter sentences, related points together, one paragraph per idea, lists
+  for steps. Both keep your meaning and language, never add facts and never
+  translate, and the same guard rejects answers that grew, gained a preamble
+  or switched script. Polished has its own time limit (default 8 s,
+  `polished_timeout_ms`); `qwen3:8b` handles it, `qwen3:14b` writes better
+  on a Mac with 32 GB or more. Command mode and literal apps are unaffected.
 - Hard budget (default 4 s, configurable). On timeout, server down, or an
   answer that looks wrong (grew, gained a preamble, changed script = likely
   translated), the raw transcript is pasted instead.
 
 Files in `~/Library/Application Support/app.loba.desktop/loba/`:
 
-- `config.json`: `cleanup_enabled`, `model`, `timeout_ms`, `ollama_url`, `keep_alive`.
+- `config.json`: `cleanup_enabled`, `model`, `edit_level` (`light` / `polished`), `timeout_ms`, `polished_timeout_ms`, `ollama_url`, `keep_alive`.
 - `dictionary.json`: your terms and how they get misheard:
 
   ```json

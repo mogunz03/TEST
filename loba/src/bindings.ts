@@ -1105,6 +1105,18 @@ export type BindingResponse = { success: boolean; binding: ShortcutBinding | nul
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
 export type Dictionary = { entries?: Entry[] }
+/**
+ * How far cleanup may go.
+ */
+export type EditLevel = 
+/**
+ * Your words, minus fillers and false starts; punctuation fixed.
+ */
+"light" | 
+/**
+ * Rewritten for clarity and order, like Typeless; meaning kept.
+ */
+"polished"
 export type EngineType = 
 /**
  * Any GGML/GGUF model loaded through transcribe-cpp (Whisper, Parakeet,
@@ -1150,7 +1162,11 @@ cleanup_enabled: boolean; ollama_url: string; model: string;
  * Hard ceiling for the cleanup round trip. Past it, the raw transcript
  * is pasted and the LLM answer is discarded.
  */
-timeout_ms: number; command_timeout_ms: number; 
+timeout_ms: number; command_timeout_ms: number; edit_level: EditLevel; 
+/**
+ * Ceiling used instead of `timeout_ms` when `edit_level` is Polished.
+ */
+polished_timeout_ms: number; 
 /**
  * Keep the model resident this long after each call (Ollama `keep_alive`).
  * A cold 8B load alone can blow the 4 s budget.

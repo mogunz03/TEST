@@ -109,7 +109,7 @@
     }
   },
   "cleanup": {
-    "lede": "A model running in Ollama on this Mac tidies each dictation before it's pasted. It drops the ums and the restarts. It won't translate.",
+    "lede": "A model running in Ollama on this Mac tidies each dictation before it's pasted. It never translates and never adds things you didn't say.",
     "enabled": {
       "label": "Clean up dictations",
       "note": "Off pastes exactly what the speech model heard."
@@ -120,10 +120,18 @@
       "down": "Can't reach Ollama. Start it with “ollama serve”.",
       "missing": "Not installed. Run “ollama pull {{model}}”."
     },
+    "level": {
+      "label": "Edit level",
+      "light": "Light",
+      "polished": "Polished",
+      "lightNote": "Keeps your wording. Drops the ums and restarts, fixes punctuation, turns spoken lists into lists.",
+      "polishedNote": "Rewrites what you said into clear, well-ordered sentences, like Typeless. Same meaning, same language, nothing added. Takes a few seconds longer."
+    },
     "budget": {
       "label": "Time limit",
       "note": "If the model is slower than this, the raw transcript goes in instead.",
-      "value": "{{seconds}} s"
+      "value": "{{seconds}} s",
+      "polishedNote": "Polished has its own limit. Long dictations need more time; past the limit, the raw transcript goes in instead."
     },
     "server": {
       "group": "Connection",

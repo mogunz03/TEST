@@ -10,6 +10,10 @@ export interface LobaConfig {
   model: string;
   timeout_ms: number;
   command_timeout_ms: number;
+  /** light trims fillers; polished rewrites for clarity. */
+  edit_level: "light" | "polished";
+  /** Used instead of timeout_ms when edit_level is polished. */
+  polished_timeout_ms: number;
   keep_alive: string;
 }
 

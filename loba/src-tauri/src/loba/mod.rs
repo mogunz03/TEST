@@ -109,10 +109,11 @@ pub fn init(app: &AppHandle) {
     let stats = Watched::open(dir.join("stats.json"), Stats::default, |s| s);
     let cfg = config.get();
     log::info!(
-        "L.O.B.A cleanup {} (model {}, budget {} ms, data {})",
+        "L.O.B.A cleanup {} ({:?}, model {}, budget {} ms, data {})",
         if cfg.cleanup_enabled { "on" } else { "off" },
+        cfg.edit_level,
         cfg.model,
-        cfg.timeout_ms,
+        cfg.cleanup_timeout_ms(),
         dir.display()
     );
     let state = Arc::new(LobaState {

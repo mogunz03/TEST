@@ -11,6 +11,20 @@ pub const DEFAULT_TIMEOUT_MS: u64 = 4_000;
 /// Command mode is deliberate (the user is waiting on a rewrite of their own
 /// selection), so it gets a longer budget than dictation — but still a cap.
 pub const DEFAULT_COMMAND_TIMEOUT_MS: u64 = 15_000;
+/// Rewriting for clarity writes more than trimming fillers does, so Polished
+/// gets its own, longer ceiling.
+pub const DEFAULT_POLISHED_TIMEOUT_MS: u64 = 8_000;
+
+/// How far cleanup may go.
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum EditLevel {
+    /// Your words, minus fillers and false starts; punctuation fixed.
+    #[default]
+    Light,
+    /// Rewritten for clarity and order, like Typeless; meaning kept.
+    Polished,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
 #[serde(default)]
@@ -24,6 +38,9 @@ pub struct LobaConfig {
     /// is pasted and the LLM answer is discarded.
     pub timeout_ms: u64,
     pub command_timeout_ms: u64,
+    pub edit_level: EditLevel,
+    /// Ceiling used instead of `timeout_ms` when `edit_level` is Polished.
+    pub polished_timeout_ms: u64,
     /// Keep the model resident this long after each call (Ollama `keep_alive`).
     /// A cold 8B load alone can blow the 4 s budget.
     pub keep_alive: String,
@@ -37,6 +54,8 @@ impl Default for LobaConfig {
             model: DEFAULT_MODEL.to_string(),
             timeout_ms: DEFAULT_TIMEOUT_MS,
             command_timeout_ms: DEFAULT_COMMAND_TIMEOUT_MS,
+            edit_level: EditLevel::Light,
+            polished_timeout_ms: DEFAULT_POLISHED_TIMEOUT_MS,
             keep_alive: "30m".to_string(),
         }
     }
@@ -60,10 +79,21 @@ impl LobaConfig {
         }
         self.timeout_ms = self.timeout_ms.clamp(500, 30_000);
         self.command_timeout_ms = self.command_timeout_ms.clamp(1_000, 120_000);
+        self.polished_timeout_ms = self.polished_timeout_ms.clamp(1_000, 30_000);
         if self.keep_alive.trim().is_empty() {
             self.keep_alive = d.keep_alive;
         }
         self
+    }
+}
+
+impl LobaConfig {
+    /// The dictation budget for the current edit level.
+    pub fn cleanup_timeout_ms(&self) -> u64 {
+        match self.edit_level {
+            EditLevel::Light => self.timeout_ms,
+            EditLevel::Polished => self.polished_timeout_ms,
+        }
     }
 }
 
@@ -120,6 +150,21 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn older_config_files_load_as_light() {
+        let c: LobaConfig =
+            serde_json::from_str(r#"{"cleanup_enabled":true,"timeout_ms":5000}"#).unwrap();
+        assert_eq!(c.edit_level, EditLevel::Light);
+        assert_eq!(c.cleanup_timeout_ms(), 5000);
+        let p = LobaConfig {
+            edit_level: EditLevel::Polished,
+            ..c
+        };
+        assert_eq!(p.cleanup_timeout_ms(), DEFAULT_POLISHED_TIMEOUT_MS);
+        let j = serde_json::to_string(&p).unwrap();
+        assert!(j.contains(r#""edit_level":"polished""#));
+    }
 
     #[test]
     fn loopback_only() {

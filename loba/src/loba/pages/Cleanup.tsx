@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Group, Row, Switch } from "../controls";
+import { Group, Row, Segmented, Switch } from "../controls";
 import { useLoba } from "../useOllama";
 
 export const Cleanup: React.FC = () => {
@@ -12,10 +12,20 @@ export const Cleanup: React.FC = () => {
   useEffect(() => {
     if (!config) return;
     setModel(config.model);
-    setBudget(config.timeout_ms);
+    setBudget(
+      config.edit_level === "polished"
+        ? config.polished_timeout_ms
+        : config.timeout_ms,
+    );
   }, [config]);
 
   if (!config) return null;
+
+  // The slider edits whichever limit the current level uses.
+  const polished = config.edit_level === "polished";
+  const budgetKey = polished ? "polished_timeout_ms" : "timeout_ms";
+  const saveBudget = () =>
+    budget !== config[budgetKey] && save({ [budgetKey]: budget });
 
   const installed =
     ollama.kind === "ready" || ollama.kind === "missing-model"
@@ -65,21 +75,37 @@ export const Cleanup: React.FC = () => {
           </datalist>
         </Row>
 
-        <Row label={t("cleanup.budget.label")} note={t("cleanup.budget.note")}>
+        <Row
+          label={t("cleanup.level.label")}
+          note={t(`cleanup.level.${config.edit_level}Note`)}
+        >
+          <Segmented
+            label={t("cleanup.level.label")}
+            value={config.edit_level}
+            onChange={(edit_level) => save({ edit_level })}
+            options={(["light", "polished"] as const).map((id) => ({
+              id,
+              label: t(`cleanup.level.${id}`),
+            }))}
+          />
+        </Row>
+
+        <Row
+          label={t("cleanup.budget.label")}
+          note={t(
+            polished ? "cleanup.budget.polishedNote" : "cleanup.budget.note",
+          )}
+        >
           <div className="flex items-center gap-3">
             <input
               type="range"
-              min={1000}
-              max={8000}
+              min={polished ? 3000 : 1000}
+              max={polished ? 20000 : 8000}
               step={500}
               value={budget}
               onChange={(e) => setBudget(Number(e.target.value))}
-              onMouseUp={() =>
-                budget !== config.timeout_ms && save({ timeout_ms: budget })
-              }
-              onKeyUp={() =>
-                budget !== config.timeout_ms && save({ timeout_ms: budget })
-              }
+              onMouseUp={saveBudget}
+              onKeyUp={saveBudget}
               className="w-28 accent-[var(--loba-ink)] cursor-pointer"
               aria-label={t("cleanup.budget.label")}
             />
