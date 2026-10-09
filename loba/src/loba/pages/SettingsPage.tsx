@@ -1,5 +1,7 @@
-import React, { type ReactNode } from "react";
+import React, { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { getVersion } from "@tauri-apps/api/app";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useSettings } from "@/hooks/useSettings";
 import { Group, PageTitle, Row, Segmented, Switch } from "../controls";
 import { ShortcutField } from "../ShortcutDialog";
@@ -119,6 +121,44 @@ const General: React.FC = () => {
           />
         </Row>
       </Group>
+
+      <About />
     </>
+  );
+};
+
+/** Version and the credit Handy's MIT license asks for. The license text
+ *  itself ships in the app bundle (Resources/LICENSE-Handy.txt). */
+const About: React.FC = () => {
+  const { t } = useTranslation("loba");
+  const [version, setVersion] = useState("");
+  useEffect(() => {
+    getVersion()
+      .then(setVersion)
+      .catch(() => {});
+  }, []);
+
+  return (
+    <Group label={t("settings.about.label")}>
+      <Row label={t("settings.about.version")}>
+        <span className="text-[13px] text-soft tabular-nums select-text">
+          {version}
+        </span>
+      </Row>
+      <Row
+        label={t("settings.about.handy.label")}
+        note={t("settings.about.handy.note")}
+      >
+        <button
+          type="button"
+          className="loba-btn loba-btn-ghost"
+          onClick={() =>
+            openUrl("https://github.com/cjpais/Handy").catch(() => {})
+          }
+        >
+          {t("settings.about.handy.source")}
+        </button>
+      </Row>
+    </Group>
   );
 };

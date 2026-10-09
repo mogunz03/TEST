@@ -97,6 +97,15 @@
     "login": {
       "label": "Open at login",
       "note": "Starts in the menu bar, ready for the shortcut."
+    },
+    "about": {
+      "label": "About",
+      "version": "Version",
+      "handy": {
+        "label": "Built on Handy",
+        "note": "Recording, transcription and pasting come from Handy by CJ Pais, used under the MIT License. Copyright (c) 2025 CJ Pais.",
+        "source": "Handy on GitHub"
+      }
     }
   },
   "cleanup": {
