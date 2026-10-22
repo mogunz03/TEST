@@ -1,9 +1,27 @@
 {
-     "sections": {
-       "main": {
-         "type": "product-becane",
-         "settings": {}
-       }
-     },
-     "order": ["main"]
-   }
+  "sections": {
+    "main": {
+      "type": "product-becane",
+      "settings": {},
+      "blocks": {
+        "size_chart": {
+          "type": "accordion",
+          "settings": {
+            "title": "SIZE CHART",
+            "acc_id": "size-guide",
+            "use_product_description": false,
+            "metafield_namespace": "custom",
+            "metafield_key": "size_chart",
+            "content": ""
+          }
+        }
+      },
+      "block_order": [
+        "size_chart"
+      ]
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

@@ -24,6 +24,29 @@
 
   assign pad = total | append: ''
   assign pad_len = pad.size
+
+  comment
+    Optional banner under the logo: a full-width video and a centred intro text.
+    The video comes from the collection itself (collection metafield custom.banner_video, a
+    video file), so each collection can have its own or none. Optional section-level defaults
+    exist for the editor. Each part has its own on/off switch in the section settings.
+  endcomment
+  assign cv = collection.metafields.custom.banner_video.value
+  assign show_video = false
+  if section.settings.show_banner_video
+    if cv != blank or section.settings.banner_video != blank or section.settings.banner_video_url != blank
+      assign show_video = true
+    endif
+  endif
+
+  assign intro_html = collection.description
+  if intro_html == blank
+    assign intro_html = section.settings.intro_fallback
+  endif
+  assign show_intro = false
+  if section.settings.show_intro and intro_html != blank
+    assign show_intro = true
+  endif
 %}
 
 {%- if section.settings.font_preset == 'custom' -%}
@@ -43,6 +66,7 @@
     --bc-font-h: {{ heading_font }};
     --bc-font-b: {{ body_font }};
     --bc-font-mono: var(--font-body--family);
+    --bc-pad-x: {{ section.settings.padding_x }}px;
 
     background: var(--bc-bg);
     color: var(--bc-fg);
@@ -395,7 +419,7 @@
 
   /* MOBILE */
   @media screen and (max-width: 900px) {
-    #bcoll-{{ section.id }} { padding: 60px 16px 100px; }
+    #bcoll-{{ section.id }} { padding: 60px 16px 100px; --bc-pad-x: 16px; }
     .bcoll__grid-{{ section.id }} { grid-template-columns: repeat(2, 1fr) !important; gap: 24px 12px; }
     .bcoll__header-{{ section.id }} {
       grid-template-columns: 1fr 1fr;
@@ -408,6 +432,39 @@
     .bcoll__count-{{ section.id }} { grid-area: count; justify-self: end; padding-top: 0; align-self: center; }
   }
 
+  /* BANNER: full-width video + centred intro, directly under the logo */
+  .bcoll__banner-{{ section.id }} {
+    margin: 0 calc(var(--bc-pad-x) * -1) 40px;   /* bleeds out by exactly the page padding, desktop and phone */
+    overflow: hidden;
+    background: #000;
+  }
+  .bcoll__banner-{{ section.id }} video,
+  .bcoll__banner-{{ section.id }} iframe {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: {{ section.settings.banner_height }}vh;
+    max-height: {{ section.settings.banner_height }}dvh;
+    object-fit: cover;
+    border: 0;
+  }
+  .bcoll__intro-{{ section.id }} {
+    max-width: 520px;
+    margin: 0 auto 56px;
+    text-align: center;
+    font-size: var(--dz-fs-body, 12px);
+    line-height: 1.9;
+    letter-spacing: 0.02em;
+    color: var(--bc-fg);
+  }
+  .bcoll__intro-{{ section.id }} > :first-child { margin-top: 0; }
+  .bcoll__intro-{{ section.id }} > :last-child { margin-bottom: 0; }
+  .bcoll__intro-{{ section.id }} p { margin: 0 0 1em; }
+  @media screen and (max-width: 749px) {
+    .bcoll__banner-{{ section.id }} { margin-bottom: 28px; }
+    .bcoll__intro-{{ section.id }} { margin-bottom: 40px; }
+  }
+
   /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
   .bcoll__btn-primary-{{ section.id }},
   .bcoll__btn-secondary-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
@@ -418,6 +475,27 @@
 {% endstyle %}
 
 <div id="bcoll-{{ section.id }}">
+
+  {%- if show_video -%}
+    <div class="bcoll__banner-{{ section.id }}" data-bcoll-banner>
+      {%- if cv != blank -%}
+        {{ cv | video_tag: image_size: '1600x', autoplay: true, loop: true, muted: true, controls: false, preload: 'metadata' }}
+      {%- elsif section.settings.banner_video != blank -%}
+        {{ section.settings.banner_video | video_tag: image_size: '1600x', autoplay: true, loop: true, muted: true, controls: false, preload: 'metadata' }}
+      {%- else -%}
+        {%- assign vurl = section.settings.banner_video_url -%}
+        {%- if vurl.type == 'youtube' -%}
+          <iframe src="https://www.youtube.com/embed/{{ vurl.id }}?autoplay=1&mute=1&loop=1&playlist={{ vurl.id }}&controls=0&modestbranding=1&playsinline=1" title="{{ collection.title | escape }}" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+        {%- elsif vurl.type == 'vimeo' -%}
+          <iframe src="https://player.vimeo.com/video/{{ vurl.id }}?autoplay=1&muted=1&loop=1&background=1&controls=0" title="{{ collection.title | escape }}" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if show_intro -%}
+    <div class="bcoll__intro-{{ section.id }}">{{ intro_html }}</div>
+  {%- endif -%}
 
   {%- comment -%} HEADER {%- endcomment -%}
   <div class="bcoll__header-{{ section.id }}">
@@ -685,6 +763,14 @@
       applyFilters();
     });
   })();
+
+  // Banner video: visitors who asked their device for reduced motion get a paused video with controls
+  (function () {
+    var v = document.querySelector('#bcoll-{{ section.id }} [data-bcoll-banner] video');
+    if (v && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      v.pause(); v.removeAttribute('autoplay'); v.controls = true;
+    }
+  })();
 </script>
 
 {% schema %}
@@ -738,7 +824,15 @@
     { "type": "checkbox", "id": "show_breadcrumb", "label": "Show breadcrumb (Home / Collection)", "default": true },
     { "type": "text", "id": "home_label", "label": "Home breadcrumb label", "default": "HOME" },
     { "type": "checkbox", "id": "show_wishlist_icon", "label": "Show wishlist icon on card titles (visual only)", "default": true },
-    { "type": "text", "id": "empty_text", "label": "Empty state text", "default": "NO PRODUCTS MATCH THESE FILTERS" }
+    { "type": "text", "id": "empty_text", "label": "Empty state text", "default": "NO PRODUCTS MATCH THESE FILTERS" },
+
+    { "type": "header", "content": "Collection banner (video + intro)" },
+    { "type": "checkbox", "id": "show_banner_video", "label": "Show the collection video", "default": true, "info": "Each collection has its own video: Settings > Custom data > Collections > Add definition > namespace and key 'custom.banner_video', type File (video). A collection without one shows no video." },
+    { "type": "video", "id": "banner_video", "label": "Default video (optional)", "info": "Only used by collections that have no video of their own." },
+    { "type": "video_url", "id": "banner_video_url", "label": "Default video link (optional)", "accept": ["youtube", "vimeo"] },
+    { "type": "range", "id": "banner_height", "label": "Maximum video height", "min": 30, "max": 90, "step": 5, "unit": "%", "default": 55, "info": "Percentage of the screen height. Around 55 keeps the intro text visible above the footer on a laptop." },
+    { "type": "checkbox", "id": "show_intro", "label": "Show the intro text", "default": true, "info": "The collection's own description (Products > Collections), centred under the video." },
+    { "type": "richtext", "id": "intro_fallback", "label": "Default intro text (optional)", "info": "Only used by collections that have no description." }
   ],
   "presets": [
     {

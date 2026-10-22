@@ -202,17 +202,34 @@
 
   .bcn-acc__body-{{ section.id }} {
     max-height: 0; overflow: hidden;
-    transition: max-height 0.35s ease;
     font-size: 11px; line-height: 1.6;
     color: var(--bcn-muted);
     font-family: var(--bcn-font-body);
   }
 
-  .bcn-acc-{{ section.id }}.is-open .bcn-acc__body-{{ section.id }} { max-height: 1200px; }
+  .bcn-acc-{{ section.id }}.is-open .bcn-acc__body-{{ section.id }} { max-height: 4000px; }
 
   .bcn-acc__inner-{{ section.id }} { padding: 8px 0 16px; }
   .bcn-acc__inner-{{ section.id }} p { margin: 0 0 8px; }
   .bcn-acc__inner-{{ section.id }} p:last-child { margin-bottom: 0; }
+  /* size charts: tables and pictures */
+  .bcn-acc__inner-{{ section.id }} table { width: 100%; border-collapse: collapse; font-size: 11px; margin: 4px 0 8px; }
+  .bcn-acc__inner-{{ section.id }} th,
+  .bcn-acc__inner-{{ section.id }} td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--bcn-hairline); font-weight: 400; }
+  .bcn-acc__inner-{{ section.id }} th { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+  .bcn-acc__inner-{{ section.id }} img { max-width: 100%; height: auto; display: block; border-radius: var(--dz-radius-md, 16px); }
+  .bcn-acc__inner-{{ section.id }} a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* BACK BUTTON: fixed top-left, level with the logo */
+  .bcn-back-{{ section.id }} {
+    position: fixed; top: 30px; left: 24px; z-index: 190;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 0;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--bcn-fg); text-decoration: none;
+  }
+  .bcn-back-{{ section.id }}:hover { color: var(--bcn-accent); }
+  @media screen and (max-width: 749px) { .bcn-back-{{ section.id }} { top: 20px; left: 16px; } }
 
   .bcn-atc-sticky-{{ section.id }} {
     position: sticky; bottom: 40px; margin-top: auto;
@@ -438,7 +455,37 @@
   .bcn-overlay__slide-{{ section.id }} iframe { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
 {% endstyle %}
 
+{%- liquid
+  assign has_size_guide = false
+  for b in section.blocks
+    if b.type == 'accordion' and b.settings.acc_id == 'size-guide'
+      capture sg_html
+        render 'becane-acc-content', block: b, product: product
+      endcapture
+      assign sg_text = sg_html | strip
+      if sg_text != blank
+        assign has_size_guide = true
+      endif
+    endif
+  endfor
+
+  assign back_url = routes.all_products_collection_url
+  if collection != blank
+    assign back_url = collection.url
+  elsif product.collections.first
+    assign back_url = product.collections.first.url
+  endif
+-%}
+
 <div id="bcn-product-{{ section.id }}">
+
+  {%- if section.settings.show_back_button -%}
+    <a class="bcn-back-{{ section.id }}" href="{{ back_url }}" data-bcn-back>
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M13 5H1M5 1 1 5l4 4"/></svg>
+      <span>{{ section.settings.back_label }}</span>
+    </a>
+  {%- endif -%}
+
   <div class="bcn-product__grid-{{ section.id }}">
 
     <div class="bcn-left-{{ section.id }}">
@@ -506,7 +553,7 @@
           <div class="bcn-variant-group-{{ section.id }}">
             <div class="bcn-variant-group__head-{{ section.id }}">
               <div class="bcn-label-{{ section.id }}">{{ option.name }}</div>
-              {%- if is_size and section.settings.show_size_guide_link -%}
+              {%- if is_size and section.settings.show_size_guide_link and has_size_guide -%}
                 <button type="button" class="bcn-variant-link-{{ section.id }}" data-bcn-open-acc="size-guide">{{ section.settings.size_guide_label }}</button>
               {%- endif -%}
             </div>
@@ -543,6 +590,9 @@
       <div class="bcn-accordions-{{ section.id }}">
         {%- for block in section.blocks -%}
           {%- if block.type == 'accordion' -%}
+            {%- capture acc_html -%}{%- render 'becane-acc-content', block: block, product: product -%}{%- endcapture -%}
+            {%- assign acc_text = acc_html | strip -%}
+            {%- if acc_text != blank -%}
             <div class="bcn-acc-{{ section.id }}" data-bcn-acc data-bcn-acc-id="{{ block.settings.acc_id }}" {{ block.shopify_attributes }}>
               <button class="bcn-acc__head-{{ section.id }}" type="button" data-bcn-acc-head>
                 <span>{{ block.settings.title }}</span>
@@ -550,17 +600,11 @@
               </button>
               <div class="bcn-acc__body-{{ section.id }}">
                 <div class="bcn-acc__inner-{{ section.id }}">
-                  {%- if block.settings.use_product_description -%}
-                    {{ product.description }}
-                  {%- elsif block.settings.metafield_namespace != blank and block.settings.metafield_key != blank -%}
-                    {%- assign mf = product.metafields[block.settings.metafield_namespace][block.settings.metafield_key] -%}
-                    {%- if mf -%}{{ mf | metafield_tag }}{%- else -%}{{ block.settings.content }}{%- endif -%}
-                  {%- else -%}
-                    {{ block.settings.content }}
-                  {%- endif -%}
+                  {{ acc_html }}
                 </div>
               </div>
             </div>
+            {%- endif -%}
           {%- endif -%}
         {%- endfor -%}
       </div>
@@ -803,6 +847,22 @@
       });
     }
 
+    // Back: return to the exact page the visitor came from (collection with its filters and
+    // scroll position, search results, home...). With no same-site history (direct link,
+    // new tab) the link's own href takes over and goes to the product's collection.
+    const backLink = root.querySelector('[data-bcn-back]');
+    if (backLink) {
+      backLink.addEventListener('click', (e) => {
+        try {
+          const ref = document.referrer ? new URL(document.referrer) : null;
+          if (ref && ref.origin === window.location.origin && window.history.length > 1) {
+            e.preventDefault();
+            window.history.back();
+          }
+        } catch (err) { /* fall through to the link */ }
+      });
+    }
+
     root.querySelectorAll('[data-bcn-acc]').forEach(acc => {
       const head = acc.querySelector('[data-bcn-acc-head]');
       if (head) head.addEventListener('click', () => acc.classList.toggle('is-open'));
@@ -891,7 +951,9 @@
     { "type": "text", "id": "soldout_label", "label": "Sold out label", "default": "SOLD OUT" },
     { "type": "text", "id": "close_label", "label": "Overlay close label", "default": "CLOSE" },
     { "type": "checkbox", "id": "show_size_guide_link", "label": "Show 'Size guide' link next to size variant", "default": true },
-    { "type": "text", "id": "size_guide_label", "label": "Size guide link text", "default": "SIZE GUIDE" }
+    { "type": "text", "id": "size_guide_label", "label": "Size guide link text", "default": "SIZE GUIDE", "info": "The link only appears on products that have a size chart (see the 'Size chart' accordion block)." },
+    { "type": "checkbox", "id": "show_back_button", "label": "Show back button", "default": true },
+    { "type": "text", "id": "back_label", "label": "Back button text", "default": "BACK" }
   ],
   "blocks": [
     {
@@ -902,7 +964,7 @@
         { "type": "text", "id": "acc_id", "label": "Internal ID (optional)", "info": "Set to 'size-guide' so the variant 'Size guide' link opens this section." },
         { "type": "checkbox", "id": "use_product_description", "label": "Use product description as content", "default": false },
         { "type": "text", "id": "metafield_namespace", "label": "Metafield namespace (optional)", "info": "e.g. 'custom'" },
-        { "type": "text", "id": "metafield_key", "label": "Metafield key (optional)", "info": "e.g. 'materials' or 'size_guide'. Overrides static content if present." },
+        { "type": "text", "id": "metafield_key", "label": "Metafield key (optional)", "info": "e.g. 'materials' or 'size_chart'. Overrides static content if present. Accordions with nothing to show are hidden automatically." },
         { "type": "richtext", "id": "content", "label": "Static content", "default": "<p>Add details here.</p>" }
       ]
     }

@@ -54,15 +54,20 @@
 
 {% style %}
   /*
-    Reserve exactly the footer's height at the bottom of every page, so the last line
-    of content stops above the blurred footer instead of sliding underneath it.
-    --gf-h is measured in JS (below) and updates on resize / when the footer grows;
-    the calc() is only the pre-JS fallback.
+    The desktop footer is fixed and blurred, so whatever scrolls to the bottom of a page
+    (product names in the last row of a grid, cart lines, search results...) would end up
+    underneath it. Reserve the footer's measured height (--gf-h, set in the script below)
+    plus a clear strip, at the end of the content area. Applies to every page that scrolls,
+    except framed text pages (they size themselves) and the home loop.
+    On phones the footer sits in the normal page flow, so nothing needs reserving.
   */
-  body {
-    /* footer height + a 24px gap: the last line of text never touches or hides under it */
-    padding-bottom: calc(var(--gf-h, calc(60px + {{ pill_clearance }}px)) + var(--dz-frame-gap, 24px));
+  {%- unless template.name == 'index' -%}
+  @media screen and (min-width: 901px) {
+    .content-for-layout:not(.dz-frame) {
+      padding-bottom: calc(var(--gf-h, 190px) + var(--dz-bottom-gap, 56px));
+    }
   }
+  {%- endunless -%}
 
   .gf {
     position: fixed;
@@ -229,7 +234,6 @@
     .gf__newsletter input[type="email"] { width: 200px; }
 
     /* The fixed footer used to cover ~40% of a phone screen on every page. */
-    body { padding-bottom: 0; }
 
     /* Normal pages: sit at the end of the content like a regular footer.
        Solid background, because there is no imagery behind it to blend with. */

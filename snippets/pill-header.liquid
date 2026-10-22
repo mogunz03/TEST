@@ -400,14 +400,34 @@
       </div>
 
       <div class="ai-pill-header__right-icons">
-        <a href="{{ routes.cart_url }}" class="ai-pill-header__icon" aria-label="Cart">
+        {%- liquid
+          comment
+            The bag icon fills up with the cart: empty, then 1-2 items, 3-5, 6+.
+            The same rule is mirrored in JS (cartLevel) so it updates without a reload.
+          endcomment
+          assign cart_n = cart.item_count
+          assign bag_fill = 0
+          if cart_n > 5
+            assign bag_fill = 16
+          elsif cart_n > 2
+            assign bag_fill = 10
+          elsif cart_n > 0
+            assign bag_fill = 5
+          endif
+          assign bag_y = 22 | minus: bag_fill
+        -%}
+        <a href="{{ routes.cart_url }}" class="ai-pill-header__icon ai-pill-header__cart" aria-label="{{ 'content.cart_title' | t }}{% if cart_n > 0 %} ({{ cart_n }}){% endif %}" data-pill-cart>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <defs>
+              <clipPath id="ph-bag-clip"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path></clipPath>
+            </defs>
+            <rect class="ai-pill-header__bag-fill" data-pill-bag-fill x="2" width="20" y="{{ bag_y }}" height="{{ bag_fill }}" clip-path="url(#ph-bag-clip)" style="fill: currentColor; stroke: none; opacity: 0.6;"></rect>
             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <path d="M16 10a4 4 0 0 1-8 0"></path>
           </svg>
-          {% if cart.item_count > 0 %}
-            <span class="ai-pill-header__cart-count">{{ cart.item_count }}</span>
+          {% if cart_n > 0 %}
+            <span class="ai-pill-header__cart-count" data-pill-cart-count>{{ cart_n }}</span>
           {% endif %}
         </a>
 
@@ -490,8 +510,11 @@
         this.menuIcon        = this.querySelector('.ai-pill-header__menu-icon');
         this.navItems        = this.querySelectorAll('.ai-pill-header__nav-item');
 
+        this.cartLink        = this.querySelector('[data-pill-cart]');
+
         this.bind();
         this.watchConsentBanner();
+        this.watchCart();
       }
 
       bind() {
@@ -580,6 +603,48 @@
         this.bar.classList.remove('menu-active');
         this.menuIcon && this.menuIcon.setAttribute('aria-expanded', 'false');
         this.navItems.forEach(item => item.classList.remove('expanded'));
+      }
+
+      // Cart icon: fills up with the number of items and updates without a reload.
+      // Same thresholds as the Liquid above: empty / 1-2 / 3-5 / 6+.
+      cartLevel(n) { return n > 5 ? 16 : n > 2 ? 10 : n > 0 ? 5 : 0; }
+
+      renderCart(n) {
+        if (!this.cartLink) return;
+        const fill = this.cartLink.querySelector('[data-pill-bag-fill]');
+        if (fill) {
+          const h = this.cartLevel(n);
+          fill.setAttribute('y', 22 - h);
+          fill.setAttribute('height', h);
+        }
+        let badge = this.cartLink.querySelector('[data-pill-cart-count]');
+        if (n > 0) {
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'ai-pill-header__cart-count';
+            badge.setAttribute('data-pill-cart-count', '');
+            this.cartLink.appendChild(badge);
+          }
+          badge.textContent = n;
+        } else if (badge) {
+          badge.remove();
+        }
+        const base = (this.cartLink.getAttribute('aria-label') || '').replace(/\s*\(\d+\)$/, '');
+        this.cartLink.setAttribute('aria-label', n > 0 ? base + ' (' + n + ')' : base);
+      }
+
+      watchCart() {
+        const refresh = () => {
+          fetch('{{ routes.cart_url }}.js', { headers: { Accept: 'application/json' } })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((cart) => { if (cart && typeof cart.item_count === 'number') this.renderCart(cart.item_count); })
+            .catch(() => {});
+        };
+        // 'cart:refresh' is what the product page fires after add-to-cart; 'cart:update' is the theme's own event.
+        document.addEventListener('cart:refresh', refresh);
+        document.addEventListener('cart:update', refresh);
+        // coming back to the page from the back/forward cache can show a stale count
+        window.addEventListener('pageshow', (e) => { if (e.persisted) refresh(); });
       }
 
       // Float above Shopify's cookie banner (#shopify-pc__banner) instead of burying
