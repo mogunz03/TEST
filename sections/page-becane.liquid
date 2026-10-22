@@ -387,6 +387,16 @@
     {%- endcase -%}
   {%- endfor -%}
 
+  {%- comment -%}
+    The page body written in Shopify admin (Online Store > Pages). This was never
+    rendered before, so edits there were silently ignored on every page.
+  {%- endcomment -%}
+  {%- if section.settings.show_page_content and page.content != blank -%}
+    <div class="pb-paragraph-{{ section.id }} is-large pb-page-content-{{ section.id }}">
+      {{ page.content }}
+    </div>
+  {%- endif -%}
+
 </div>
 
 {% schema %}
@@ -397,6 +407,7 @@
     { "type": "text", "id": "eyebrow", "label": "Eyebrow / category label" },
     { "type": "text", "id": "title", "label": "Page title override", "info": "Leave blank to use the page's own title." },
     { "type": "checkbox", "id": "show_page_title", "label": "Show page title", "default": true },
+    { "type": "checkbox", "id": "show_page_content", "label": "Show the page's own content", "info": "The text you write in Online Store > Pages.", "default": true },
 
     { "type": "header", "content": "Colors" },
     { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
@@ -503,11 +514,7 @@
     {
       "name": "Becane page",
       "category": "Page",
-      "blocks": [
-        { "type": "hero", "settings": { "heading": "ABOUT", "eyebrow": "DAUZE" } },
-        { "type": "paragraph", "settings": { "large": true, "text": "<p>Introduce the brand here.</p>" } },
-        { "type": "paragraph", "settings": { "text": "<p>Add longer-form body copy below.</p>" } }
-      ]
+      "blocks": []
     }
   ]
 }

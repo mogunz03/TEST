@@ -2,8 +2,13 @@
   "sections": {
     "main": {
       "type": "page-becane",
-      "settings": {}
+      "settings": {
+        "show_page_title": true,
+        "show_page_content": true
+      }
     }
   },
-  "order": ["main"]
+  "order": [
+    "main"
+  ]
 }
