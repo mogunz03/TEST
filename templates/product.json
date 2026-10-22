@@ -19,9 +19,86 @@
       "block_order": [
         "size_chart"
       ]
+    },
+    "matches_carousel": {
+      "type": "_blocks",
+      "blocks": {
+        "ai_gen_block_562a680_9h384m": {
+          "type": "ai_gen_block_562a680",
+          "settings": {
+            "title": "Matches better with",
+            "subtitle": "",
+            "product_list": [
+              "dauze-unisex-black-pants",
+              "dauze-unisex-pratical-black-pants",
+              "dauze-unisex-winter-trench-coat",
+              "dauze-unisex-black-velvet-pants",
+              "dauze-vegan-leather-unisex-double-layer-bomber-jacket",
+              "dauze-dual-tone-patched-denim-pants",
+              "dauzexbouncingwalls",
+              "dauze-oversix",
+              "dauze-dual-toned-hooded-quilted-winter-jacket"
+            ],
+            "button_text": "View",
+            "show_second_image_on_hover": true,
+            "scroll_speed": 85,
+            "pause_on_hover": true,
+            "card_width": 180,
+            "image_height": 240,
+            "section_padding": 35,
+            "background_color": "#f1f1f1",
+            "title_color": "#000000",
+            "subtitle_color": "#666666",
+            "card_background": "#f1f1f1",
+            "product_title_color": "#000000",
+            "product_price_color": "#000000",
+            "button_color": "#ef5000",
+            "button_text_color": "#ffffff",
+            "button_hover_color": "#333333",
+            "title_size": 12,
+            "subtitle_size": 10,
+            "product_title_size": 10,
+            "product_price_size": 10,
+            "card_border_radius": 16,
+            "button_border_radius": 12
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "ai_gen_block_562a680_9h384m"
+      ],
+      "settings": {
+        "content_direction": "column",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 12,
+        "section_width": "full-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "scheme-2",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
     }
   },
   "order": [
-    "main"
+    "main",
+    "matches_carousel"
   ]
 }

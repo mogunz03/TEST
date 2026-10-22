@@ -44,7 +44,7 @@
     background: var(--bcn-bg);
     min-height: 100vh;
     min-height: 100dvh;
-    padding: var(--bcn-pad-y) var(--bcn-pad-x) 200px;
+    padding: var(--bcn-pad-y) var(--bcn-pad-x) 72px; /* the footer gap is reserved page-wide (global-footer), so no extra here */
     box-sizing: border-box;
   }
 
@@ -220,16 +220,19 @@
   .bcn-acc__inner-{{ section.id }} img { max-width: 100%; height: auto; display: block; border-radius: var(--dz-radius-md, 16px); }
   .bcn-acc__inner-{{ section.id }} a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
-  /* BACK BUTTON: fixed top-left, level with the logo */
+  /* BACK: a normal row at the top of the page content, lined up with the grid's left edge.
+     It scrolls away with the page, so it can never sit on top of the (sticky) title or the gallery. */
+  .bcn-backrow-{{ section.id }} {
+    max-width: var(--bcn-max-w);
+    margin: 0 auto 20px;
+  }
   .bcn-back-{{ section.id }} {
-    position: fixed; top: 30px; left: 24px; z-index: 190;
     display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 0;
     font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--bcn-fg); text-decoration: none;
   }
   .bcn-back-{{ section.id }}:hover { color: var(--bcn-accent); }
-  @media screen and (max-width: 749px) { .bcn-back-{{ section.id }} { top: 20px; left: 16px; } }
 
   .bcn-atc-sticky-{{ section.id }} {
     position: sticky; bottom: 40px; margin-top: auto;
@@ -256,6 +259,10 @@
   html:has(#bcn-product-{{ section.id }}) {
     scroll-snap-type: y proximity;
   }
+
+  /* the top of the section is a snap point too, so the page opens at the very top (with the
+     back row visible) instead of snapping down to the first photo */
+  #bcn-product-{{ section.id }} { scroll-snap-align: start; }
 
   .bcn-right-{{ section.id }} {
     display: flex; flex-direction: column;
@@ -344,7 +351,7 @@
   }
 
   @media screen and (max-width: 900px) {
-    #bcn-product-{{ section.id }} { padding: 24px 20px calc(var(--bcn-footer-h, 140px) + 100px); }
+    #bcn-product-{{ section.id }} { padding: 24px 20px 56px; }
     .bcn-product__grid-{{ section.id }} { grid-template-columns: 1fr; gap: 24px; }
     .bcn-left-{{ section.id }} { position: static; order: 2; gap: 28px; }
     .bcn-right-{{ section.id }} {
@@ -480,10 +487,12 @@
 <div id="bcn-product-{{ section.id }}">
 
   {%- if section.settings.show_back_button -%}
-    <a class="bcn-back-{{ section.id }}" href="{{ back_url }}" data-bcn-back>
-      <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M13 5H1M5 1 1 5l4 4"/></svg>
-      <span>{{ section.settings.back_label }}</span>
-    </a>
+    <div class="bcn-backrow-{{ section.id }}">
+      <a class="bcn-back-{{ section.id }}" href="{{ back_url }}" data-bcn-back>
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M13 5H1M5 1 1 5l4 4"/></svg>
+        <span>{{ section.settings.back_label }}</span>
+      </a>
+    </div>
   {%- endif -%}
 
   <div class="bcn-product__grid-{{ section.id }}">
