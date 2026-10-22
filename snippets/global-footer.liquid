@@ -215,10 +215,38 @@
     .gf__newsletter,
     .gf__socials { justify-self: center; }
     .gf__newsletter input[type="email"] { width: 200px; }
+
+    /* The fixed footer used to cover ~40% of a phone screen on every page. */
+    body { padding-bottom: 0; }
+
+    /* Normal pages: sit at the end of the content like a regular footer.
+       Solid background, because there is no imagery behind it to blend with. */
+    .gf--flow {
+      position: relative;
+      isolation: isolate;
+      padding: 32px 5vw calc(32px + {{ pill_clearance }}px + env(safe-area-inset-bottom, 0px));
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .gf--flow::before { opacity: 1; }
+
+    /* Homepage is an infinite loop, so the footer has to stay fixed there.
+       Keep it to two slim rows so the hero stays visible. */
+    .gf:not(.gf--flow) { padding-top: 10px; padding-bottom: calc(10px + {{ pill_clearance }}px); }
+    .gf:not(.gf--flow) .gf__inner { gap: 8px; }
+    .gf:not(.gf--flow) .gf__copyright { display: none; }
+    .gf:not(.gf--flow) .gf__row2 {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px 12px;
+    }
+    .gf:not(.gf--flow) .gf__newsletter input[type="email"] { width: 150px; }
   }
 {% endstyle %}
 
-<footer class="gf" role="contentinfo">
+<footer class="gf{% unless template.name == 'index' %} gf--flow{% endunless %}" role="contentinfo">
   <div class="gf__inner">
 
     <ul class="gf__menu">
