@@ -23,5 +23,135 @@
 
     --dz-tracking-label: 0.06em;
     --dz-tracking-title: 0.04em;
+
+    /* Page frame (text pages) */
+    --dz-frame-top: 84px;     /* below the floating logo pill */
+    --dz-frame-gap: 12px;     /* space between frame and footer */
+    --dz-frame-side: 24px;
+    --dz-frame-width: 1040px;
+    --dz-frame-bg: #fff;
+    --dz-page-bg: #f4f4f4;
+    --dz-hairline: rgb(0 0 0 / 0.1);
+    --dz-pad-x: 32px;
+  }
+  @media (max-width: 749px) {
+    :root { --dz-frame-top: 68px; --dz-frame-side: 12px; --dz-pad-x: 20px; }
+  }
+
+  /* ------------------------------------------------------------------
+     PAGE FRAME
+     One layout for every text page (pages, legal pages, Shopify policy
+     pages): a card that sits between the logo and the footer. The title
+     stays put; only the body scrolls inside the card.
+     Frame bottom = measured footer height (--gf-h, set in global-footer).
+     ------------------------------------------------------------------ */
+  body.dz-framed-page {
+    overflow: hidden;
+    padding-bottom: 0;
+    background: var(--dz-page-bg);
+  }
+
+  .dz-frame {
+    position: fixed;
+    top: var(--dz-frame-top);
+    bottom: calc(var(--gf-h, 160px) + var(--dz-frame-gap));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(var(--dz-frame-width), calc(100% - 2 * var(--dz-frame-side)));
+    display: block;              /* the theme default is a flex column; a plain block scrolls predictably */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    background: var(--dz-frame-bg);
+    color: #000;
+    border: 1px solid var(--dz-hairline);
+    border-radius: var(--dz-radius-lg, 20px);
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.06);
+    z-index: 1;
+  }
+  .dz-frame:focus { outline: none; }
+  .dz-frame:focus-visible { outline: 1px solid rgb(0 0 0 / 0.35); outline-offset: 2px; }
+
+  /* Pinned header: our sections (.dz-head) and Shopify's policy pages (.shopify-policy__title)
+     look identical and stay at the top of the card while the body scrolls beneath. */
+  .dz-head,
+  .dz-frame .shopify-policy__title {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    margin: 0;
+    padding: 20px var(--dz-pad-x) 16px;
+    background: var(--dz-frame-bg);
+    border-bottom: 1px solid var(--dz-hairline);
+    text-align: left;
+  }
+  .dz-head__eyebrow {
+    margin: 0 0 6px;
+    font-size: var(--dz-fs-label);
+    font-weight: 500;
+    letter-spacing: var(--dz-tracking-label);
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+  .dz-head__title,
+  .dz-frame .shopify-policy__title h1 {
+    margin: 0;
+    font-size: var(--dz-fs-title);
+    font-weight: 500;
+    letter-spacing: var(--dz-tracking-title);
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .dz-head__meta {
+    margin: 6px 0 0;
+    font-size: var(--dz-fs-label);
+    letter-spacing: var(--dz-tracking-label);
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  /* Body of the card */
+  .dz-body,
+  .dz-frame .shopify-policy__body {
+    padding: 24px var(--dz-pad-x) 48px;
+  }
+  .dz-frame .shopify-policy__container { padding: 0; max-width: none; margin: 0; }
+
+  /* One prose style for all of them */
+  .dz-prose,
+  .dz-frame .shopify-policy__body .rte {
+    max-width: 720px;
+    margin-inline: auto;
+    font-size: var(--dz-fs-body);
+    line-height: 1.7;
+  }
+  .dz-prose > :first-child { margin-top: 0; }
+  .dz-prose p, .dz-prose ul, .dz-prose ol,
+  .dz-frame .shopify-policy__body p, .dz-frame .shopify-policy__body ul, .dz-frame .shopify-policy__body ol { margin: 0 0 1.1em; }
+  .dz-prose h1, .dz-prose h2, .dz-prose h3, .dz-prose h4,
+  .dz-frame .shopify-policy__body h1, .dz-frame .shopify-policy__body h2,
+  .dz-frame .shopify-policy__body h3, .dz-frame .shopify-policy__body h4 {
+    margin: 2em 0 0.7em;
+    font-size: var(--dz-fs-heading);
+    font-weight: 500;
+    letter-spacing: var(--dz-tracking-title);
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+  .dz-prose h3, .dz-prose h4,
+  .dz-frame .shopify-policy__body h3, .dz-frame .shopify-policy__body h4 { font-size: var(--dz-fs-body); }
+  .dz-prose a, .dz-frame .shopify-policy__body a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .dz-prose a:hover, .dz-frame .shopify-policy__body a:hover { color: var(--color-primary, #ef5000); }
+  .dz-prose img, .dz-frame .shopify-policy__body img { max-width: 100%; height: auto; border-radius: var(--dz-radius-md, 16px); }
+  .dz-prose blockquote, .dz-frame .shopify-policy__body blockquote {
+    margin: 1.5em 0; padding-left: 1em; border-left: 1px solid var(--dz-hairline); font-style: normal;
+  }
+  .dz-prose table, .dz-frame .shopify-policy__body table { width: 100%; border-collapse: collapse; font-size: var(--dz-fs-small); }
+  .dz-prose th, .dz-prose td,
+  .dz-frame .shopify-policy__body th, .dz-frame .shopify-policy__body td { padding: 8px 10px; border-bottom: 1px solid var(--dz-hairline); text-align: left; }
+
+  @media (max-width: 749px) {
+    .dz-head__title, .dz-frame .shopify-policy__title h1 { font-size: 15px; }
   }
 </style>

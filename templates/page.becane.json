@@ -5,7 +5,16 @@
       "settings": {
         "show_page_title": true,
         "show_page_content": true
-      }
+      },
+      "blocks": {
+        "content": {
+          "type": "page_content",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "content"
+      ]
     }
   },
   "order": [

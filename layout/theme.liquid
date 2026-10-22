@@ -41,7 +41,19 @@
     {% # theme-check-enable RemoteAsset %}
   </head>
 
-  <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
+  {%- comment -%}
+    Text pages (pages, legal pages, Shopify policy pages) share one framed layout: a card
+    between the logo and the footer where the title stays put and only the body scrolls.
+    Commerce / gallery pages (home, collection, product, cart) keep their own full-bleed layouts.
+  {%- endcomment -%}
+  {%- liquid
+    assign dz_framed = false
+    case request.page_type
+      when 'page', 'policy'
+        assign dz_framed = true
+    endcase
+  -%}
+  <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}{% if dz_framed %} dz-framed-page{% endif %}">
     {% render 'skip-to-content-link', href: '#MainContent', text: 'accessibility.skip_to_text' %}
     <div id="header-group">
       {% sections 'header-group' %}
@@ -120,7 +132,8 @@
 
     <main
       id="MainContent"
-      class="content-for-layout"
+      class="content-for-layout{% if dz_framed %} dz-frame{% endif %}"
+      {% if dz_framed %}tabindex="0"{% endif %}
       role="main"
       data-page-transition-enabled="{{ settings.page_transition_enabled }}"
       data-product-transition="{{ settings.transition_to_main_product }}"
@@ -134,6 +147,6 @@
     {% if settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add-modal' %}
     {% endif %}
-    {% render 'global-footer' %}
+    {% render 'global-footer', framed: dz_framed %}
   </body>
 </html>

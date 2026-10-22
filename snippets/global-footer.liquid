@@ -1,7 +1,9 @@
 {% comment %}
   Global Sticky Footer
   File: snippets/global-footer.liquid
-  Usage: {% render 'global-footer' %} inside <body> in layout/theme.liquid
+  Usage: {% render 'global-footer', framed: dz_framed %} inside <body> in layout/theme.liquid
+  framed  true on framed text pages: the footer stays fixed on every screen size
+          (the page card above it is sized from the footer's measured height).
 
   Renders on EVERY page including the homepage.
   Visual: floating, sticky to bottom of viewport, semi-transparent dark
@@ -99,7 +101,8 @@
     align-items: center;
     gap: 16px;
     list-style: none;
-    margin: 0; padding: 0;
+    margin: 0;
+    padding: 10px 0; /* 10px above + 10px below = 20px of breathing room around the links */
     pointer-events: auto;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -146,6 +149,7 @@
     background: transparent;
     border: none;
     border-bottom: 1px solid currentColor;
+    border-radius: 0; /* square: the global input radius would curve the ends of the underline */
     color: inherit;
     font-family: inherit;
     font-size: 11px;
@@ -165,6 +169,7 @@
   .gf__newsletter button {
     background: transparent;
     border: none;
+    border-radius: 0;
     color: inherit;
     font-family: inherit;
     font-size: 14px;
@@ -252,7 +257,7 @@
   }
 {% endstyle %}
 
-<footer class="gf{% unless template.name == 'index' %} gf--flow{% endunless %}" role="contentinfo">
+<footer class="gf{% unless template.name == 'index' or framed %} gf--flow{% endunless %}" role="contentinfo">
   <div class="gf__inner">
 
     <ul class="gf__menu">

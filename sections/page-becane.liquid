@@ -42,26 +42,6 @@
   #pb-{{ section.id }} *::before,
   #pb-{{ section.id }} *::after { box-sizing: border-box; }
 
-  .pb-eyebrow-{{ section.id }} {
-    font-family: var(--pb-font-h);
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--pb-muted);
-    margin: 0 0 12px;
-    text-align: center;
-  }
-
-  .pb-title-{{ section.id }} {
-    font-family: var(--pb-font-h);
-    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
-    font-weight: 600; letter-spacing: 0.02em;
-    text-transform: uppercase; line-height: 1.1;
-    margin: 0 auto 60px;
-    text-align: center;
-    max-width: 900px;
-    padding: 0 24px;
-  }
-
   /* HERO BLOCK */
   .pb-hero-{{ section.id }} {
     position: relative;
@@ -262,6 +242,59 @@
     .pb-columns-{{ section.id }}[data-reverse="true"] .pb-col-{{ section.id }}.is-media { order: 0; }
   }
 
+
+  /* FRAME: inside the shared page card (snippets/dauze-tokens.liquid) the card owns the
+     padding, background and scrolling, so the section drops its own and every block
+     lines up on the same left edge. */
+  .dz-frame #pb-{{ section.id }} { padding: 0; background: transparent; color: inherit; }
+  .dz-frame .pb-paragraph-{{ section.id }},
+  .dz-frame .pb-heading-{{ section.id }},
+  .dz-frame .pb-image-{{ section.id }},
+  .dz-frame .pb-video-{{ section.id }},
+  .dz-frame .pb-columns-{{ section.id }},
+  .dz-frame .pb-quote-{{ section.id }} { padding-inline: 0; margin-block: 0 32px; }
+  .dz-frame .pb-heading-{{ section.id }},
+  .dz-frame .pb-quote-{{ section.id }} { text-align: left; margin-inline: auto; }
+  .dz-frame .pb-heading-{{ section.id }} { max-width: 720px; font-weight: 500; letter-spacing: var(--dz-tracking-title); }
+  .dz-frame .pb-paragraph-{{ section.id }} { font-size: var(--dz-fs-body); line-height: 1.7; }
+  .dz-frame .pb-paragraph-{{ section.id }}.is-large { font-size: var(--dz-fs-lead, 16px); }
+  .dz-frame .pb-hero-{{ section.id }} {
+    width: auto; margin: 0 0 32px; border-radius: var(--dz-radius-md, 16px);
+    min-height: min(46dvh, 400px);
+  }
+  .dz-frame .pb-hero__caption-{{ section.id }} { min-height: min(46dvh, 400px); padding: 28px; }
+
+  /* CONTACT FORM block */
+  .pb-form-{{ section.id }} { max-width: 720px; margin: 0 auto 32px; }
+  .pb-form-{{ section.id }} form { display: grid; gap: 16px; }
+  .pb-form__grid-{{ section.id }} { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pb-form__field-{{ section.id }} {
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: var(--dz-fs-label, 11px); letter-spacing: var(--dz-tracking-label, 0.06em); text-transform: uppercase;
+  }
+  /* beats base.css input:not([type=checkbox],[type=radio]) so the field keeps this look */
+  .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} input,
+  .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} textarea {
+    width: 100%; padding: 12px 14px;
+    font: inherit; font-size: var(--dz-fs-body, 14px); letter-spacing: 0; text-transform: none;
+    color: #000; background: #fff;
+    border: 1px solid rgb(0 0 0 / 0.2); border-radius: var(--dz-radius-sm, 12px);
+    outline: none; resize: vertical;
+  }
+  .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} input:focus,
+  .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} textarea:focus { border-color: #000; }
+  @media (pointer: coarse) {
+    .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} input,
+    .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} textarea { font-size: 16px; } /* stops iOS zooming on focus */
+  }
+  .pb-form__msg-{{ section.id }} {
+    margin: 0; padding: 12px 14px; font-size: var(--dz-fs-small, 12px);
+    border-radius: var(--dz-radius-sm, 12px); background: rgb(0 0 0 / 0.05);
+  }
+  .pb-form__msg-{{ section.id }}.is-error { background: rgb(200 30 30 / 0.08); }
+  .pb-form-{{ section.id }} .pb-btn-{{ section.id }} { justify-self: start; margin-top: 0; }
+  @media (max-width: 600px) { .pb-form__grid-{{ section.id }} { grid-template-columns: 1fr; } }
+
   /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
   .pb-btn-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
   .pb-image-{{ section.id }}:not(.is-full) img,
@@ -271,18 +304,29 @@
   .pb-col-{{ section.id }} video { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
 {% endstyle %}
 
+{%- liquid
+  assign has_content_block = false
+  for b in section.blocks
+    if b.type == 'page_content'
+      assign has_content_block = true
+    endif
+  endfor
+-%}
+
 <div id="pb-{{ section.id }}">
 
-  {%- if section.settings.eyebrow != blank -%}
-    <div class="pb-eyebrow-{{ section.id }}">{{ section.settings.eyebrow }}</div>
+  {%- if section.settings.eyebrow != blank or section.settings.title != blank or section.settings.show_page_title -%}
+    <header class="dz-head">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="dz-head__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.title != blank or section.settings.show_page_title -%}
+        <h1 class="dz-head__title">{{ section.settings.title | default: page.title }}</h1>
+      {%- endif -%}
+    </header>
   {%- endif -%}
 
-  {%- if section.settings.title != blank -%}
-    <h1 class="pb-title-{{ section.id }}">{{ section.settings.title | default: page.title }}</h1>
-  {%- elsif page.title != blank and section.settings.show_page_title -%}
-    <h1 class="pb-title-{{ section.id }}">{{ page.title }}</h1>
-  {%- endif -%}
-
+  <div class="dz-body">
   {%- for block in section.blocks -%}
     {%- case block.type -%}
 
@@ -391,6 +435,45 @@
           {%- endif -%}
         </figure>
 
+      {%- when 'page_content' -%}
+        <div class="dz-prose pb-page-content-{{ section.id }}" {{ block.shopify_attributes }}>
+          {{ page.content }}
+        </div>
+
+      {%- when 'contact_form' -%}
+        <div class="pb-form-{{ section.id }}" {{ block.shopify_attributes }}>
+          {%- assign form_class = 'pb-form__form-' | append: section.id -%}
+          {%- form 'contact', id: 'ContactForm', class: form_class -%}
+            {%- if form.posted_successfully? -%}
+              <p class="pb-form__msg-{{ section.id }} is-ok" role="status">{{ block.settings.success_message }}</p>
+            {%- endif -%}
+            {%- if form.errors -%}
+              <p class="pb-form__msg-{{ section.id }} is-error" role="alert">{{ form.errors | default_errors }}</p>
+            {%- endif -%}
+            <div class="pb-form__grid-{{ section.id }}">
+              <label class="pb-form__field-{{ section.id }}">
+                <span>{{ 'blocks.contact_form.name' | t }}</span>
+                <input type="text" name="contact[name]" autocomplete="name" value="{{ form.name }}" required>
+              </label>
+              <label class="pb-form__field-{{ section.id }}">
+                <span>{{ 'blocks.contact_form.email' | t }}</span>
+                <input type="email" name="contact[email]" autocomplete="email" value="{{ form.email }}" required>
+              </label>
+            </div>
+            {%- if block.settings.show_phone -%}
+              <label class="pb-form__field-{{ section.id }}">
+                <span>{{ 'blocks.contact_form.phone' | t }}</span>
+                <input type="tel" name="contact[phone]" autocomplete="tel" value="{{ form.phone }}">
+              </label>
+            {%- endif -%}
+            <label class="pb-form__field-{{ section.id }}">
+              <span>{{ 'blocks.contact_form.comment' | t }}</span>
+              <textarea name="contact[body]" rows="6" required>{{ form.body }}</textarea>
+            </label>
+            <button type="submit" class="pb-btn-{{ section.id }}">{{ block.settings.button_label | default: 'Send' }}</button>
+          {%- endform -%}
+        </div>
+
       {%- when 'spacer' -%}
         <div class="pb-spacer-{{ section.id }}" style="height: {{ block.settings.height }}px;" {{ block.shopify_attributes }}></div>
 
@@ -401,11 +484,12 @@
     The page body written in Shopify admin (Online Store > Pages). This was never
     rendered before, so edits there were silently ignored on every page.
   {%- endcomment -%}
-  {%- if section.settings.show_page_content and page.content != blank -%}
-    <div class="pb-paragraph-{{ section.id }} is-large pb-page-content-{{ section.id }}">
+  {%- if section.settings.show_page_content and has_content_block == false and page.content != blank -%}
+    <div class="dz-prose pb-page-content-{{ section.id }}">
       {{ page.content }}
     </div>
   {%- endif -%}
+  </div>
 
 </div>
 
@@ -417,7 +501,7 @@
     { "type": "text", "id": "eyebrow", "label": "Eyebrow / category label" },
     { "type": "text", "id": "title", "label": "Page title override", "info": "Leave blank to use the page's own title." },
     { "type": "checkbox", "id": "show_page_title", "label": "Show page title", "default": true },
-    { "type": "checkbox", "id": "show_page_content", "label": "Show the page's own content", "info": "The text you write in Online Store > Pages.", "default": true },
+    { "type": "checkbox", "id": "show_page_content", "label": "Show the page's own content", "info": "Used when no 'Page content' block is added below. The text you write in Online Store > Pages.", "default": true },
 
     { "type": "header", "content": "Colors" },
     { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
@@ -517,6 +601,26 @@
       "name": "Spacer",
       "settings": [
         { "type": "range", "id": "height", "label": "Height", "min": 16, "max": 200, "step": 8, "unit": "px", "default": 48 }
+      ]
+    }
+
+    ,
+    {
+      "type": "page_content",
+      "name": "Page content",
+      "limit": 1,
+      "settings": [
+        { "type": "paragraph", "content": "Shows the text written for this page in Online Store > Pages." }
+      ]
+    },
+    {
+      "type": "contact_form",
+      "name": "Contact form",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "button_label", "label": "Button label", "default": "Send" },
+        { "type": "text", "id": "success_message", "label": "Success message", "default": "Thanks for contacting us. We'll get back to you as soon as possible." },
+        { "type": "checkbox", "id": "show_phone", "label": "Ask for a phone number", "default": false }
       ]
     }
   ],

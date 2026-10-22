@@ -2,8 +2,15 @@
   "sections": {
     "page_becane_yzxYa3": {
       "type": "page-becane",
-      "blocks": {},
-      "block_order": [],
+      "blocks": {
+        "content": {
+          "type": "page_content",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "content"
+      ],
       "name": "Page",
       "settings": {
         "eyebrow": "",

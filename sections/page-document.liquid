@@ -3,196 +3,36 @@
   File: sections/page-document.liquid
   Use for: legal pages — Refund and Return, Privacy Policy, Shipping Policy, Terms of Services.
 
-  Clean prose layout, narrow column, no hero. Renders the page's content
-  directly so admins edit the page in the normal Shopify page editor.
+  Renders the page's content directly so admins edit the page in the normal Shopify
+  page editor. Layout, header and typography all come from the shared page frame in
+  snippets/dauze-tokens.liquid, so this page looks identical to every other text page
+  (pages, Shopify policy pages): title pinned at the top, only the body scrolls.
 {% endcomment %}
 
-{% liquid
-  if section.settings.font_preset == 'custom'
-    assign heading_font = section.settings.heading_font.family | append: ', ' | append: section.settings.heading_font.fallback_families
-    assign body_font    = section.settings.body_font.family    | append: ', ' | append: section.settings.body_font.fallback_families
-  else
-    assign heading_font = settings.type_heading_font.family | append: ', ' | append: settings.type_heading_font.fallback_families
-    assign body_font    = settings.type_body_font.family | append: ', ' | append: settings.type_body_font.fallback_families
-  endif
-%}
-
-{%- if section.settings.font_preset == 'custom' -%}
-  {{ section.settings.heading_font | font_face: font_display: 'swap' }}
-  {{ section.settings.body_font    | font_face: font_display: 'swap' }}
-{%- endif -%}
-
-{% style %}
-  #pd-{{ section.id }} {
-    --pd-bg: {{ section.settings.bg_color }};
-    --pd-fg: {{ section.settings.text_color }};
-    --pd-muted: {{ section.settings.muted_color }};
-    --pd-hairline: {{ section.settings.hairline_color }};
-    --pd-accent: {{ section.settings.accent_color }};
-    --pd-font-h: {{ heading_font }};
-    --pd-font-b: {{ body_font }};
-    --pd-font-mono: var(--font-body--family);
-
-    background: var(--pd-bg);
-    color: var(--pd-fg);
-    font-family: var(--pd-font-b);
-    padding: 100px 24px 140px;
-    box-sizing: border-box;
-    min-height: 100vh;
-  }
-
-  #pd-{{ section.id }} *,
-  #pd-{{ section.id }} *::before,
-  #pd-{{ section.id }} *::after { box-sizing: border-box; }
-
-  .pd-wrap-{{ section.id }} {
-    max-width: 720px;
-    margin: 0 auto;
-  }
-
-  .pd-eyebrow-{{ section.id }} {
-    font-family: var(--pd-font-h);
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--pd-muted);
-    margin: 0 0 12px;
-  }
-
-  .pd-title-{{ section.id }} {
-    font-family: var(--pd-font-h);
-    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    line-height: 1.1;
-    margin: 0 0 8px;
-  }
-
-  .pd-meta-{{ section.id }} {
-    font-family: var(--pd-font-mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    color: var(--pd-muted);
-    margin: 0 0 48px;
-    text-transform: uppercase;
-  }
-
-  .pd-divider-{{ section.id }} {
-    height: 1px;
-    background: var(--pd-hairline);
-    margin: 0 0 40px;
-    border: none;
-  }
-
-  /* Prose container — auto-styles whatever the page editor outputs */
-  .pd-prose-{{ section.id }} {
-    font-family: var(--pd-font-b);
-    font-size: 15px;
-    line-height: 1.75;
-    color: var(--pd-fg);
-  }
-  .pd-prose-{{ section.id }} h1,
-  .pd-prose-{{ section.id }} h2,
-  .pd-prose-{{ section.id }} h3,
-  .pd-prose-{{ section.id }} h4 {
-    font-family: var(--pd-font-h);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin: 40px 0 16px;
-    line-height: 1.2;
-  }
-  .pd-prose-{{ section.id }} h2 { font-size: 16px; }
-  .pd-prose-{{ section.id }} h3 { font-size: 13px; color: var(--pd-muted); }
-  .pd-prose-{{ section.id }} h4 { font-size: 12px; letter-spacing: 0.08em; }
-  .pd-prose-{{ section.id }} p  { margin: 0 0 1.2em; }
-  .pd-prose-{{ section.id }} ul,
-  .pd-prose-{{ section.id }} ol {
-    padding-left: 1.4em;
-    margin: 0 0 1.4em;
-  }
-  .pd-prose-{{ section.id }} li { margin-bottom: 0.4em; }
-  .pd-prose-{{ section.id }} a {
-    color: var(--pd-fg);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-  .pd-prose-{{ section.id }} a:hover { color: var(--pd-accent); }
-  .pd-prose-{{ section.id }} strong { font-weight: 700; }
-  .pd-prose-{{ section.id }} em { font-style: italic; }
-  .pd-prose-{{ section.id }} hr {
-    border: none;
-    border-top: 1px solid var(--pd-hairline);
-    margin: 32px 0;
-  }
-  .pd-prose-{{ section.id }} blockquote {
-    border-left: 2px solid var(--pd-fg);
-    padding-left: 20px;
-    margin: 24px 0;
-    font-style: italic;
-    color: var(--pd-muted);
-  }
-  .pd-prose-{{ section.id }} code {
-    font-family: var(--pd-font-mono);
-    font-size: 13px;
-    background: rgba(0,0,0,0.05);
-    padding: 1px 4px;
-  }
-  .pd-prose-{{ section.id }} table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 24px 0;
-    font-size: 13px;
-  }
-  .pd-prose-{{ section.id }} th,
-  .pd-prose-{{ section.id }} td {
-    border: 1px solid var(--pd-hairline);
-    padding: 8px 12px;
-    text-align: left;
-  }
-  .pd-prose-{{ section.id }} th {
-    background: rgba(0,0,0,0.03);
-    font-family: var(--pd-font-h);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 0.06em;
-  }
-
-  @media screen and (max-width: 900px) {
-    #pd-{{ section.id }} { padding: 80px 20px 120px; }
-  }
-
-  /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
-  .pd-prose-{{ section.id }} img { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
-{% endstyle %}
-
 <div id="pd-{{ section.id }}">
-  <div class="pd-wrap-{{ section.id }}">
 
+  <header class="dz-head">
     {%- if section.settings.eyebrow != blank -%}
-      <div class="pd-eyebrow-{{ section.id }}">{{ section.settings.eyebrow }}</div>
+      <p class="dz-head__eyebrow">{{ section.settings.eyebrow }}</p>
     {%- endif -%}
 
     {%- if section.settings.show_title -%}
-      <h1 class="pd-title-{{ section.id }}">{{ page.title }}</h1>
+      <h1 class="dz-head__title">{{ page.title }}</h1>
     {%- endif -%}
 
     {%- if section.settings.show_updated_date and page.updated_at != blank -%}
-      <p class="pd-meta-{{ section.id }}">
+      <p class="dz-head__meta">
         {{ section.settings.updated_label | default: 'Last updated' }} {{ page.updated_at | date: '%b %-d, %Y' }}
       </p>
     {%- endif -%}
+  </header>
 
-    {%- if section.settings.show_divider -%}
-      <hr class="pd-divider-{{ section.id }}">
-    {%- endif -%}
-
-    <div class="pd-prose-{{ section.id }}">
+  <div class="dz-body">
+    <div class="dz-prose">
       {{ page.content }}
     </div>
-
   </div>
+
 </div>
 
 {% schema %}
@@ -200,38 +40,13 @@
   "name": "Becane document",
   "settings": [
     { "type": "header", "content": "Header" },
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow / category label", "default": "LEGAL" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "LEGAL" },
     { "type": "checkbox", "id": "show_title", "label": "Show page title", "default": true },
-    { "type": "checkbox", "id": "show_updated_date", "label": "Show last updated date", "default": true },
-    { "type": "text", "id": "updated_label", "label": "Updated date label", "default": "LAST UPDATED" },
-    { "type": "checkbox", "id": "show_divider", "label": "Show divider line below header", "default": true },
-
-    { "type": "header", "content": "Colors" },
-    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
-    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
-    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
-    { "type": "color", "id": "hairline_color", "label": "Hairline / dividers", "default": "#d8d8d8" },
-    { "type": "color", "id": "accent_color", "label": "Accent (link hover)", "default": "#ef5000" },
-
-    { "type": "header", "content": "Typography" },
-    {
-      "type": "radio",
-      "id": "font_preset",
-      "label": "Font preset",
-      "options": [
-        { "value": "helvetica", "label": "Match site typography (recommended)" },
-        { "value": "custom", "label": "Custom fonts" }
-      ],
-      "default": "helvetica"
-    },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" }
+    { "type": "checkbox", "id": "show_updated_date", "label": "Show last-updated date", "default": true },
+    { "type": "text", "id": "updated_label", "label": "Updated label", "default": "LAST UPDATED" }
   ],
   "presets": [
-    {
-      "name": "Becane document",
-      "category": "Page"
-    }
+    { "name": "Becane document", "category": "Page" }
   ]
 }
 {% endschema %}
