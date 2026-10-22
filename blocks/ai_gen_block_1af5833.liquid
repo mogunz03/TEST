@@ -20,7 +20,7 @@
   .ai-minimal-homepage-{{ ai_gen_id }} {
     background-color: #ffffff;
     color: #000000;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-body--family);
     line-height: 1.4;
   }
 
@@ -37,7 +37,7 @@
   }
 
   .ai-minimal-homepage-section-title-{{ ai_gen_id }} {
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: var(--font-heading--family);
     font-weight: 600;
     font-size: {{ block.settings.section_title_size }}px;
     text-transform: uppercase;
@@ -141,7 +141,7 @@
   }
 
   .ai-minimal-editorial-title-{{ ai_gen_id }} {
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: var(--font-heading--family);
     font-size: {{ block.settings.editorial_title_size }}px;
     font-weight: 600;
     text-transform: uppercase;
@@ -158,7 +158,7 @@
   }
 
   .ai-minimal-editorial-link-{{ ai_gen_id }} {
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: var(--font-heading--family);
     font-size: {{ block.settings.editorial_link_size }}px;
     font-weight: 600;
     text-transform: uppercase;

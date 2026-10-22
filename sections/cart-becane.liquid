@@ -12,8 +12,8 @@
     assign heading_font = section.settings.heading_font.family | append: ', ' | append: section.settings.heading_font.fallback_families
     assign body_font    = section.settings.body_font.family    | append: ', ' | append: section.settings.body_font.fallback_families
   else
-    assign heading_font = '-apple-system, BlinkMacSystemFont, "Helvetica Neue", "Akzidenz-Grotesk", Helvetica, Arial, sans-serif'
-    assign body_font    = heading_font
+    assign heading_font = settings.type_heading_font.family | append: ', ' | append: settings.type_heading_font.fallback_families
+    assign body_font    = settings.type_body_font.family | append: ', ' | append: settings.type_body_font.fallback_families
   endif
 %}
 
@@ -540,7 +540,7 @@
       "id": "font_preset",
       "label": "Font preset",
       "options": [
-        { "value": "helvetica", "label": "Helvetica / Akzidenz (system)" },
+        { "value": "helvetica", "label": "Match site typography (recommended)" },
         { "value": "custom", "label": "Custom fonts" }
       ],
       "default": "helvetica"
