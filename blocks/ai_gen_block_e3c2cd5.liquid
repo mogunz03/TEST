@@ -1,0 +1,711 @@
+{% doc %}
+  @prompt
+    That's an excellent point. I'll make the final prompt as concise and direct as possible while ensuring the AI has all the necessary code to make the changes in one pass.
+    
+    Here is the revised, word-efficient prompt for the Shopify AI assistant.
+    
+    -----
+    
+    ## 💡 Concise Shopify AI Prompt for Marquee Fix
+    
+    Copy and paste the **entire content** below into your Shopify AI chat assistant.
+    
+    ### The Prompt
+    
+    ```
+    I need to implement a continuous scrolling marquee carousel for product recommendations. Since I can't create new files, perform these direct file edits to resolve syntax and theme-check errors:
+    
+    ### 1. MODIFY sections/product-recommendations.liquid
+    
+    A. **Replace the Product Card Loop:** Find the existing `{% for product in products ... %}` loop and entirely replace its content with this code. This fixes the `theme-checkCaptureOnContentForBlock` error by using a direct render call:
+    
+    [START LOOP REPLACEMENT]
+    {% for product in products limit: section.settings.max_products %}
+      {% capture product_card_html %}
+        <div class="resource-list__item">
+          {% render 'product-card', product: product, section_id: section.id %} 
+        </div>
+      {% endcapture %}
+      
+      {% liquid
+        assign slides = slides | append: product_card_html | append: ''
+        assign list_items = list_items | append: product_card_html
+      %}
+    {% endfor %}
+    [END LOOP REPLACEMENT]
+    
+    B. **Add Marquee CSS:** Add this CSS to the bottom of the `{% stylesheet %}` block:
+    
+    [START MARQUEE CSS]
+      /* --- MARQUEE CSS --- */
+      @keyframes scroll-left {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); } 
+      }
+    
+      .resource-list.resource-list__carousel {
+        overflow: hidden;
+        width: 100%;
+        display: block; 
+      }
+    
+      .resource-list__carousel :is(.carousel__slide-list, .slider__slide-list) { 
+        display: flex;
+        white-space: nowrap; 
+        animation: scroll-left 60s linear infinite; 
+        width: 200%; 
+        will-change: transform;
+        padding: 0 !important; 
+        margin: 0 !important;
+      }
+    
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-marquee-carousel-{{ ai_gen_id }} {
+    width: 100%;
+    overflow: hidden;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.section_padding }}px 0;
+  }
+
+  .ai-marquee-carousel-header-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: {{ block.settings.header_spacing }}px;
+    padding: 0 20px;
+  }
+
+  .ai-marquee-carousel-title-{{ ai_gen_id }} {
+    color: {{ block.settings.title_color }};
+    font-size: {{ block.settings.title_size }}px;
+    margin: 0 0 10px;
+    text-transform: {{ block.settings.title_case }};
+  }
+
+  .ai-marquee-carousel-subtitle-{{ ai_gen_id }} {
+    color: {{ block.settings.subtitle_color }};
+    font-size: {{ block.settings.subtitle_size }}px;
+    margin: 0;
+  }
+
+  .ai-marquee-carousel-track-{{ ai_gen_id }} {
+    display: flex;
+    width: 200%;
+    animation: ai-marquee-scroll-{{ ai_gen_id }} {{ block.settings.animation_speed }}s linear infinite;
+    will-change: transform;
+  }
+
+  .ai-marquee-carousel-track-{{ ai_gen_id }}:hover {
+    animation-play-state: {{ block.settings.pause_on_hover | default: true }};
+  }
+
+  .ai-marquee-carousel-item-{{ ai_gen_id }} {
+    flex: 0 0 {{ block.settings.card_width }}px;
+    margin-right: {{ block.settings.card_spacing }}px;
+    background-color: {{ block.settings.card_background }};
+    border-radius: {{ block.settings.card_border_radius }}px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    border: {{ block.settings.card_border_width }}px solid {{ block.settings.card_border_color }};
+  }
+
+  .ai-marquee-carousel-item-{{ ai_gen_id }}:hover {
+    transform: {{ block.settings.hover_effect }};
+  }
+
+  .ai-marquee-carousel-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: {{ block.settings.image_height }}px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ai-marquee-carousel-image-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: {{ block.settings.image_height }}px;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .ai-marquee-carousel-image-placeholder-{{ ai_gen_id }} svg {
+    width: 60%;
+    height: 60%;
+    opacity: 0.3;
+  }
+
+  .ai-marquee-carousel-content-{{ ai_gen_id }} {
+    padding: {{ block.settings.card_padding }}px;
+  }
+
+  .ai-marquee-carousel-product-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.product_title_size }}px;
+    color: {{ block.settings.product_title_color }};
+    margin: 0 0 8px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    display: block;
+  }
+
+  .ai-marquee-carousel-product-title-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.product_title_hover_color }};
+  }
+
+  .ai-marquee-carousel-product-price-{{ ai_gen_id }} {
+    font-size: {{ block.settings.product_price_size }}px;
+    color: {{ block.settings.product_price_color }};
+    margin: 0 0 12px;
+    font-weight: 500;
+  }
+
+  .ai-marquee-carousel-product-price-compare-{{ ai_gen_id }} {
+    text-decoration: line-through;
+    opacity: 0.7;
+    margin-right: 8px;
+  }
+
+  .ai-marquee-carousel-product-badge-{{ ai_gen_id }} {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: {{ block.settings.badge_background }};
+    color: {{ block.settings.badge_text_color }};
+    padding: 4px 8px;
+    border-radius: {{ block.settings.badge_border_radius }}px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .ai-marquee-carousel-quick-add-{{ ai_gen_id }} {
+    background-color: {{ block.settings.button_background }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    padding: 8px 16px;
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-transform: uppercase;
+  }
+
+  .ai-marquee-carousel-quick-add-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_background }};
+    color: {{ block.settings.button_hover_text_color }};
+  }
+
+  .ai-marquee-carousel-empty-state-{{ ai_gen_id }} {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+  }
+
+  @keyframes ai-marquee-scroll-{{ ai_gen_id }} {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-marquee-carousel-item-{{ ai_gen_id }} {
+      flex: 0 0 {{ block.settings.card_width | times: 0.8 }}px;
+    }
+    
+    .ai-marquee-carousel-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.8 }}px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-marquee-carousel-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {% if block.settings.title != blank or block.settings.subtitle != blank %}
+    <div class="ai-marquee-carousel-header-{{ ai_gen_id }}">
+      {% if block.settings.title != blank %}
+        <h2 class="ai-marquee-carousel-title-{{ ai_gen_id }}">{{ block.settings.title }}</h2>
+      {% endif %}
+      {% if block.settings.subtitle != blank %}
+        <p class="ai-marquee-carousel-subtitle-{{ ai_gen_id }}">{{ block.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if block.settings.product_list != blank %}
+    <div class="ai-marquee-carousel-track-{{ ai_gen_id }}">
+      {% comment %} First set of products {% endcomment %}
+      {% for product in block.settings.product_list %}
+        <div class="ai-marquee-carousel-item-{{ ai_gen_id }}">
+          <div style="position: relative;">
+            {% if product.featured_image %}
+              <img
+                src="{{ product.featured_image | image_url: width: block.settings.card_width | times: 2 }}"
+                alt="{{ product.featured_image.alt | escape }}"
+                class="ai-marquee-carousel-image-{{ ai_gen_id }}"
+                loading="lazy"
+                width="{{ block.settings.card_width }}"
+                height="{{ block.settings.image_height }}"
+              >
+            {% else %}
+              <div class="ai-marquee-carousel-image-placeholder-{{ ai_gen_id }}">
+                {{ 'product-1' | placeholder_svg_tag }}
+              </div>
+            {% endif %}
+
+            {% if product.compare_at_price > product.price %}
+              <div class="ai-marquee-carousel-product-badge-{{ ai_gen_id }}">
+                Sale
+              </div>
+            {% elsif product.available == false %}
+              <div class="ai-marquee-carousel-product-badge-{{ ai_gen_id }}">
+                Sold Out
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="ai-marquee-carousel-content-{{ ai_gen_id }}">
+            <a href="{{ product.url }}" class="ai-marquee-carousel-product-title-{{ ai_gen_id }}">
+              {{ product.title }}
+            </a>
+
+            <div class="ai-marquee-carousel-product-price-{{ ai_gen_id }}">
+              {% if product.compare_at_price > product.price %}
+                <span class="ai-marquee-carousel-product-price-compare-{{ ai_gen_id }}">
+                  {{ product.compare_at_price | money }}
+                </span>
+              {% endif %}
+              {{ product.price | money }}
+            </div>
+
+            {% if block.settings.show_quick_add and product.available %}
+              <button 
+                class="ai-marquee-carousel-quick-add-{{ ai_gen_id }}"
+                onclick="window.location.href='{{ product.url }}'"
+              >
+                {{ block.settings.quick_add_text }}
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+
+      {% comment %} Duplicate set for seamless loop {% endcomment %}
+      {% for product in block.settings.product_list %}
+        <div class="ai-marquee-carousel-item-{{ ai_gen_id }}">
+          <div style="position: relative;">
+            {% if product.featured_image %}
+              <img
+                src="{{ product.featured_image | image_url: width: block.settings.card_width | times: 2 }}"
+                alt="{{ product.featured_image.alt | escape }}"
+                class="ai-marquee-carousel-image-{{ ai_gen_id }}"
+                loading="lazy"
+                width="{{ block.settings.card_width }}"
+                height="{{ block.settings.image_height }}"
+              >
+            {% else %}
+              <div class="ai-marquee-carousel-image-placeholder-{{ ai_gen_id }}">
+                {{ 'product-1' | placeholder_svg_tag }}
+              </div>
+            {% endif %}
+
+            {% if product.compare_at_price > product.price %}
+              <div class="ai-marquee-carousel-product-badge-{{ ai_gen_id }}">
+                Sale
+              </div>
+            {% elsif product.available == false %}
+              <div class="ai-marquee-carousel-product-badge-{{ ai_gen_id }}">
+                Sold Out
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="ai-marquee-carousel-content-{{ ai_gen_id }}">
+            <a href="{{ product.url }}" class="ai-marquee-carousel-product-title-{{ ai_gen_id }}">
+              {{ product.title }}
+            </a>
+
+            <div class="ai-marquee-carousel-product-price-{{ ai_gen_id }}">
+              {% if product.compare_at_price > product.price %}
+                <span class="ai-marquee-carousel-product-price-compare-{{ ai_gen_id }}">
+                  {{ product.compare_at_price | money }}
+                </span>
+              {% endif %}
+              {{ product.price | money }}
+            </div>
+
+            {% if block.settings.show_quick_add and product.available %}
+              <button 
+                class="ai-marquee-carousel-quick-add-{{ ai_gen_id }}"
+                onclick="window.location.href='{{ product.url }}'"
+              >
+                {{ block.settings.quick_add_text }}
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="ai-marquee-carousel-empty-state-{{ ai_gen_id }}">
+      <p>Select products to display in the marquee carousel</p>
+    </div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Marquee product carousel",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Featured Products"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Discover our latest collection"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products",
+      "limit": 12
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "card_width",
+      "min": 200,
+      "max": 400,
+      "step": 20,
+      "unit": "px",
+      "label": "Card width",
+      "default": 280
+    },
+    {
+      "type": "range",
+      "id": "card_spacing",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Card spacing",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "image_height",
+      "min": 200,
+      "max": 400,
+      "step": 20,
+      "unit": "px",
+      "label": "Image height",
+      "default": 280
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "min": 10,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Card padding",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "min": 20,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "label": "Section padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "header_spacing",
+      "min": 20,
+      "max": 80,
+      "step": 10,
+      "unit": "px",
+      "label": "Header spacing",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Animation"
+    },
+    {
+      "type": "range",
+      "id": "animation_speed",
+      "min": 20,
+      "max": 120,
+      "step": 10,
+      "unit": "s",
+      "label": "Animation speed",
+      "default": 60
+    },
+    {
+      "type": "select",
+      "id": "hover_effect",
+      "label": "Hover effect",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "scale(1.05)",
+          "label": "Scale up"
+        },
+        {
+          "value": "translateY(-5px)",
+          "label": "Lift up"
+        }
+      ],
+      "default": "scale(1.05)"
+    },
+    {
+      "type": "checkbox",
+      "id": "pause_on_hover",
+      "label": "Pause on hover",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "subtitle_color",
+      "label": "Subtitle color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Card border color",
+      "default": "#e6e6e6"
+    },
+    {
+      "type": "color",
+      "id": "product_title_color",
+      "label": "Product title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "product_title_hover_color",
+      "label": "Product title hover color",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "product_price_color",
+      "label": "Product price color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Title size",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "subtitle_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Subtitle size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "product_title_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Product title size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "product_price_size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Product price size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "title_case",
+      "label": "Title case",
+      "options": [
+        {
+          "value": "none",
+          "label": "Default"
+        },
+        {
+          "value": "uppercase",
+          "label": "Uppercase"
+        }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "header",
+      "content": "Card style"
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Card border radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "card_border_width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "label": "Card border width",
+      "default": 1
+    },
+    {
+      "type": "header",
+      "content": "Badges"
+    },
+    {
+      "type": "color",
+      "id": "badge_background",
+      "label": "Badge background",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "badge_text_color",
+      "label": "Badge text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "badge_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Badge border radius",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Quick add button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_quick_add",
+      "label": "Show quick add button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "quick_add_text",
+      "label": "Quick add text",
+      "default": "View Product"
+    },
+    {
+      "type": "color",
+      "id": "button_background",
+      "label": "Button background",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_background",
+      "label": "Button hover background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_text_color",
+      "label": "Button hover text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Button border radius",
+      "default": 4
+    }
+  ],
+  "presets": [
+    {
+      "name": "Marquee product carousel"
+    }
+  ]
+}
+{% endschema %}

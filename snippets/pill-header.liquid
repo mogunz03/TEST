@@ -1,0 +1,485 @@
+{% comment %}
+  Pill Header — global floating navigation
+  Usage: place {% render 'pill-header' %} inside <body> in layout/theme.liquid
+  File location: snippets/pill-header.liquid
+
+  All visual settings are hard-coded to match your original block defaults.
+  Change the variables in the {% liquid %} block below to retheme without
+  touching CSS.
+{% endcomment %}
+
+{% liquid
+  assign menu_handle           = 'main-menu'
+  assign max_width             = 800
+  assign vertical_padding      = 12
+  assign horizontal_padding    = 25
+  assign bar_background        = 'rgba(255, 255, 255, 0.2)'
+  assign border_color          = 'rgba(255, 255, 255, 0.3)'
+  assign blur_strength         = 10
+  assign blur_strength_expanded = 25
+  assign shadow_color          = 'rgba(0, 0, 0, 0.08)'
+  assign shadow_color_expanded = 'rgba(0, 0, 0, 0.12)'
+
+  assign icon_size             = 20
+  assign icon_color            = '#000000'
+  assign icon_hover_color      = '#ef5000'
+  assign cart_badge_bg         = '#ef5000'
+  assign cart_badge_text       = '#ffffff'
+
+  assign logo_height           = 30
+  assign logo_height_mobile    = 24
+  assign logo_text_size        = 18
+  assign logo_text_size_mobile = 14
+  assign logo_text_color       = '#000000'
+
+  assign search_placeholder    = 'Search...'
+  assign search_font_size      = 16
+  assign search_text_color     = '#000000'
+  assign search_placeholder_color = '#999999'
+
+  assign nav_top_spacing       = 20
+  assign nav_font_size         = 24
+  assign nav_font_size_mobile  = 18
+  assign nav_text_color        = '#000000'
+  assign nav_hover_color       = '#ef5000'
+  assign nav_spacing           = 15
+  assign nav_item_padding      = 10
+  assign submenu_font_size     = 16
+  assign submenu_font_size_mobile = 14
+  assign submenu_text_color    = '#666666'
+  assign submenu_hover_color   = '#ef5000'
+  assign submenu_item_padding  = 10
+%}
+
+{% style %}
+  .ai-pill-header {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483000;
+    width: 100%;
+    max-width: {{ max_width }}px;
+    padding: 0 20px;
+    display: block;
+    pointer-events: none;
+    isolation: isolate;
+  }
+
+  .ai-pill-header__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: {{ bar_background }};
+    backdrop-filter: blur({{ blur_strength }}px);
+    -webkit-backdrop-filter: blur({{ blur_strength }}px);
+    border: 1px solid {{ border_color }};
+    border-radius: 10px;
+    padding: {{ vertical_padding }}px {{ horizontal_padding }}px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    pointer-events: auto;
+    box-shadow: 0 8px 32px {{ shadow_color }};
+  }
+
+  .ai-pill-header__bar.menu-active {
+    border-radius: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    backdrop-filter: blur({{ blur_strength_expanded }}px);
+    -webkit-backdrop-filter: blur({{ blur_strength_expanded }}px);
+    box-shadow: 0 12px 48px {{ shadow_color_expanded }};
+  }
+
+  .ai-pill-header__bar.search-active { border-radius: 10px; }
+
+  .ai-pill-header__top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-shrink: 0;
+    gap: 15px;
+  }
+
+  .ai-pill-header__left-icons,
+  .ai-pill-header__right-icons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .ai-pill-header__icon {
+    width: {{ icon_size }}px;
+    height: {{ icon_size }}px;
+    cursor: pointer;
+    color: {{ icon_color }};
+    transition: color 0.3s ease;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    position: relative;
+  }
+
+  .ai-pill-header__icon:hover { color: {{ icon_hover_color }}; }
+
+  .ai-pill-header__icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ai-pill-header__cart-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: {{ cart_badge_bg }};
+    color: {{ cart_badge_text }};
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .ai-pill-header__menu-icon { position: relative; }
+
+  .ai-pill-header__menu-icon svg {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .ai-pill-header__menu-hamburger { opacity: 1; transform: rotate(0deg); }
+  .ai-pill-header__menu-close-svg { opacity: 0; transform: rotate(90deg); }
+
+  .ai-pill-header__bar.menu-active .ai-pill-header__menu-hamburger {
+    opacity: 0;
+    transform: rotate(-90deg);
+  }
+  .ai-pill-header__bar.menu-active .ai-pill-header__menu-close-svg {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+
+  .ai-pill-header__logo {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .ai-pill-header__logo-image {
+    max-height: {{ logo_height }}px;
+    width: auto;
+  }
+
+  .ai-pill-header__logo-text {
+    font-size: {{ logo_text_size }}px;
+    font-weight: 600;
+    color: {{ logo_text_color }};
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ai-pill-header__search-input {
+    display: none;
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: {{ search_font_size }}px;
+    color: {{ search_text_color }};
+    outline: none;
+    padding: 0 20px;
+  }
+
+  .ai-pill-header__search-input::placeholder { color: {{ search_placeholder_color }}; }
+
+  .ai-pill-header__bar.search-active .ai-pill-header__search-input { display: block; }
+
+  .ai-pill-header__bar.search-active .ai-pill-header__logo,
+  .ai-pill-header__bar.search-active .ai-pill-header__left-icons,
+  .ai-pill-header__bar.search-active .ai-pill-header__right-icons { display: none; }
+
+  .ai-pill-header__close-search { display: none; }
+  .ai-pill-header__bar.search-active .ai-pill-header__close-search { display: block; }
+
+  .ai-pill-header__nav {
+    width: 100%;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-top: 0;
+  }
+
+  .ai-pill-header__bar.menu-active .ai-pill-header__nav {
+    max-height: 60vh;
+    opacity: 1;
+    padding-top: {{ nav_top_spacing }}px;
+    overflow-y: auto;
+  }
+
+  .ai-pill-header__nav-item { margin-bottom: {{ nav_spacing }}px; }
+
+  .ai-pill-header__nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: {{ nav_font_size }}px;
+    color: {{ nav_text_color }};
+    text-decoration: none;
+    padding: {{ nav_item_padding }}px 0;
+    transition: color 0.3s ease;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ai-pill-header__nav-link:hover { color: {{ nav_hover_color }}; }
+
+  .ai-pill-header__chevron {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-pill-header__chevron svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ai-pill-header__nav-item.expanded .ai-pill-header__chevron { transform: rotate(180deg); }
+
+  .ai-pill-header__submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-left: 20px;
+  }
+
+  .ai-pill-header__nav-item.expanded .ai-pill-header__submenu { max-height: 1000px; }
+
+  .ai-pill-header__submenu-link {
+    display: block;
+    font-size: {{ submenu_font_size }}px;
+    color: {{ submenu_text_color }};
+    text-decoration: none;
+    padding: {{ submenu_item_padding }}px 0;
+    transition: color 0.3s ease;
+  }
+
+  .ai-pill-header__submenu-link:hover { color: {{ submenu_hover_color }}; }
+
+  @media screen and (max-width: 749px) {
+    .ai-pill-header__logo-image { max-height: {{ logo_height_mobile }}px; }
+    .ai-pill-header__logo-text  { font-size: {{ logo_text_size_mobile }}px; }
+    .ai-pill-header__nav-link   { font-size: {{ nav_font_size_mobile }}px; }
+    .ai-pill-header__submenu-link { font-size: {{ submenu_font_size_mobile }}px; }
+  }
+{% endstyle %}
+
+<pill-header class="ai-pill-header">
+  <div class="ai-pill-header__bar">
+    <div class="ai-pill-header__top-row">
+      <div class="ai-pill-header__left-icons">
+        <button class="ai-pill-header__icon ai-pill-header__search-icon" aria-label="Search" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </button>
+
+        <a href="{{ routes.account_url }}" class="ai-pill-header__icon" aria-label="Account">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </a>
+
+        {%- if localization.available_currencies.size > 1 -%}
+          <form method="post" action="{{ routes.cart_url }}/update" id="ph-currency-form" accept-charset="UTF-8" class="ai-pill-header__currency-form" enctype="application/x-www-form-urlencoded">
+            <input type="hidden" name="_method" value="put">
+            <select name="currency" aria-label="Currency" onchange="this.form.submit()" style="background:transparent;border:none;color:{{ icon_color }};font-size:12px;cursor:pointer;outline:none;">
+              {%- for currency in localization.available_currencies -%}
+                <option value="{{ currency.iso_code }}" {% if currency.iso_code == cart.currency.iso_code %}selected{% endif %}>{{ currency.iso_code }}</option>
+              {%- endfor -%}
+            </select>
+          </form>
+        {%- endif -%}
+      </div>
+
+      <button class="ai-pill-header__icon ai-pill-header__close-search" aria-label="Close search" type="button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <input
+        type="search"
+        name="q"
+        class="ai-pill-header__search-input"
+        placeholder="{{ search_placeholder }}"
+        aria-label="Search"
+        data-search-action="{{ routes.search_url }}"
+      >
+
+      <div class="ai-pill-header__logo">
+        <a href="{{ routes.root_url }}" style="display:flex;align-items:center;text-decoration:none;">
+          {% if settings.logo != blank %}
+            <img
+              src="{{ settings.logo | image_url: width: 400 }}"
+              alt="{{ shop.name | escape }}"
+              class="ai-pill-header__logo-image"
+              loading="lazy"
+              width="200" height="60"
+            >
+          {% else %}
+            <span class="ai-pill-header__logo-text">{{ shop.name }}</span>
+          {% endif %}
+        </a>
+      </div>
+
+      <div class="ai-pill-header__right-icons">
+        <a href="{{ routes.cart_url }}" class="ai-pill-header__icon" aria-label="Cart">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          {% if cart.item_count > 0 %}
+            <span class="ai-pill-header__cart-count">{{ cart.item_count }}</span>
+          {% endif %}
+        </a>
+
+        <button class="ai-pill-header__icon ai-pill-header__menu-icon" aria-label="Menu" aria-expanded="false" type="button">
+          <svg class="ai-pill-header__menu-hamburger" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6"  x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <svg class="ai-pill-header__menu-close-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6"  y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <nav class="ai-pill-header__nav" aria-label="Main">
+      {% for link in linklists[menu_handle].links %}
+        <div class="ai-pill-header__nav-item" data-has-children="{% if link.links.size > 0 %}1{% else %}0{% endif %}">
+          {% if link.links.size > 0 %}
+            <div class="ai-pill-header__nav-link" role="button" tabindex="0">
+              <span>{{ link.title }}</span>
+              <span class="ai-pill-header__chevron">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="ai-pill-header__submenu">
+              {% for child_link in link.links %}
+                <a href="{{ child_link.url }}" class="ai-pill-header__submenu-link">{{ child_link.title }}</a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <a href="{{ link.url }}" class="ai-pill-header__nav-link">
+              <span>{{ link.title }}</span>
+            </a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </nav>
+
+  </div>
+</pill-header>
+
+<script>
+  (function () {
+    if (customElements.get('pill-header')) return;
+
+    class PillHeader extends HTMLElement {
+      connectedCallback() {
+        this.bar             = this.querySelector('.ai-pill-header__bar');
+        this.searchIcon      = this.querySelector('.ai-pill-header__search-icon');
+        this.closeSearchIcon = this.querySelector('.ai-pill-header__close-search');
+        this.searchInput     = this.querySelector('.ai-pill-header__search-input');
+        this.menuIcon        = this.querySelector('.ai-pill-header__menu-icon');
+        this.navItems        = this.querySelectorAll('.ai-pill-header__nav-item');
+
+        this.bind();
+      }
+
+      bind() {
+        this.searchIcon      && this.searchIcon.addEventListener('click', () => this.openSearch());
+        this.closeSearchIcon && this.closeSearchIcon.addEventListener('click', () => this.closeSearch());
+        this.menuIcon        && this.menuIcon.addEventListener('click', () => this.toggleMenu());
+
+        this.navItems.forEach(item => {
+          if (item.getAttribute('data-has-children') === '1') {
+            const link = item.querySelector('.ai-pill-header__nav-link');
+            link.addEventListener('click', (e) => {
+              e.preventDefault();
+              item.classList.toggle('expanded');
+            });
+            link.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                item.classList.toggle('expanded');
+              }
+            });
+          }
+        });
+
+        if (this.searchInput) {
+          this.searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const q = this.searchInput.value.trim();
+              if (q) {
+                const base = this.searchInput.getAttribute('data-search-action') || '/search';
+                window.location.href = base + '?q=' + encodeURIComponent(q);
+              }
+            }
+          });
+        }
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') { this.closeSearch(); this.closeMenu(); }
+        });
+      }
+
+      openSearch()  { this.closeMenu(); this.bar.classList.add('search-active'); this.searchInput.focus(); }
+      closeSearch() { this.bar.classList.remove('search-active'); this.searchInput.value = ''; }
+      toggleMenu()  { this.bar.classList.contains('menu-active') ? this.closeMenu() : this.openMenu(); }
+      openMenu()    { this.closeSearch(); this.bar.classList.add('menu-active'); this.menuIcon.setAttribute('aria-expanded', 'true'); }
+      closeMenu()   {
+        this.bar.classList.remove('menu-active');
+        this.menuIcon && this.menuIcon.setAttribute('aria-expanded', 'false');
+        this.navItems.forEach(item => item.classList.remove('expanded'));
+      }
+    }
+
+    customElements.define('pill-header', PillHeader);
+  })();
+</script>

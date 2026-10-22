@@ -1,0 +1,941 @@
+{% doc %}
+  @prompt
+    Design a highly professional and photography-focused Shopify homepage that functions as a sophisticated gallery and lookbook, modeled after the aesthetic and grid layout of unveil.fr.
+    
+    Focus on these key elements:
+    
+    Grid Layout: Implement a structured, minimalist grid system for showcasing product photography and campaign imagery (like the 'Projects' section). Each product/photo block must be large and clean.
+    
+    Typography & Aesthetic: Use a refined, modern sans-serif typeface for all elements. Maintain a clean, monochromatic background (white or light gray) to maximize the visual impact of the photos.
+    
+    Minimal Interaction: Utilize subtle hover effects that reveal minimal project/product titles and categories, keeping the focus purely on the visuals until interaction.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-photo-gallery-{{ ai_gen_id }} {
+    width: 100%;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.section_padding }}px 0;
+  }
+
+  .ai-photo-gallery-container-{{ ai_gen_id }} {
+    max-width: {{ block.settings.max_width }}px;
+    margin: 0 auto;
+    padding: 0 {{ block.settings.horizontal_padding }}px;
+  }
+
+  .ai-photo-gallery-header-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: {{ block.settings.grid_gap | times: 2 }}px;
+  }
+
+  .ai-photo-gallery-title-{{ ai_gen_id }} {
+    font-family: {{ settings.type_heading_font.family }}, {{ settings.type_heading_font.fallback_families }};
+    font-weight: {{ settings.type_heading_font.weight }};
+    font-size: {{ block.settings.title_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 {{ block.settings.grid_gap }}px;
+    letter-spacing: {{ block.settings.title_letter_spacing }}px;
+    text-transform: {{ block.settings.title_case }};
+    line-height: 1.2;
+  }
+
+  .ai-photo-gallery-subtitle-{{ ai_gen_id }} {
+    font-family: {{ settings.type_body_font.family }}, {{ settings.type_body_font.fallback_families }};
+    font-weight: {{ settings.type_body_font.weight }};
+    font-size: {{ block.settings.subtitle_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0;
+    opacity: 0.8;
+    line-height: 1.4;
+  }
+
+  .ai-photo-gallery-grid-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat({{ block.settings.columns_desktop }}, 1fr);
+    gap: {{ block.settings.grid_gap }}px;
+    margin-top: {{ block.settings.grid_gap | times: 2 }}px;
+  }
+
+  .ai-photo-gallery-item-{{ ai_gen_id }} {
+    position: relative;
+    overflow: hidden;
+    background-color: {{ block.settings.item_background }};
+    aspect-ratio: {{ block.settings.aspect_ratio }};
+    cursor: pointer;
+    transition: all {{ block.settings.hover_duration }}ms ease;
+  }
+
+  .ai-photo-gallery-item-{{ ai_gen_id }}:hover {
+    transform: translateY(-{{ block.settings.hover_lift }}px);
+  }
+
+  .ai-photo-gallery-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all {{ block.settings.hover_duration }}ms ease;
+  }
+
+  .ai-photo-gallery-item-{{ ai_gen_id }}:hover .ai-photo-gallery-image-{{ ai_gen_id }} {
+    transform: scale({{ block.settings.image_scale | divided_by: 100.0 | plus: 1 }});
+  }
+
+  .ai-photo-gallery-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 60%,
+      {{ block.settings.overlay_color }} 100%
+    );
+    opacity: 0;
+    transition: opacity {{ block.settings.hover_duration }}ms ease;
+    display: flex;
+    align-items: flex-end;
+    padding: {{ block.settings.overlay_padding }}px;
+  }
+
+  .ai-photo-gallery-item-{{ ai_gen_id }}:hover .ai-photo-gallery-overlay-{{ ai_gen_id }} {
+    opacity: 1;
+  }
+
+  .ai-photo-gallery-content-{{ ai_gen_id }} {
+    color: {{ block.settings.overlay_text_color }};
+    width: 100%;
+  }
+
+  .ai-photo-gallery-item-title-{{ ai_gen_id }} {
+    font-family: {{ settings.type_heading_font.family }}, {{ settings.type_heading_font.fallback_families }};
+    font-weight: {{ settings.type_heading_font.weight }};
+    font-size: {{ block.settings.item_title_size }}px;
+    margin: 0 0 {{ block.settings.overlay_padding | divided_by: 4 }}px;
+    text-transform: {{ block.settings.item_title_case }};
+    letter-spacing: {{ block.settings.item_title_letter_spacing }}px;
+    line-height: 1.3;
+  }
+
+  .ai-photo-gallery-item-category-{{ ai_gen_id }} {
+    font-family: {{ settings.type_body_font.family }}, {{ settings.type_body_font.fallback_families }};
+    font-weight: {{ settings.type_body_font.weight }};
+    font-size: {{ block.settings.item_category_size }}px;
+    margin: 0;
+    opacity: 0.9;
+    text-transform: {{ block.settings.item_category_case }};
+    letter-spacing: {{ block.settings.item_category_letter_spacing }}px;
+    line-height: 1.2;
+  }
+
+  .ai-photo-gallery-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: {{ block.settings.placeholder_bg }};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .ai-photo-gallery-placeholder-{{ ai_gen_id }} svg {
+    width: 60px;
+    height: 60px;
+    opacity: 0.3;
+    color: {{ block.settings.text_color }};
+  }
+
+  .ai-photo-gallery-empty-state-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: {{ block.settings.overlay_padding }}px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: {{ settings.type_body_font.family }}, {{ settings.type_body_font.fallback_families }};
+    font-size: 12px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.6;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 990px) {
+    .ai-photo-gallery-grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat({{ block.settings.columns_tablet }}, 1fr);
+    }
+
+    .ai-photo-gallery-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.8 }}px;
+    }
+
+    .ai-photo-gallery-container-{{ ai_gen_id }} {
+      padding: 0 {{ block.settings.horizontal_padding | times: 0.75 }}px;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-photo-gallery-grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat({{ block.settings.columns_mobile }}, 1fr);
+      gap: {{ block.settings.grid_gap | times: 0.75 }}px;
+    }
+
+    .ai-photo-gallery-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.7 }}px;
+    }
+
+    .ai-photo-gallery-subtitle-{{ ai_gen_id }} {
+      font-size: {{ block.settings.subtitle_size | times: 0.9 }}px;
+    }
+
+    .ai-photo-gallery-container-{{ ai_gen_id }} {
+      padding: 0 {{ block.settings.horizontal_padding | times: 0.5 }}px;
+    }
+
+    .ai-photo-gallery-{{ ai_gen_id }} {
+      padding: {{ block.settings.section_padding | times: 0.75 }}px 0;
+    }
+
+    .ai-photo-gallery-item-{{ ai_gen_id }}:hover {
+      transform: none;
+    }
+
+    .ai-photo-gallery-overlay-{{ ai_gen_id }} {
+      opacity: 1;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        transparent 50%,
+        {{ block.settings.overlay_color }} 100%
+      );
+    }
+  }
+{% endstyle %}
+
+<photography-gallery-{{ ai_gen_id }}
+  class="ai-photo-gallery-{{ ai_gen_id }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="ai-photo-gallery-container-{{ ai_gen_id }}">
+    {% if block.settings.title != blank or block.settings.subtitle != blank %}
+      <div class="ai-photo-gallery-header-{{ ai_gen_id }}">
+        {% if block.settings.title != blank %}
+          <h2 class="ai-photo-gallery-title-{{ ai_gen_id }}">{{ block.settings.title }}</h2>
+        {% endif %}
+        {% if block.settings.subtitle != blank %}
+          <p class="ai-photo-gallery-subtitle-{{ ai_gen_id }}">{{ block.settings.subtitle }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="ai-photo-gallery-grid-{{ ai_gen_id }}">
+      {% for i in (1..12) %}
+        {% liquid
+          assign image_key = 'image_' | append: i
+          assign title_key = 'title_' | append: i
+          assign category_key = 'category_' | append: i
+          assign link_key = 'link_' | append: i
+
+          assign item_image = block.settings[image_key]
+          assign item_title = block.settings[title_key]
+          assign item_category = block.settings[category_key]
+          assign item_link = block.settings[link_key]
+        %}
+
+        {% if item_image != blank or item_title != blank or item_category != blank %}
+          <div class="ai-photo-gallery-item-{{ ai_gen_id }}" data-item="{{ i }}">
+            {% if item_link != blank %}
+              <a href="{{ item_link }}" style="display: block; width: 100%; height: 100%;">
+            {% endif %}
+
+            {% if item_image != blank %}
+              <img
+                src="{{ item_image | image_url: width: 800 }}"
+                alt="{{ item_image.alt | default: item_title | escape }}"
+                class="ai-photo-gallery-image-{{ ai_gen_id }}"
+                loading="lazy"
+                width="{{ item_image.width }}"
+                height="{{ item_image.height }}"
+              >
+            {% else %}
+              <div class="ai-photo-gallery-placeholder-{{ ai_gen_id }}">
+                {{ 'image' | placeholder_svg_tag }}
+                <div class="ai-photo-gallery-empty-state-{{ ai_gen_id }}">
+                  Add image {{ i }}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if item_title != blank or item_category != blank %}
+              <div class="ai-photo-gallery-overlay-{{ ai_gen_id }}">
+                <div class="ai-photo-gallery-content-{{ ai_gen_id }}">
+                  {% if item_title != blank %}
+                    <h3 class="ai-photo-gallery-item-title-{{ ai_gen_id }}">{{ item_title }}</h3>
+                  {% endif %}
+                  {% if item_category != blank %}
+                    <p class="ai-photo-gallery-item-category-{{ ai_gen_id }}">{{ item_category }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+
+            {% if item_link != blank %}
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</photography-gallery-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class PhotographyGallery{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.items = this.querySelectorAll('.ai-photo-gallery-item-{{ ai_gen_id }}');
+        this.setupEventListeners();
+      }
+
+      setupEventListeners() {
+        this.items.forEach((item) => {
+          item.addEventListener('mouseenter', () => {
+            this.handleItemHover(item, true);
+          });
+
+          item.addEventListener('mouseleave', () => {
+            this.handleItemHover(item, false);
+          });
+
+          item.addEventListener('click', (e) => {
+            const link = item.querySelector('a');
+            if (link && !e.target.closest('a')) {
+              e.preventDefault();
+              link.click();
+            }
+          });
+        });
+      }
+
+      handleItemHover(item, isHovering) {
+        const overlay = item.querySelector('.ai-photo-gallery-overlay-{{ ai_gen_id }}');
+        const image = item.querySelector('.ai-photo-gallery-image-{{ ai_gen_id }}');
+        const scaleValue = isHovering ? ({{ block.settings.image_scale }} / 100 + 1) : 1;
+        
+        if (overlay) {
+          overlay.style.opacity = isHovering ? '1' : '0';
+        }
+        
+        if (image) {
+          image.style.transform = `scale(${scaleValue})`;
+        }
+      }
+    }
+
+    customElements.define('photography-gallery-{{ ai_gen_id }}', PhotographyGallery{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Photography gallery",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Gallery content"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Gallery title",
+      "default": "Projects"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Gallery subtitle",
+      "default": "Explore our latest photography work and creative projects"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "columns_desktop",
+      "label": "Columns on desktop",
+      "options": [
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" }
+      ],
+      "default": "3"
+    },
+    {
+      "type": "select",
+      "id": "columns_tablet",
+      "label": "Columns on tablet",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Columns on mobile",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "select",
+      "id": "aspect_ratio",
+      "label": "Image aspect ratio",
+      "options": [
+        { "value": "1/1", "label": "Square (1:1)" },
+        { "value": "4/3", "label": "Landscape (4:3)" },
+        { "value": "3/4", "label": "Portrait (3:4)" },
+        { "value": "16/9", "label": "Widescreen (16:9)" },
+        { "value": "2/3", "label": "Portrait (2:3)" }
+      ],
+      "default": "4/3"
+    },
+    {
+      "type": "range",
+      "id": "grid_gap",
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "unit": "px",
+      "label": "Grid gap",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "min": 800,
+      "max": 1600,
+      "step": 50,
+      "unit": "px",
+      "label": "Maximum width",
+      "default": 1200
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Section padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "horizontal_padding",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Horizontal padding",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 20,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "label": "Title size",
+      "default": 48
+    },
+    {
+      "type": "select",
+      "id": "title_case",
+      "label": "Title case",
+      "options": [
+        { "value": "none", "label": "Default" },
+        { "value": "uppercase", "label": "Uppercase" },
+        { "value": "lowercase", "label": "Lowercase" }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "title_letter_spacing",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "unit": "px",
+      "label": "Title letter spacing",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "subtitle_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Subtitle size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "item_title_size",
+      "min": 12,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Item title size",
+      "default": 18
+    },
+    {
+      "type": "select",
+      "id": "item_title_case",
+      "label": "Item title case",
+      "options": [
+        { "value": "none", "label": "Default" },
+        { "value": "uppercase", "label": "Uppercase" },
+        { "value": "lowercase", "label": "Lowercase" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "item_title_letter_spacing",
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "unit": "px",
+      "label": "Item title letter spacing",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "item_category_size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Category size",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "item_category_case",
+      "label": "Category case",
+      "options": [
+        { "value": "none", "label": "Default" },
+        { "value": "uppercase", "label": "Uppercase" },
+        { "value": "lowercase", "label": "Lowercase" }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "item_category_letter_spacing",
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "unit": "px",
+      "label": "Category letter spacing",
+      "default": 1
+    },
+    {
+      "type": "header",
+      "content": "Hover effects"
+    },
+    {
+      "type": "range",
+      "id": "hover_duration",
+      "min": 200,
+      "max": 800,
+      "step": 50,
+      "unit": "ms",
+      "label": "Hover duration",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "hover_lift",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Hover lift",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "image_scale",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "%",
+      "label": "Image scale on hover",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "overlay_padding",
+      "min": 15,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "label": "Overlay padding",
+      "default": 25
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "item_background",
+      "label": "Item background",
+      "default": "#f8f8f8"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Overlay color",
+      "default": "rgba(0,0,0,0.7)"
+    },
+    {
+      "type": "color",
+      "id": "overlay_text_color",
+      "label": "Overlay text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "placeholder_bg",
+      "label": "Placeholder background",
+      "default": "#f4f4f4"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_1",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_1",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_1",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_1",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_2",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_2",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_2",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_2",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 3"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_3",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_3",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_3",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_3",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 4"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_4",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_4",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_4",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_4",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 5"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_5",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_5",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_5",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_5",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 6"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_6",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_6",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_6",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_6",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 7"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_7",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_7",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_7",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_7",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 8"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_8",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_8",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_8",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_8",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 9"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_9",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_9",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_9",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_9",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 10"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_10",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_10",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_10",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_10",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 11"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_11",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_11",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_11",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_11",
+      "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Gallery item 12"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_12",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title_12",
+      "label": "Title"
+    },
+    {
+      "type": "text",
+      "id": "category_12",
+      "label": "Category"
+    },
+    {
+      "type": "url",
+      "id": "link_12",
+      "label": "Link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Photography gallery"
+    }
+  ]
+}
+{% endschema %}

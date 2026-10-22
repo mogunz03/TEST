@@ -1,0 +1,558 @@
+{% comment %}
+  Becane Cart
+  File: sections/cart-becane.liquid
+
+  Two states:
+    EMPTY  — quiet "YOUR CART IS EMPTY" + single CTA to shop
+    FILLED — line items list + subtotal + checkout button
+{% endcomment %}
+
+{% liquid
+  if section.settings.font_preset == 'custom'
+    assign heading_font = section.settings.heading_font.family | append: ', ' | append: section.settings.heading_font.fallback_families
+    assign body_font    = section.settings.body_font.family    | append: ', ' | append: section.settings.body_font.fallback_families
+  else
+    assign heading_font = '-apple-system, BlinkMacSystemFont, "Helvetica Neue", "Akzidenz-Grotesk", Helvetica, Arial, sans-serif'
+    assign body_font    = heading_font
+  endif
+%}
+
+{%- if section.settings.font_preset == 'custom' -%}
+  {{ section.settings.heading_font | font_face: font_display: 'swap' }}
+  {{ section.settings.body_font    | font_face: font_display: 'swap' }}
+{%- endif -%}
+
+{% style %}
+  #bcart-{{ section.id }} {
+    --bc-bg: {{ section.settings.bg_color }};
+    --bc-fg: {{ section.settings.text_color }};
+    --bc-muted: {{ section.settings.muted_color }};
+    --bc-hairline: {{ section.settings.hairline_color }};
+    --bc-accent: {{ section.settings.accent_color }};
+    --bc-btn-bg: {{ section.settings.btn_bg }};
+    --bc-btn-fg: {{ section.settings.btn_fg }};
+    --bc-font-h: {{ heading_font }};
+    --bc-font-b: {{ body_font }};
+    --bc-font-mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, monospace;
+
+    background: var(--bc-bg);
+    color: var(--bc-fg);
+    font-family: var(--bc-font-b);
+    min-height: 80vh;
+    padding: 100px 24px 140px;
+    box-sizing: border-box;
+  }
+
+  #bcart-{{ section.id }} *,
+  #bcart-{{ section.id }} *::before,
+  #bcart-{{ section.id }} *::after { box-sizing: border-box; }
+
+  /* EMPTY STATE */
+  .bcart__empty-{{ section.id }} {
+    max-width: 600px;
+    margin: 80px auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+  .bcart__empty-eyebrow-{{ section.id }} {
+    font-family: var(--bc-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--bc-muted);
+    text-transform: uppercase;
+  }
+  .bcart__empty-title-{{ section.id }} {
+    font-family: var(--bc-font-h);
+    font-size: clamp(22px, 2.2vw, 32px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .bcart__btn-{{ section.id }} {
+    display: inline-block;
+    background: var(--bc-btn-bg);
+    color: var(--bc-btn-fg);
+    border: none;
+    padding: 14px 28px;
+    font-family: var(--bc-font-h);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .bcart__btn-{{ section.id }}:hover { opacity: 0.85; }
+
+  /* FILLED STATE */
+  .bcart__wrap-{{ section.id }} {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .bcart__header-{{ section.id }} {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    gap: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--bc-hairline);
+  }
+  .bcart__title-{{ section.id }} {
+    font-family: var(--bc-font-h);
+    font-size: clamp(22px, 2.2vw, 32px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .bcart__count-{{ section.id }} {
+    font-family: var(--bc-font-mono);
+    font-size: 11px;
+    color: var(--bc-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .bcart__items-{{ section.id }} {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bcart__item-{{ section.id }} {
+    display: grid;
+    grid-template-columns: 120px 1fr auto auto;
+    gap: 24px;
+    align-items: start;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--bc-hairline);
+  }
+  .bcart__item-{{ section.id }}:last-child { border-bottom: none; }
+
+  .bcart__item-img-{{ section.id }} {
+    width: 120px;
+    aspect-ratio: 1 / 1;
+    background: #eee;
+    overflow: hidden;
+  }
+  .bcart__item-img-{{ section.id }} img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .bcart__item-info-{{ section.id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .bcart__item-title-{{ section.id }} {
+    font-family: var(--bc-font-h);
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 0;
+  }
+  .bcart__item-title-{{ section.id }} a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .bcart__item-title-{{ section.id }} a:hover { color: var(--bc-accent); }
+  .bcart__item-variant-{{ section.id }} {
+    font-family: var(--bc-font-mono);
+    font-size: 11px;
+    color: var(--bc-muted);
+    letter-spacing: 0.04em;
+  }
+  .bcart__item-remove-{{ section.id }} {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 8px;
+    font-family: var(--bc-font-h);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bc-muted);
+    cursor: pointer;
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    align-self: start;
+  }
+  .bcart__item-remove-{{ section.id }}:hover { color: var(--bc-accent); }
+
+  .bcart__qty-{{ section.id }} {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--bc-hairline);
+  }
+  .bcart__qty-{{ section.id }} button {
+    background: none; border: none;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    color: var(--bc-fg);
+    font-family: var(--bc-font-mono);
+    font-size: 14px;
+    padding: 0;
+  }
+  .bcart__qty-{{ section.id }} button:hover { background: rgba(0,0,0,0.04); }
+  .bcart__qty-{{ section.id }} input {
+    width: 36px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-family: var(--bc-font-mono);
+    font-size: 12px;
+    color: var(--bc-fg);
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .bcart__qty-{{ section.id }} input::-webkit-outer-spin-button,
+  .bcart__qty-{{ section.id }} input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+
+  .bcart__item-price-{{ section.id }} {
+    font-family: var(--bc-font-mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-align: right;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  /* SUMMARY */
+  .bcart__summary-{{ section.id }} {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--bc-hairline);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 24px;
+  }
+  .bcart__totals-{{ section.id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 280px;
+  }
+  .bcart__row-{{ section.id }} {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    font-family: var(--bc-font-h);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .bcart__row-{{ section.id }} .label { color: var(--bc-muted); font-weight: 500; }
+  .bcart__row-{{ section.id }} .value { font-family: var(--bc-font-mono); }
+  .bcart__row-{{ section.id }}.is-total .label,
+  .bcart__row-{{ section.id }}.is-total .value {
+    font-size: 13px;
+    color: var(--bc-fg);
+    font-weight: 700;
+  }
+
+  .bcart__note-{{ section.id }} {
+    width: 100%;
+    margin: 24px 0;
+  }
+  .bcart__note-{{ section.id }} label {
+    display: block;
+    font-family: var(--bc-font-h);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bc-muted);
+    margin-bottom: 8px;
+  }
+  .bcart__note-{{ section.id }} textarea {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--bc-hairline);
+    color: var(--bc-fg);
+    font-family: var(--bc-font-b);
+    font-size: 13px;
+    padding: 12px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+  }
+  .bcart__note-{{ section.id }} textarea:focus { border-color: var(--bc-fg); }
+
+  .bcart__checkout-{{ section.id }} {
+    display: block;
+    width: 100%;
+    max-width: 380px;
+    background: var(--bc-btn-bg);
+    color: var(--bc-btn-fg);
+    border: none;
+    padding: 16px;
+    font-family: var(--bc-font-h);
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .bcart__checkout-{{ section.id }}:hover { opacity: 0.85; }
+  .bcart__continue-{{ section.id }} {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: var(--bc-font-h);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bc-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+  }
+  .bcart__continue-{{ section.id }}:hover { color: var(--bc-fg); }
+
+  @media screen and (max-width: 900px) {
+    #bcart-{{ section.id }} { padding: 60px 16px 100px; }
+    .bcart__item-{{ section.id }} {
+      grid-template-columns: 80px 1fr;
+      gap: 16px;
+    }
+    .bcart__item-img-{{ section.id }} { width: 80px; }
+    .bcart__qty-{{ section.id }} { grid-column: 2; }
+    .bcart__item-price-{{ section.id }} { grid-column: 2; text-align: left; }
+    .bcart__summary-{{ section.id }} { align-items: stretch; }
+    .bcart__totals-{{ section.id }} { width: 100%; }
+    .bcart__checkout-{{ section.id }},
+    .bcart__continue-{{ section.id }} { max-width: 100%; }
+  }
+{% endstyle %}
+
+<div id="bcart-{{ section.id }}">
+
+  {%- if cart.item_count == 0 -%}
+
+    <div class="bcart__empty-{{ section.id }}">
+      {%- if section.settings.empty_eyebrow != blank -%}
+        <div class="bcart__empty-eyebrow-{{ section.id }}">{{ section.settings.empty_eyebrow }}</div>
+      {%- endif -%}
+      <h1 class="bcart__empty-title-{{ section.id }}">{{ section.settings.empty_title }}</h1>
+      <a class="bcart__btn-{{ section.id }}" href="{{ section.settings.empty_button_link | default: routes.all_products_collection_url }}">
+        {{ section.settings.empty_button_label }}
+      </a>
+    </div>
+
+  {%- else -%}
+
+    <div class="bcart__wrap-{{ section.id }}">
+
+      <div class="bcart__header-{{ section.id }}">
+        <h1 class="bcart__title-{{ section.id }}">{{ section.settings.title }}</h1>
+        <span class="bcart__count-{{ section.id }}">{{ cart.item_count }} {% if cart.item_count == 1 %}ITEM{% else %}ITEMS{% endif %}</span>
+      </div>
+
+      <form action="{{ routes.cart_url }}" method="post" novalidate id="bcart-form-{{ section.id }}">
+        <div class="bcart__items-{{ section.id }}">
+          {%- for item in cart.items -%}
+            <div class="bcart__item-{{ section.id }}" data-bcart-item data-bcart-key="{{ item.key }}">
+              <a class="bcart__item-img-{{ section.id }}" href="{{ item.url }}">
+                {%- if item.image -%}
+                  <img src="{{ item.image | image_url: width: 240 }}" alt="{{ item.title | escape }}" loading="lazy" width="120" height="120">
+                {%- endif -%}
+              </a>
+
+              <div class="bcart__item-info-{{ section.id }}">
+                <h3 class="bcart__item-title-{{ section.id }}">
+                  <a href="{{ item.url }}">{{ item.product.title }}</a>
+                </h3>
+                {%- unless item.product.has_only_default_variant -%}
+                  <div class="bcart__item-variant-{{ section.id }}">{{ item.variant.title }}</div>
+                {%- endunless -%}
+                {%- for option in item.properties -%}
+                  {%- assign property_first_char = option.first | slice: 0 -%}
+                  {%- if option.last != blank and property_first_char != '_' -%}
+                    <div class="bcart__item-variant-{{ section.id }}">{{ option.first }}: {{ option.last }}</div>
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- if item.selling_plan_allocation -%}
+                  <div class="bcart__item-variant-{{ section.id }}">{{ item.selling_plan_allocation.selling_plan.name }}</div>
+                {%- endif -%}
+                <button type="button" class="bcart__item-remove-{{ section.id }}" data-bcart-remove>{{ section.settings.remove_label }}</button>
+              </div>
+
+              <div class="bcart__qty-{{ section.id }}">
+                <button type="button" data-bcart-qty-dec aria-label="Decrease">−</button>
+                <input type="number"
+                       name="updates[]"
+                       value="{{ item.quantity }}"
+                       min="0"
+                       data-bcart-qty
+                       aria-label="Quantity">
+                <button type="button" data-bcart-qty-inc aria-label="Increase">+</button>
+              </div>
+
+              <div class="bcart__item-price-{{ section.id }}">
+                {{ item.final_line_price | money_without_trailing_zeros }}
+                {%- if item.original_line_price != item.final_line_price -%}
+                  <div style="text-decoration: line-through; opacity: 0.5; font-size: 10px; margin-top: 2px;">{{ item.original_line_price | money_without_trailing_zeros }}</div>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+
+        <div class="bcart__summary-{{ section.id }}">
+          {%- if section.settings.show_note -%}
+            <div class="bcart__note-{{ section.id }}">
+              <label for="cart-note-{{ section.id }}">{{ section.settings.note_label }}</label>
+              <textarea name="note" id="cart-note-{{ section.id }}" placeholder="{{ section.settings.note_placeholder }}">{{ cart.note }}</textarea>
+            </div>
+          {%- endif -%}
+
+          <div class="bcart__totals-{{ section.id }}">
+            {%- if cart.total_discount > 0 -%}
+              <div class="bcart__row-{{ section.id }}">
+                <span class="label">{{ section.settings.discount_label }}</span>
+                <span class="value">−{{ cart.total_discount | money_without_trailing_zeros }}</span>
+              </div>
+            {%- endif -%}
+            <div class="bcart__row-{{ section.id }} is-total">
+              <span class="label">{{ section.settings.subtotal_label }}</span>
+              <span class="value">{{ cart.total_price | money_without_trailing_zeros }}</span>
+            </div>
+            <div class="bcart__row-{{ section.id }}">
+              <span class="label" style="font-size: 10px; text-transform: none; letter-spacing: 0.04em;">{{ section.settings.tax_note }}</span>
+            </div>
+          </div>
+
+          <button type="submit" name="checkout" class="bcart__checkout-{{ section.id }}">
+            {{ section.settings.checkout_label }}
+          </button>
+          <a class="bcart__continue-{{ section.id }}" href="{{ routes.all_products_collection_url }}">{{ section.settings.continue_label }}</a>
+        </div>
+      </form>
+
+    </div>
+
+  {%- endif -%}
+</div>
+
+<script>
+  (function () {
+    const root = document.getElementById('bcart-{{ section.id }}');
+    if (!root) return;
+    const form = root.querySelector('form');
+    if (!form) return;
+
+    function getKey(itemEl) { return itemEl.dataset.bcartKey; }
+
+    async function updateQty(key, qty) {
+      try {
+        const res = await fetch('{{ routes.cart_change_url }}.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: key, quantity: qty })
+        });
+        if (!res.ok) throw new Error('Cart update failed');
+        // Reload to reflect new totals + line item state
+        window.location.reload();
+      } catch (err) {
+        console.error('[bcart]', err);
+        window.location.reload();
+      }
+    }
+
+    root.querySelectorAll('[data-bcart-item]').forEach(itemEl => {
+      const key   = getKey(itemEl);
+      const input = itemEl.querySelector('[data-bcart-qty]');
+      const dec   = itemEl.querySelector('[data-bcart-qty-dec]');
+      const inc   = itemEl.querySelector('[data-bcart-qty-inc]');
+      const rm    = itemEl.querySelector('[data-bcart-remove]');
+
+      dec && dec.addEventListener('click', () => {
+        const v = Math.max(0, parseInt(input.value, 10) - 1);
+        input.value = v;
+        updateQty(key, v);
+      });
+      inc && inc.addEventListener('click', () => {
+        const v = parseInt(input.value, 10) + 1;
+        input.value = v;
+        updateQty(key, v);
+      });
+      input && input.addEventListener('change', () => {
+        const v = Math.max(0, parseInt(input.value, 10) || 0);
+        input.value = v;
+        updateQty(key, v);
+      });
+      rm && rm.addEventListener('click', () => updateQty(key, 0));
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Becane cart",
+  "settings": [
+    { "type": "header", "content": "Cart titles" },
+    { "type": "text", "id": "title", "label": "Cart page title", "default": "YOUR CART" },
+    { "type": "text", "id": "subtotal_label", "label": "Subtotal label", "default": "SUBTOTAL" },
+    { "type": "text", "id": "discount_label", "label": "Discount label", "default": "DISCOUNT" },
+    { "type": "text", "id": "tax_note", "label": "Tax/shipping note", "default": "Taxes and shipping calculated at checkout" },
+    { "type": "text", "id": "checkout_label", "label": "Checkout button label", "default": "CHECKOUT" },
+    { "type": "text", "id": "continue_label", "label": "Continue shopping link label", "default": "Continue shopping" },
+    { "type": "text", "id": "remove_label", "label": "Remove item label", "default": "REMOVE" },
+
+    { "type": "header", "content": "Empty state" },
+    { "type": "text", "id": "empty_eyebrow", "label": "Eyebrow", "default": "CART" },
+    { "type": "text", "id": "empty_title", "label": "Title", "default": "YOUR CART IS EMPTY" },
+    { "type": "text", "id": "empty_button_label", "label": "Button label", "default": "START SHOPPING" },
+    { "type": "url", "id": "empty_button_link", "label": "Button link (defaults to /collections/all)" },
+
+    { "type": "header", "content": "Cart note (optional)" },
+    { "type": "checkbox", "id": "show_note", "label": "Show order note field", "default": true },
+    { "type": "text", "id": "note_label", "label": "Note label", "default": "ORDER NOTE" },
+    { "type": "text", "id": "note_placeholder", "label": "Note placeholder", "default": "Special instructions for your order..." },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
+    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
+    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
+    { "type": "color", "id": "hairline_color", "label": "Hairline / dividers", "default": "#d8d8d8" },
+    { "type": "color", "id": "accent_color", "label": "Accent (link hover)", "default": "#ef5000" },
+    { "type": "color", "id": "btn_bg", "label": "Button background", "default": "#000000" },
+    { "type": "color", "id": "btn_fg", "label": "Button text", "default": "#ffffff" },
+
+    { "type": "header", "content": "Typography" },
+    {
+      "type": "radio",
+      "id": "font_preset",
+      "label": "Font preset",
+      "options": [
+        { "value": "helvetica", "label": "Helvetica / Akzidenz (system)" },
+        { "value": "custom", "label": "Custom fonts" }
+      ],
+      "default": "helvetica"
+    },
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" }
+  ],
+  "presets": [
+    {
+      "name": "Becane cart",
+      "category": "Cart"
+    }
+  ]
+}
+{% endschema %}

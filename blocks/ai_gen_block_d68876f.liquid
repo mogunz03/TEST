@@ -1,0 +1,519 @@
+{% doc %}
+  @prompt
+    Create a pill-shaped header navigation block that can be added to the global header section and appears on every page. The pill header should have a floating, centered pill/capsule shape with a frosted glass or dark background, containing navigation links. It should match a premium minimalist streetwear aesthetic with clean typography, subtle blur effect, and smooth hover states. The block should be responsive and sit above or within the existing header.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-pill-nav-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    position: relative;
+    z-index: 100;
+    padding: {{ block.settings.vertical_spacing }}px 0;
+  }
+
+  .ai-pill-nav-container-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .ai-pill-nav-wrapper-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    gap: {{ block.settings.link_spacing }}px;
+    padding: {{ block.settings.pill_padding_vertical }}px {{ block.settings.pill_padding_horizontal }}px;
+    background: {{ block.settings.background_color }};
+    backdrop-filter: blur({{ block.settings.blur_strength }}px);
+    -webkit-backdrop-filter: blur({{ block.settings.blur_strength }}px);
+    border-radius: {{ block.settings.pill_border_radius }}px;
+    border: {{ block.settings.border_width }}px solid {{ block.settings.border_color }};
+    box-shadow: {{ block.settings.shadow_horizontal }}px {{ block.settings.shadow_vertical }}px {{ block.settings.shadow_blur }}px {{ block.settings.shadow_color }};
+  }
+
+  .ai-pill-nav-link-{{ ai_gen_id }} {
+    font-family: {{ block.settings.font_family }}, sans-serif;
+    font-size: {{ block.settings.font_size }}px;
+    font-weight: {{ block.settings.font_weight }};
+    color: {{ block.settings.text_color }};
+    text-decoration: none;
+    text-transform: {{ block.settings.text_transform }};
+    letter-spacing: {{ block.settings.letter_spacing }}px;
+    padding: {{ block.settings.link_padding_vertical }}px {{ block.settings.link_padding_horizontal }}px;
+    border-radius: {{ block.settings.link_border_radius }}px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .ai-pill-nav-link-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.text_hover_color }};
+    background: {{ block.settings.link_hover_background }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-pill-nav-wrapper-{{ ai_gen_id }} {
+      gap: {{ block.settings.link_spacing_mobile }}px;
+      padding: {{ block.settings.pill_padding_vertical_mobile }}px {{ block.settings.pill_padding_horizontal_mobile }}px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .ai-pill-nav-wrapper-{{ ai_gen_id }}::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ai-pill-nav-link-{{ ai_gen_id }} {
+      font-size: {{ block.settings.font_size_mobile }}px;
+      padding: {{ block.settings.link_padding_vertical_mobile }}px {{ block.settings.link_padding_horizontal_mobile }}px;
+    }
+  }
+{% endstyle %}
+
+<pill-nav-{{ ai_gen_id }} class="ai-pill-nav-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-pill-nav-container-{{ ai_gen_id }}">
+    <nav class="ai-pill-nav-wrapper-{{ ai_gen_id }}" role="navigation" aria-label="Main navigation">
+      {% if block.settings.link_1_text != blank %}
+        <a href="{{ block.settings.link_1_url }}" class="ai-pill-nav-link-{{ ai_gen_id }}">
+          {{ block.settings.link_1_text }}
+        </a>
+      {% endif %}
+      {% if block.settings.link_2_text != blank %}
+        <a href="{{ block.settings.link_2_url }}" class="ai-pill-nav-link-{{ ai_gen_id }}">
+          {{ block.settings.link_2_text }}
+        </a>
+      {% endif %}
+      {% if block.settings.link_3_text != blank %}
+        <a href="{{ block.settings.link_3_url }}" class="ai-pill-nav-link-{{ ai_gen_id }}">
+          {{ block.settings.link_3_text }}
+        </a>
+      {% endif %}
+      {% if block.settings.link_4_text != blank %}
+        <a href="{{ block.settings.link_4_url }}" class="ai-pill-nav-link-{{ ai_gen_id }}">
+          {{ block.settings.link_4_text }}
+        </a>
+      {% endif %}
+      {% if block.settings.link_5_text != blank %}
+        <a href="{{ block.settings.link_5_url }}" class="ai-pill-nav-link-{{ ai_gen_id }}">
+          {{ block.settings.link_5_text }}
+        </a>
+      {% endif %}
+      {% if block.settings.link_6_text != blank %}
+        <a href="{{ block.settings.link_6_url }}" class="ai-pill-nav-link-{{ ai_gen_id }}">
+          {{ block.settings.link_6_text }}
+        </a>
+      {% endif %}
+    </nav>
+  </div>
+</pill-nav-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class PillNav{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.highlightActiveLink();
+      }
+
+      highlightActiveLink() {
+        const currentPath = window.location.pathname;
+        const links = this.querySelectorAll('.ai-pill-nav-link-{{ ai_gen_id }}');
+        
+        links.forEach(link => {
+          const linkPath = new URL(link.href).pathname;
+          if (linkPath === currentPath) {
+            link.style.color = '{{ block.settings.text_hover_color }}';
+            link.style.background = '{{ block.settings.link_hover_background }}';
+          }
+        });
+      }
+    }
+
+    customElements.define('pill-nav-{{ ai_gen_id }}', PillNav{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Pill navigation",
+  "tag": null,
+  "class": "pill-navigation-block",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Navigation links"
+    },
+    {
+      "type": "text",
+      "id": "link_1_text",
+      "label": "Link 1 text",
+      "default": "Shop"
+    },
+    {
+      "type": "url",
+      "id": "link_1_url",
+      "label": "Link 1 URL"
+    },
+    {
+      "type": "text",
+      "id": "link_2_text",
+      "label": "Link 2 text",
+      "default": "Collections"
+    },
+    {
+      "type": "url",
+      "id": "link_2_url",
+      "label": "Link 2 URL"
+    },
+    {
+      "type": "text",
+      "id": "link_3_text",
+      "label": "Link 3 text",
+      "default": "About"
+    },
+    {
+      "type": "url",
+      "id": "link_3_url",
+      "label": "Link 3 URL"
+    },
+    {
+      "type": "text",
+      "id": "link_4_text",
+      "label": "Link 4 text"
+    },
+    {
+      "type": "url",
+      "id": "link_4_url",
+      "label": "Link 4 URL"
+    },
+    {
+      "type": "text",
+      "id": "link_5_text",
+      "label": "Link 5 text"
+    },
+    {
+      "type": "url",
+      "id": "link_5_url",
+      "label": "Link 5 URL"
+    },
+    {
+      "type": "text",
+      "id": "link_6_text",
+      "label": "Link 6 text"
+    },
+    {
+      "type": "url",
+      "id": "link_6_url",
+      "label": "Link 6 URL"
+    },
+    {
+      "type": "header",
+      "content": "Pill style"
+    },
+    {
+      "type": "range",
+      "id": "vertical_spacing",
+      "label": "Vertical spacing",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "rgba(0, 0, 0, 0.6)"
+    },
+    {
+      "type": "range",
+      "id": "blur_strength",
+      "label": "Blur strength",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "pill_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "pill_padding_vertical",
+      "label": "Vertical padding",
+      "min": 4,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "pill_padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 10,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "default": "rgba(255, 255, 255, 0.2)"
+    },
+    {
+      "type": "header",
+      "content": "Shadow"
+    },
+    {
+      "type": "range",
+      "id": "shadow_horizontal",
+      "label": "Horizontal offset",
+      "min": -20,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "shadow_vertical",
+      "label": "Vertical offset",
+      "min": -20,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "shadow_blur",
+      "label": "Blur",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color",
+      "id": "shadow_color",
+      "label": "Shadow color",
+      "default": "rgba(0, 0, 0, 0.15)"
+    },
+    {
+      "type": "header",
+      "content": "Link style"
+    },
+    {
+      "type": "range",
+      "id": "link_spacing",
+      "label": "Link spacing",
+      "min": 4,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "font_family",
+      "label": "Font",
+      "options": [
+        { "value": "Montserrat", "label": "Montserrat" },
+        { "value": "Barlow Condensed", "label": "Barlow Condensed" },
+        { "value": "Arial", "label": "Arial" },
+        { "value": "Helvetica", "label": "Helvetica" }
+      ],
+      "default": "Barlow Condensed"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "font_weight",
+      "label": "Font weight",
+      "options": [
+        { "value": "400", "label": "Normal" },
+        { "value": "500", "label": "Medium" },
+        { "value": "600", "label": "Semi-bold" },
+        { "value": "700", "label": "Bold" }
+      ],
+      "default": "600"
+    },
+    {
+      "type": "select",
+      "id": "text_transform",
+      "label": "Text transform",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "uppercase", "label": "Uppercase" },
+        { "value": "lowercase", "label": "Lowercase" }
+      ],
+      "default": "uppercase"
+    },
+    {
+      "type": "range",
+      "id": "letter_spacing",
+      "label": "Letter spacing",
+      "min": 0,
+      "max": 4,
+      "step": 0.5,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_hover_color",
+      "label": "Hover text color",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "link_hover_background",
+      "label": "Hover background",
+      "default": "rgba(255, 255, 255, 0.1)"
+    },
+    {
+      "type": "range",
+      "id": "link_padding_vertical",
+      "label": "Link vertical padding",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "link_padding_horizontal",
+      "label": "Link horizontal padding",
+      "min": 4,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "link_border_radius",
+      "label": "Link border radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Mobile settings"
+    },
+    {
+      "type": "range",
+      "id": "font_size_mobile",
+      "label": "Font size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "link_spacing_mobile",
+      "label": "Link spacing",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "pill_padding_vertical_mobile",
+      "label": "Vertical padding",
+      "min": 4,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "pill_padding_horizontal_mobile",
+      "label": "Horizontal padding",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "link_padding_vertical_mobile",
+      "label": "Link vertical padding",
+      "min": 2,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "link_padding_horizontal_mobile",
+      "label": "Link horizontal padding",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "Pill navigation"
+    }
+  ]
+}
+{% endschema %}

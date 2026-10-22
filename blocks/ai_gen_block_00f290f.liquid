@@ -1,0 +1,288 @@
+{% doc %}
+  @prompt
+    the product marquee carousel is showing each product double, fix that to only display each items onces, without doing any other changes, change it to select products not collection, product card no shadow, full width, , only product name align left ,no price no button, 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-product-marquee-{{ ai_gen_id }} {
+    overflow: hidden;
+    width: 100%;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.section_padding }}px 0;
+  }
+
+  .ai-product-marquee-track-{{ ai_gen_id }} {
+    display: flex;
+    animation: ai-marquee-scroll-{{ ai_gen_id }} {{ block.settings.scroll_speed }}s linear infinite;
+    gap: {{ block.settings.product_gap }}px;
+  }
+
+  .ai-product-marquee-item-{{ ai_gen_id }} {
+    flex-shrink: 0;
+    width: {{ block.settings.product_width }}px;
+    background-color: {{ block.settings.card_background_color }};
+    border-radius: {{ block.settings.card_border_radius }}px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-product-marquee-item-{{ ai_gen_id }}:hover {
+    transform: translateY(-{{ block.settings.hover_lift }}px);
+  }
+
+  .ai-product-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: {{ block.settings.image_height }}px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ai-product-image-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: {{ block.settings.image_height }}px;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-product-image-placeholder-{{ ai_gen_id }} svg {
+    width: 60%;
+    height: 60%;
+    opacity: 0.3;
+  }
+
+  .ai-product-info-{{ ai_gen_id }} {
+    padding: {{ block.settings.card_padding }}px;
+  }
+
+  .ai-product-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_size }}px;
+    color: {{ block.settings.title_color }};
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+  }
+
+  .ai-product-title-{{ ai_gen_id }}:hover {
+    color: {{ block.settings.title_hover_color }};
+  }
+
+  @keyframes ai-marquee-scroll-{{ ai_gen_id }} {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(-100% - {{ block.settings.product_gap }}px));
+    }
+  }
+
+  .ai-product-marquee-track-{{ ai_gen_id }}:hover {
+    animation-play-state: paused;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-product-marquee-item-{{ ai_gen_id }} {
+      width: {{ block.settings.product_width | times: 0.8 }}px;
+    }
+
+    .ai-product-info-{{ ai_gen_id }} {
+      padding: {{ block.settings.card_padding | times: 0.8 }}px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-product-marquee-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {% assign selected_products = block.settings.products %}
+  
+  {% if selected_products.size > 0 %}
+    <div class="ai-product-marquee-track-{{ ai_gen_id }}">
+      {% for product in selected_products %}
+        <div class="ai-product-marquee-item-{{ ai_gen_id }}">
+          {% if product.featured_image %}
+            <img
+              src="{{ product.featured_image | image_url: width: 400 }}"
+              alt="{{ product.featured_image.alt | escape }}"
+              class="ai-product-image-{{ ai_gen_id }}"
+              loading="lazy"
+              width="400"
+              height="{{ block.settings.image_height }}"
+            >
+          {% else %}
+            <div class="ai-product-image-placeholder-{{ ai_gen_id }}">
+              {{ 'product-1' | placeholder_svg_tag }}
+            </div>
+          {% endif %}
+          
+          <div class="ai-product-info-{{ ai_gen_id }}">
+            <a href="{{ product.url }}" class="ai-product-title-{{ ai_gen_id }}">
+              {{ product.title }}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 40px; color: #666;">
+      Please select products to display in the marquee.
+    </div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Product marquee carousel",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Products"
+    },
+    {
+      "type": "product_list",
+      "id": "products",
+      "label": "Products",
+      "limit": 20
+    },
+    {
+      "type": "header",
+      "content": "Animation"
+    },
+    {
+      "type": "range",
+      "id": "scroll_speed",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "s",
+      "label": "Scroll speed",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "product_width",
+      "min": 200,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "label": "Product card width",
+      "default": 280
+    },
+    {
+      "type": "range",
+      "id": "product_gap",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Gap between products",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "image_height",
+      "min": 200,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "label": "Image height",
+      "default": 280
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Section padding",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Card style"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_background_color",
+      "label": "Card background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Card border radius",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "min": 10,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Card padding",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "hover_lift",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "label": "Hover lift effect",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Title size",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "title_hover_color",
+      "label": "Title hover color",
+      "default": "#ef5000"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product marquee carousel"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "product-becane",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

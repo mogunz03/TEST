@@ -1,0 +1,914 @@
+{% doc %}
+  @prompt
+    A magazine-style editorial layout
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-editorial-layout-{{ ai_gen_id }} {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: {{ block.settings.section_padding }}px 20px;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-editorial-container-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: {{ block.settings.content_gap }}px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .ai-editorial-hero-{{ ai_gen_id }} {
+    position: relative;
+    overflow: hidden;
+    border-radius: {{ block.settings.image_border_radius }}px;
+    aspect-ratio: {{ block.settings.hero_aspect_ratio }};
+  }
+
+  .ai-editorial-hero-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ai-editorial-hero-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .ai-editorial-hero-placeholder-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+    max-width: 300px;
+    max-height: 200px;
+    opacity: 0.3;
+  }
+
+  .ai-editorial-hero-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      {{ block.settings.overlay_direction }},
+      {{ block.settings.overlay_color_start }},
+      {{ block.settings.overlay_color_end }}
+    );
+    opacity: {{ block.settings.overlay_opacity | divided_by: 100.0 }};
+  }
+
+  .ai-editorial-hero-content-{{ ai_gen_id }} {
+    position: absolute;
+    {{ block.settings.text_position }}: 40px;
+    {% if block.settings.text_position == 'top' or block.settings.text_position == 'bottom' %}
+      left: 40px;
+      right: 40px;
+    {% else %}
+      top: 40px;
+      bottom: 40px;
+    {% endif %}
+    color: {{ block.settings.hero_text_color }};
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    {% if block.settings.text_position == 'center' %}
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    {% elsif block.settings.text_position == 'bottom' %}
+      justify-content: flex-end;
+    {% endif %}
+  }
+
+  .ai-editorial-hero-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.hero_title_size }}px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .ai-editorial-hero-subtitle-{{ ai_gen_id }} {
+    font-size: {{ block.settings.hero_subtitle_size }}px;
+    font-weight: 400;
+    line-height: 1.4;
+    margin: 0 0 24px;
+    opacity: 0.9;
+  }
+
+  .ai-editorial-hero-button-{{ ai_gen_id }} {
+    display: inline-block;
+    padding: 12px 32px;
+    background-color: {{ block.settings.button_bg_color }};
+    color: {{ block.settings.button_text_color }};
+    text-decoration: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 2px solid {{ block.settings.button_border_color }};
+    transition: all 0.3s ease;
+    font-size: 14px;
+  }
+
+  .ai-editorial-hero-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_bg_color }};
+    color: {{ block.settings.button_hover_text_color }};
+    border-color: {{ block.settings.button_hover_border_color }};
+  }
+
+  .ai-editorial-content-grid-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: {{ block.settings.content_gap }}px;
+    margin-top: {{ block.settings.content_gap }}px;
+  }
+
+  .ai-editorial-article-{{ ai_gen_id }} {
+    background-color: {{ block.settings.article_bg_color }};
+    border-radius: {{ block.settings.image_border_radius }}px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .ai-editorial-article-{{ ai_gen_id }}:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .ai-editorial-article-image-{{ ai_gen_id }} {
+    position: relative;
+    aspect-ratio: {{ block.settings.article_aspect_ratio }};
+    overflow: hidden;
+  }
+
+  .ai-editorial-article-image-{{ ai_gen_id }} img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-editorial-article-{{ ai_gen_id }}:hover .ai-editorial-article-image-{{ ai_gen_id }} img {
+    transform: scale(1.05);
+  }
+
+  .ai-editorial-article-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-editorial-article-placeholder-{{ ai_gen_id }} svg {
+    width: 60px;
+    height: 60px;
+    opacity: 0.3;
+  }
+
+  .ai-editorial-article-content-{{ ai_gen_id }} {
+    padding: 24px;
+  }
+
+  .ai-editorial-article-category-{{ ai_gen_id }} {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: {{ block.settings.category_color }};
+    margin-bottom: 12px;
+    padding: 4px 12px;
+    background-color: {{ block.settings.category_bg_color }};
+    border-radius: 20px;
+  }
+
+  .ai-editorial-article-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.article_title_size }}px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 12px;
+    color: {{ block.settings.article_text_color }};
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .ai-editorial-article-excerpt-{{ ai_gen_id }} {
+    font-size: {{ block.settings.article_excerpt_size }}px;
+    line-height: 1.6;
+    color: {{ block.settings.article_text_color }};
+    opacity: 0.8;
+    margin: 0 0 16px;
+  }
+
+  .ai-editorial-article-meta-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: {{ block.settings.article_text_color }};
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .ai-editorial-quote-{{ ai_gen_id }} {
+    background: linear-gradient(135deg, {{ block.settings.quote_bg_start }}, {{ block.settings.quote_bg_end }});
+    padding: 40px;
+    border-radius: {{ block.settings.image_border_radius }}px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin: {{ block.settings.content_gap }}px 0;
+  }
+
+  .ai-editorial-quote-{{ ai_gen_id }}::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 120px;
+    color: {{ block.settings.quote_text_color }};
+    opacity: 0.1;
+    font-family: serif;
+  }
+
+  .ai-editorial-quote-text-{{ ai_gen_id }} {
+    font-size: {{ block.settings.quote_text_size }}px;
+    font-style: italic;
+    line-height: 1.4;
+    color: {{ block.settings.quote_text_color }};
+    margin: 0 0 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .ai-editorial-quote-author-{{ ai_gen_id }} {
+    font-size: {{ block.settings.quote_author_size }}px;
+    font-weight: 600;
+    color: {{ block.settings.quote_text_color }};
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ai-editorial-empty-state-{{ ai_gen_id }} {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+  }
+
+  @media screen and (max-width: 768px) {
+    .ai-editorial-layout-{{ ai_gen_id }} {
+      padding: {{ block.settings.section_padding | times: 0.6 }}px 16px;
+    }
+
+    .ai-editorial-hero-content-{{ ai_gen_id }} {
+      {{ block.settings.text_position }}: 20px;
+      {% if block.settings.text_position == 'top' or block.settings.text_position == 'bottom' %}
+        left: 20px;
+        right: 20px;
+      {% else %}
+        top: 20px;
+        bottom: 20px;
+      {% endif %}
+    }
+
+    .ai-editorial-hero-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.hero_title_size | times: 0.7 }}px;
+    }
+
+    .ai-editorial-hero-subtitle-{{ ai_gen_id }} {
+      font-size: {{ block.settings.hero_subtitle_size | times: 0.8 }}px;
+    }
+
+    .ai-editorial-content-grid-{{ ai_gen_id }} {
+      grid-template-columns: 1fr;
+    }
+
+    .ai-editorial-article-content-{{ ai_gen_id }} {
+      padding: 20px;
+    }
+
+    .ai-editorial-quote-{{ ai_gen_id }} {
+      padding: 30px 20px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-editorial-layout-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-editorial-container-{{ ai_gen_id }}">
+    <div class="ai-editorial-hero-{{ ai_gen_id }}">
+      {% if block.settings.hero_image %}
+        <img
+          src="{{ block.settings.hero_image | image_url: width: 1200 }}"
+          alt="{{ block.settings.hero_image.alt | escape }}"
+          class="ai-editorial-hero-image-{{ ai_gen_id }}"
+          loading="lazy"
+          width="{{ block.settings.hero_image.width }}"
+          height="{{ block.settings.hero_image.height }}"
+        >
+      {% else %}
+        <div class="ai-editorial-hero-placeholder-{{ ai_gen_id }}">
+          {{ 'hero-apparel-1' | placeholder_svg_tag }}
+        </div>
+      {% endif %}
+
+      {% if block.settings.show_overlay %}
+        <div class="ai-editorial-hero-overlay-{{ ai_gen_id }}"></div>
+      {% endif %}
+
+      <div class="ai-editorial-hero-content-{{ ai_gen_id }}">
+        {% if block.settings.hero_title != blank %}
+          <h1 class="ai-editorial-hero-title-{{ ai_gen_id }}">{{ block.settings.hero_title }}</h1>
+        {% endif %}
+        {% if block.settings.hero_subtitle != blank %}
+          <p class="ai-editorial-hero-subtitle-{{ ai_gen_id }}">{{ block.settings.hero_subtitle }}</p>
+        {% endif %}
+        {% if block.settings.hero_button_text != blank and block.settings.hero_button_link != blank %}
+          <a href="{{ block.settings.hero_button_link }}" class="ai-editorial-hero-button-{{ ai_gen_id }}">
+            {{ block.settings.hero_button_text }}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if block.settings.show_quote %}
+      <div class="ai-editorial-quote-{{ ai_gen_id }}">
+        {% if block.settings.quote_text != blank %}
+          <blockquote class="ai-editorial-quote-text-{{ ai_gen_id }}">{{ block.settings.quote_text }}</blockquote>
+        {% endif %}
+        {% if block.settings.quote_author != blank %}
+          <cite class="ai-editorial-quote-author-{{ ai_gen_id }}">{{ block.settings.quote_author }}</cite>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="ai-editorial-content-grid-{{ ai_gen_id }}">
+      {% for i in (1..3) %}
+        {% liquid
+          assign article_image_key = 'article_' | append: i | append: '_image'
+          assign article_category_key = 'article_' | append: i | append: '_category'
+          assign article_title_key = 'article_' | append: i | append: '_title'
+          assign article_excerpt_key = 'article_' | append: i | append: '_excerpt'
+          assign article_author_key = 'article_' | append: i | append: '_author'
+          assign article_date_key = 'article_' | append: i | append: '_date'
+          assign article_link_key = 'article_' | append: i | append: '_link'
+
+          assign article_image = block.settings[article_image_key]
+          assign article_category = block.settings[article_category_key]
+          assign article_title = block.settings[article_title_key]
+          assign article_excerpt = block.settings[article_excerpt_key]
+          assign article_author = block.settings[article_author_key]
+          assign article_date = block.settings[article_date_key]
+          assign article_link = block.settings[article_link_key]
+        %}
+
+        {% if article_title != blank or article_image != blank %}
+          <article class="ai-editorial-article-{{ ai_gen_id }}">
+            <div class="ai-editorial-article-image-{{ ai_gen_id }}">
+              {% if article_image %}
+                <img
+                  src="{{ article_image | image_url: width: 600 }}"
+                  alt="{{ article_image.alt | escape }}"
+                  loading="lazy"
+                  width="{{ article_image.width }}"
+                  height="{{ article_image.height }}"
+                >
+              {% else %}
+                <div class="ai-editorial-article-placeholder-{{ ai_gen_id }}">
+                  {{ 'image' | placeholder_svg_tag }}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="ai-editorial-article-content-{{ ai_gen_id }}">
+              {% if article_category != blank %}
+                <span class="ai-editorial-article-category-{{ ai_gen_id }}">{{ article_category }}</span>
+              {% endif %}
+
+              {% if article_title != blank %}
+                {% if article_link != blank %}
+                  <h3 class="ai-editorial-article-title-{{ ai_gen_id }}">
+                    <a href="{{ article_link }}" style="color: inherit; text-decoration: none;">{{ article_title }}</a>
+                  </h3>
+                {% else %}
+                  <h3 class="ai-editorial-article-title-{{ ai_gen_id }}">{{ article_title }}</h3>
+                {% endif %}
+              {% endif %}
+
+              {% if article_excerpt != blank %}
+                <p class="ai-editorial-article-excerpt-{{ ai_gen_id }}">{{ article_excerpt }}</p>
+              {% endif %}
+
+              {% if article_author != blank or article_date != blank %}
+                <div class="ai-editorial-article-meta-{{ ai_gen_id }}">
+                  {% if article_author != blank %}
+                    <span>By {{ article_author }}</span>
+                  {% endif %}
+                  {% if article_date != blank %}
+                    <span>{{ article_date }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </article>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% unless block.settings.hero_title != blank or block.settings.article_1_title != blank or block.settings.article_2_title != blank or block.settings.article_3_title != blank %}
+      <div class="ai-editorial-empty-state-{{ ai_gen_id }}">
+        <p>Start creating your magazine-style layout by adding content above</p>
+      </div>
+    {% endunless %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Magazine editorial layout",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Hero section"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero image"
+    },
+    {
+      "type": "text",
+      "id": "hero_title",
+      "label": "Hero title",
+      "default": "Editorial Feature"
+    },
+    {
+      "type": "textarea",
+      "id": "hero_subtitle",
+      "label": "Hero subtitle",
+      "default": "Discover the latest trends and stories that matter"
+    },
+    {
+      "type": "text",
+      "id": "hero_button_text",
+      "label": "Button text",
+      "default": "Read More"
+    },
+    {
+      "type": "url",
+      "id": "hero_button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "select",
+      "id": "text_position",
+      "label": "Text position",
+      "options": [
+        { "value": "top", "label": "Top" },
+        { "value": "center", "label": "Center" },
+        { "value": "bottom", "label": "Bottom" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "hero_aspect_ratio",
+      "label": "Hero aspect ratio",
+      "options": [
+        { "value": "16/9", "label": "16:9" },
+        { "value": "4/3", "label": "4:3" },
+        { "value": "3/2", "label": "3:2" },
+        { "value": "1/1", "label": "1:1" }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "header",
+      "content": "Hero overlay"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_overlay",
+      "label": "Show overlay",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "overlay_direction",
+      "label": "Overlay direction",
+      "options": [
+        { "value": "to bottom", "label": "Top to bottom" },
+        { "value": "to top", "label": "Bottom to top" },
+        { "value": "to right", "label": "Left to right" },
+        { "value": "to left", "label": "Right to left" }
+      ],
+      "default": "to bottom"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color_start",
+      "label": "Overlay start color",
+      "default": "rgba(0,0,0,0.6)"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color_end",
+      "label": "Overlay end color",
+      "default": "rgba(0,0,0,0.2)"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay opacity",
+      "default": 70
+    },
+    {
+      "type": "header",
+      "content": "Quote section"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_quote",
+      "label": "Show quote section",
+      "default": true
+    },
+    {
+      "type": "textarea",
+      "id": "quote_text",
+      "label": "Quote text",
+      "default": "Fashion is about dressing according to what's fashionable. Style is more about being yourself."
+    },
+    {
+      "type": "text",
+      "id": "quote_author",
+      "label": "Quote author",
+      "default": "Oscar de la Renta"
+    },
+    {
+      "type": "header",
+      "content": "Article 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "article_1_image",
+      "label": "Article image"
+    },
+    {
+      "type": "text",
+      "id": "article_1_category",
+      "label": "Category",
+      "default": "Fashion"
+    },
+    {
+      "type": "text",
+      "id": "article_1_title",
+      "label": "Title",
+      "default": "Spring Collection Highlights"
+    },
+    {
+      "type": "textarea",
+      "id": "article_1_excerpt",
+      "label": "Excerpt",
+      "default": "Explore the vibrant colors and fresh silhouettes that define this season's must-have pieces."
+    },
+    {
+      "type": "text",
+      "id": "article_1_author",
+      "label": "Author",
+      "default": "Sarah Johnson"
+    },
+    {
+      "type": "text",
+      "id": "article_1_date",
+      "label": "Date",
+      "default": "March 15, 2024"
+    },
+    {
+      "type": "url",
+      "id": "article_1_link",
+      "label": "Article link"
+    },
+    {
+      "type": "header",
+      "content": "Article 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "article_2_image",
+      "label": "Article image"
+    },
+    {
+      "type": "text",
+      "id": "article_2_category",
+      "label": "Category",
+      "default": "Lifestyle"
+    },
+    {
+      "type": "text",
+      "id": "article_2_title",
+      "label": "Title",
+      "default": "Sustainable Fashion Forward"
+    },
+    {
+      "type": "textarea",
+      "id": "article_2_excerpt",
+      "label": "Excerpt",
+      "default": "How conscious consumers are reshaping the fashion industry with eco-friendly choices."
+    },
+    {
+      "type": "text",
+      "id": "article_2_author",
+      "label": "Author",
+      "default": "Emma Chen"
+    },
+    {
+      "type": "text",
+      "id": "article_2_date",
+      "label": "Date",
+      "default": "March 12, 2024"
+    },
+    {
+      "type": "url",
+      "id": "article_2_link",
+      "label": "Article link"
+    },
+    {
+      "type": "header",
+      "content": "Article 3"
+    },
+    {
+      "type": "image_picker",
+      "id": "article_3_image",
+      "label": "Article image"
+    },
+    {
+      "type": "text",
+      "id": "article_3_category",
+      "label": "Category",
+      "default": "Trends"
+    },
+    {
+      "type": "text",
+      "id": "article_3_title",
+      "label": "Title",
+      "default": "Street Style Inspiration"
+    },
+    {
+      "type": "textarea",
+      "id": "article_3_excerpt",
+      "label": "Excerpt",
+      "default": "Real fashion from real people - capturing authentic style moments from around the world."
+    },
+    {
+      "type": "text",
+      "id": "article_3_author",
+      "label": "Author",
+      "default": "Marcus Rodriguez"
+    },
+    {
+      "type": "text",
+      "id": "article_3_date",
+      "label": "Date",
+      "default": "March 10, 2024"
+    },
+    {
+      "type": "url",
+      "id": "article_3_link",
+      "label": "Article link"
+    },
+    {
+      "type": "header",
+      "content": "Layout settings"
+    },
+    {
+      "type": "select",
+      "id": "article_aspect_ratio",
+      "label": "Article image aspect ratio",
+      "options": [
+        { "value": "16/9", "label": "16:9" },
+        { "value": "4/3", "label": "4:3" },
+        { "value": "3/2", "label": "3:2" },
+        { "value": "1/1", "label": "1:1" }
+      ],
+      "default": "4/3"
+    },
+    {
+      "type": "range",
+      "id": "content_gap",
+      "min": 20,
+      "max": 80,
+      "step": 5,
+      "unit": "px",
+      "label": "Content spacing",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Section padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "image_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Image border radius",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "hero_text_color",
+      "label": "Hero text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "article_bg_color",
+      "label": "Article background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "article_text_color",
+      "label": "Article text color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "category_color",
+      "label": "Category text color",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "category_bg_color",
+      "label": "Category background color",
+      "default": "rgba(239, 80, 0, 0.1)"
+    },
+    {
+      "type": "color",
+      "id": "quote_bg_start",
+      "label": "Quote background start",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "quote_bg_end",
+      "label": "Quote background end",
+      "default": "#ff6b1a"
+    },
+    {
+      "type": "color",
+      "id": "quote_text_color",
+      "label": "Quote text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Button colors"
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color",
+      "label": "Button background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_border_color",
+      "label": "Button border",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_bg_color",
+      "label": "Button hover background",
+      "default": "rgba(255, 255, 255, 0.9)"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_text_color",
+      "label": "Button hover text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_border_color",
+      "label": "Button hover border",
+      "default": "rgba(255, 255, 255, 0.9)"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "hero_title_size",
+      "min": 24,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "label": "Hero title size",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "hero_subtitle_size",
+      "min": 14,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Hero subtitle size",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "article_title_size",
+      "min": 16,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Article title size",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "article_excerpt_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Article excerpt size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "quote_text_size",
+      "min": 18,
+      "max": 36,
+      "step": 1,
+      "unit": "px",
+      "label": "Quote text size",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "quote_author_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Quote author size",
+      "default": 14
+    }
+  ],
+  "presets": [
+    {
+      "name": "Magazine editorial layout"
+    }
+  ]
+}
+{% endschema %}

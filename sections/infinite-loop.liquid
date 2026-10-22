@@ -1,0 +1,549 @@
+{% comment %}
+  Infinite loop home section
+  File: sections/infinite-loop.liquid
+
+  Loop logic only. Footer is handled globally by snippets/global-footer.liquid
+  rendered from theme.liquid — this section no longer carries its own footer.
+{% endcomment %}
+
+{% comment %}
+  Font resolution: this section used to fall back to a hardcoded system
+  stack (Helvetica/Akzidenz) when font_preset was left on its default —
+  completely decoupled from the theme's actual Montserrat/Barlow Condensed
+  type settings used everywhere else (header, product pages, footer). That
+  mismatch is what made the homepage hero read as a different, more generic
+  typeface than the rest of the site. Default now inherits the theme's real
+  global fonts so the hero matches automatically; "custom" still lets you
+  override deliberately, per-section.
+{% endcomment %}
+{% liquid
+  if section.settings.font_preset == 'custom'
+    assign heading_font = section.settings.heading_font.family | append: ', ' | append: section.settings.heading_font.fallback_families
+    assign body_font = section.settings.body_font.family | append: ', ' | append: section.settings.body_font.fallback_families
+  else
+    assign heading_font = settings.type_heading_font.family | append: ', ' | append: settings.type_heading_font.fallback_families
+    assign body_font = settings.type_body_font.family | append: ', ' | append: settings.type_body_font.fallback_families
+  endif
+%}
+
+{%- if section.settings.font_preset == 'custom' -%}
+  {{ section.settings.heading_font | font_face: font_display: 'swap' }}
+  {{ section.settings.body_font | font_face: font_display: 'swap' }}
+{%- endif -%}
+{%- comment -%} When not custom, the global theme fonts are already embedded site-wide by the layout — no need to re-declare @font-face here. {%- endcomment -%}
+
+{% style %}
+  #il-{{ section.id }} {
+    --il-bg: {{ section.settings.bg_color }};
+    --il-fg: {{ section.settings.text_color }};
+    --il-muted: {{ section.settings.muted_color }};
+    --il-accent: {{ section.settings.accent_color }};
+    --il-btn-bg: {{ section.settings.button_bg }};
+    --il-btn-fg: {{ section.settings.button_fg }};
+    --il-font-heading: {{ heading_font }};
+    --il-font-body: {{ body_font }};
+
+    background: var(--il-bg);
+    color: var(--il-fg);
+    font-family: var(--il-font-body);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  #il-{{ section.id }} *,
+  #il-{{ section.id }} *::before,
+  #il-{{ section.id }} *::after { box-sizing: border-box; }
+
+  .il-track-{{ section.id }} {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .il-slide-{{ section.id }} {
+    width: 100%;
+    min-height: {{ section.settings.slide_height }}vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .il-slide-{{ section.id }}[data-bg-mode="image"]::before,
+  .il-slide-{{ section.id }}[data-bg-mode="video"]::before,
+  .il-slide-{{ section.id }}[data-bg-mode="iframe"]::before {
+    content: ""; position: absolute; inset: 0;
+    background: rgba(0,0,0,var(--il-overlay, 0));
+    z-index: 2;
+  }
+
+  .il-slide-{{ section.id }} > .il-bg-media-{{ section.id }} {
+    position: absolute; inset: 0; z-index: 1;
+  }
+  .il-slide-{{ section.id }} > .il-bg-media-{{ section.id }} img,
+  .il-slide-{{ section.id }} > .il-bg-media-{{ section.id }} video,
+  .il-slide-{{ section.id }} > .il-bg-media-{{ section.id }} iframe {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    border: none;
+  }
+
+  .il-slide__content-{{ section.id }} {
+    position: relative; z-index: 3;
+    max-width: 760px;
+    padding: 120px 40px;
+    text-align: center;
+    color: inherit;
+  }
+  .il-slide__content-{{ section.id }}[data-align="left"]  { text-align: left; margin-right: auto; padding-left: 8vw; }
+  .il-slide__content-{{ section.id }}[data-align="right"] { text-align: right; margin-left: auto; padding-right: 8vw; }
+
+  .il-eyebrow-{{ section.id }} {
+    font-family: var(--il-font-heading);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    margin: 0 0 24px;
+    opacity: 0.6;
+  }
+
+  .il-heading-{{ section.id }} {
+    font-family: var(--il-font-heading);
+    font-size: clamp(34px, 5.5vw, 84px);
+    font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.04; text-transform: uppercase;
+    margin: 0 0 32px;
+  }
+  .il-heading-{{ section.id }}.is-italic { font-style: italic; }
+
+  .il-paragraph-{{ section.id }} {
+    font-family: var(--il-font-body);
+    font-size: 15px; line-height: 1.6;
+    letter-spacing: 0.01em;
+    margin: 0 0 40px;
+    max-width: 560px;
+  }
+  .il-slide__content-{{ section.id }}[data-align="center"] .il-paragraph-{{ section.id }} { margin-left: auto; margin-right: auto; }
+
+  .il-btn-{{ section.id }} {
+    display: inline-block;
+    background: var(--il-btn-bg);
+    color: var(--il-btn-fg);
+    border: none;
+    padding: 16px 32px;
+    font-family: var(--il-font-heading);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .il-btn-{{ section.id }}:hover { opacity: 0.85; }
+
+  .il-grid-{{ section.id }} {
+    position: relative; z-index: 3;
+    width: 100%;
+    padding: 100px 6vw;
+  }
+  .il-grid__head-{{ section.id }} {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 56px; gap: 24px;
+  }
+  .il-grid__title-{{ section.id }} {
+    font-family: var(--il-font-heading);
+    font-size: clamp(22px, 2.6vw, 36px);
+    font-weight: 600; letter-spacing: -0.005em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .il-grid__link-{{ section.id }} {
+    font-family: var(--il-font-heading);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--il-fg); text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .il-grid__items-{{ section.id }} {
+    display: grid;
+    gap: 48px 32px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .il-card-{{ section.id }} { display: block; text-decoration: none; color: inherit; }
+  .il-card__img-{{ section.id }} {
+    width: 100%; aspect-ratio: 3 / 4;
+    overflow: hidden; margin-bottom: 16px;
+    background: #eee;
+  }
+  .il-card__img-{{ section.id }} img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+  .il-card-{{ section.id }}:hover .il-card__img-{{ section.id }} img { transform: scale(1.04); }
+  .il-card__title-{{ section.id }} {
+    font-family: var(--il-font-heading);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .il-card__price-{{ section.id }} {
+    font-family: var(--il-font-heading);
+    font-size: 11px;
+    color: var(--il-muted);
+    letter-spacing: 0.04em;
+  }
+
+  @media screen and (max-width: 900px) {
+    .il-slide__content-{{ section.id }} { padding: 80px 24px; }
+    .il-grid__items-{{ section.id }} { grid-template-columns: repeat(2, 1fr) !important; gap: 32px 20px; }
+    .il-grid-{{ section.id }} { padding: 64px 24px; }
+  }
+{% endstyle %}
+
+<div id="il-{{ section.id }}" data-il-root>
+  <div class="il-track-{{ section.id }}" data-il-track>
+    {%- for copy in (1..3) -%}
+      <div data-il-copy="{{ forloop.index0 }}">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+
+            {%- when 'hero' -%}
+              {%- liquid
+                assign bg_mode = 'solid'
+                if block.settings.bg_video != blank
+                  assign bg_mode = 'video'
+                elsif block.settings.bg_video_url != blank
+                  assign bg_mode = 'iframe'
+                elsif block.settings.bg_image != blank
+                  assign bg_mode = 'image'
+                endif
+              -%}
+
+              <section class="il-slide-{{ section.id }}"
+                       data-il-slide
+                       data-bg-mode="{{ bg_mode }}"
+                       style="background: {{ block.settings.slide_bg }}; color: {{ block.settings.slide_fg }}; --il-overlay: {{ block.settings.overlay_opacity | divided_by: 100.0 }};"
+                       {{ block.shopify_attributes }}>
+
+                {%- if bg_mode == 'video' -%}
+                  <div class="il-bg-media-{{ section.id }}">
+                    {{ block.settings.bg_video | video_tag: image_size: '1600x', autoplay: false, loop: true, muted: true, controls: false, preload: 'metadata' }}
+                  </div>
+                {%- elsif bg_mode == 'iframe' -%}
+                  <div class="il-bg-media-{{ section.id }}">
+                    {%- assign vurl = block.settings.bg_video_url -%}
+                    {%- if vurl.type == 'youtube' -%}
+                      <iframe data-src="https://www.youtube.com/embed/{{ vurl.id }}?autoplay=1&mute=1&loop=1&playlist={{ vurl.id }}&controls=0&showinfo=0&modestbranding=1&rel=0&playsinline=1"
+                              allow="autoplay; encrypted-media"
+                              allowfullscreen
+                              loading="lazy"></iframe>
+                    {%- elsif vurl.type == 'vimeo' -%}
+                      <iframe data-src="https://player.vimeo.com/video/{{ vurl.id }}?autoplay=1&muted=1&loop=1&background=1&controls=0"
+                              allow="autoplay; encrypted-media"
+                              allowfullscreen
+                              loading="lazy"></iframe>
+                    {%- endif -%}
+                  </div>
+                {%- elsif bg_mode == 'image' -%}
+                  <div class="il-bg-media-{{ section.id }}">
+                    <img src="{{ block.settings.bg_image | image_url: width: 2400 }}"
+                         alt="{{ block.settings.heading | escape }}"
+                         loading="lazy" width="2400" height="1600">
+                  </div>
+                {%- endif -%}
+
+                <div class="il-slide__content-{{ section.id }}" data-align="{{ block.settings.text_align }}">
+                  {%- if block.settings.eyebrow != blank -%}
+                    <div class="il-eyebrow-{{ section.id }}">{{ block.settings.eyebrow }}</div>
+                  {%- endif -%}
+                  {%- if block.settings.heading != blank -%}
+                    <h2 class="il-heading-{{ section.id }} {% if block.settings.italic_heading %}is-italic{% endif %}">{{ block.settings.heading }}</h2>
+                  {%- endif -%}
+                  {%- if block.settings.paragraph != blank -%}
+                    <div class="il-paragraph-{{ section.id }}">{{ block.settings.paragraph }}</div>
+                  {%- endif -%}
+                  {%- if block.settings.button_label != blank and block.settings.button_link != blank -%}
+                    <a class="il-btn-{{ section.id }}" href="{{ block.settings.button_link }}">{{ block.settings.button_label }}</a>
+                  {%- endif -%}
+                </div>
+              </section>
+
+            {%- when 'product_grid' -%}
+              <section class="il-slide-{{ section.id }}"
+                       data-il-slide
+                       style="background: {{ block.settings.slide_bg }}; color: {{ block.settings.slide_fg }}; min-height: auto;"
+                       {{ block.shopify_attributes }}>
+                <div class="il-grid-{{ section.id }}">
+                  <div class="il-grid__head-{{ section.id }}">
+                    <h2 class="il-grid__title-{{ section.id }}">{{ block.settings.title }}</h2>
+                    {%- if block.settings.link_label != blank and block.settings.link_url != blank -%}
+                      <a class="il-grid__link-{{ section.id }}" href="{{ block.settings.link_url }}">{{ block.settings.link_label }} →</a>
+                    {%- endif -%}
+                  </div>
+                  {%- assign coll = collections[block.settings.collection] -%}
+                  <div class="il-grid__items-{{ section.id }}"
+                       style="grid-template-columns: repeat({{ block.settings.columns }}, 1fr);">
+                    {%- for prod in coll.products limit: block.settings.product_count -%}
+                      <a class="il-card-{{ section.id }}" href="{{ prod.url }}">
+                        <div class="il-card__img-{{ section.id }}">
+                          {%- if prod.featured_image -%}
+                            <img src="{{ prod.featured_image | image_url: width: 800 }}"
+                                 alt="{{ prod.title | escape }}"
+                                 loading="lazy" width="800" height="800">
+                          {%- endif -%}
+                        </div>
+                        <div class="il-card__title-{{ section.id }}">{{ prod.title }}</div>
+                        <div class="il-card__price-{{ section.id }}">{{ prod.price | money_without_trailing_zeros }}</div>
+                      </a>
+                    {%- endfor -%}
+                  </div>
+                </div>
+              </section>
+
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+    {%- endfor -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    const root = document.getElementById('il-{{ section.id }}');
+    if (!root) return;
+    const track = root.querySelector('[data-il-track]');
+    if (!track) return;
+    const copies = track.querySelectorAll('[data-il-copy]');
+    if (copies.length !== 3) return;
+
+    let copyHeight = 0;
+    let isTeleporting = false;
+    let rafPending = false;
+    let lastScrollY = window.scrollY;
+
+    function measure() {
+      // Slide heights are fixed via vh units, so this is stable — but we
+      // re-run it on image/iframe load anyway in case the merchant swaps
+      // in taller custom content later.
+      copyHeight = copies[0].getBoundingClientRect().height;
+    }
+
+    // Recomputed fresh on every check instead of cached once at load.
+    // Caching this was the root cause of the "snaps to the very top"
+    // symptom: anything that shifts page height above the loop after
+    // init (an app embed block, an announcement bar, a sticky header
+    // that collapses on scroll) silently desyncs a cached trackTop,
+    // so the boundary math fires at the wrong scroll position and the
+    // teleport lands somewhere that reads as "back to the top" instead
+    // of the intended one-copy-back jump.
+    function getTrackTop() {
+      return window.scrollY + track.getBoundingClientRect().top;
+    }
+
+    function teleportTo(y) {
+      isTeleporting = true;
+      window.scrollTo({ top: y, behavior: 'auto' });
+      // longer flag window to absorb trackpad inertia after the jump
+      setTimeout(() => { isTeleporting = false; }, 80);
+    }
+
+    function checkBounds() {
+      rafPending = false;
+      if (isTeleporting || copyHeight === 0) { lastScrollY = window.scrollY; return; }
+
+      const currentScrollY = window.scrollY;
+      const scrollingUp = currentScrollY < lastScrollY;
+      const scrollWithinTrack = currentScrollY - getTrackTop();
+
+      // Scrolled past the end of copy 1 (into copy 2) → snap back one
+      // copy. Copy 1 and copy 2 render identical content, so this jump
+      // is invisible — this is the A→B→C→A wrap the loop is built for.
+      if (scrollWithinTrack >= copyHeight * 2) {
+        const target = currentScrollY - copyHeight;
+        lastScrollY = target;
+        teleportTo(target);
+        return;
+      }
+
+      // Scrolled UP past the start of copy 0 → snap forward one copy.
+      // Gated to scrollingUp only: without this check, a normal
+      // first-time scroll DOWN into the section also satisfies the
+      // position test (scrollWithinTrack is negative before you ever
+      // reach the track), which fired an unwanted forward jump the
+      // instant you approached the loop from above.
+      if (scrollingUp && scrollWithinTrack < 0 && scrollWithinTrack > -copyHeight) {
+        const target = currentScrollY + copyHeight;
+        lastScrollY = target;
+        teleportTo(target);
+        return;
+      }
+
+      lastScrollY = currentScrollY;
+    }
+
+    function onScroll() {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(checkBounds);
+    }
+
+    function init() {
+      measure();
+      lastScrollY = window.scrollY;
+
+      // Re-measure when copy 0's height changes (images loaded, fonts swapped, etc).
+      if ('ResizeObserver' in window) {
+        const ro = new ResizeObserver(() => {
+          // Debounce — don't measure on every micro-resize
+          clearTimeout(window._ilResizeT);
+          window._ilResizeT = setTimeout(measure, 100);
+        });
+        ro.observe(copies[0]);
+      }
+
+      // Re-measure after each image inside the loop finishes loading
+      root.querySelectorAll('img').forEach(img => {
+        if (!img.complete) {
+          img.addEventListener('load',  measure, { once: true });
+          img.addEventListener('error', measure, { once: true });
+        }
+      });
+
+      // Lazy autoplay for native videos
+      if ('IntersectionObserver' in window) {
+        const videos = root.querySelectorAll('video');
+        if (videos.length) {
+          const io = new IntersectionObserver((entries) => {
+            entries.forEach(en => {
+              const v = en.target;
+              if (en.isIntersecting) {
+                if (v.paused) v.play().catch(() => {});
+              } else {
+                if (!v.paused) v.pause();
+              }
+            });
+          }, { threshold: 0.1, rootMargin: '50px' });
+          videos.forEach(v => io.observe(v));
+        }
+
+        // Lazy iframe loading
+        const iframes = root.querySelectorAll('iframe[data-src]');
+        if (iframes.length) {
+          const io2 = new IntersectionObserver((entries) => {
+            entries.forEach(en => {
+              const f = en.target;
+              if (en.isIntersecting && !f.src) {
+                f.src = f.dataset.src;
+                // iframes adjust content size — re-measure shortly after they load
+                f.addEventListener('load', () => setTimeout(measure, 200), { once: true });
+              }
+            });
+          }, { threshold: 0.05, rootMargin: '200px' });
+          iframes.forEach(f => io2.observe(f));
+        }
+      }
+    }
+
+    if (document.readyState === 'complete') {
+      init();
+    } else {
+      window.addEventListener('load', init);
+    }
+
+    let resizeT;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(measure, 150);
+    });
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Infinite loop",
+  "settings": [
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "slide_height", "label": "Hero slide height", "min": 60, "max": 120, "step": 5, "unit": "vh", "default": 90 },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "bg_color", "label": "Default background", "default": "#f4f4f4" },
+    { "type": "color", "id": "text_color", "label": "Default text", "default": "#000000" },
+    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
+    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#ef5000" },
+    { "type": "color", "id": "button_bg", "label": "Button background", "default": "#000000" },
+    { "type": "color", "id": "button_fg", "label": "Button text", "default": "#ffffff" },
+
+    { "type": "header", "content": "Typography" },
+    {
+      "type": "radio",
+      "id": "font_preset",
+      "label": "Font preset",
+      "options": [
+        { "value": "helvetica", "label": "Match site typography (recommended)" },
+        { "value": "custom", "label": "Custom fonts for this section only" }
+      ],
+      "default": "helvetica"
+    },
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" },
+
+    { "type": "paragraph", "content": "Footer is handled site-wide by the global-footer snippet rendered from theme.liquid. No footer settings here." }
+  ],
+  "blocks": [
+    {
+      "type": "hero",
+      "name": "Hero slide",
+      "settings": [
+        { "type": "header", "content": "Background" },
+        { "type": "color", "id": "slide_bg", "label": "Background color", "default": "#f4f4f4" },
+        { "type": "color", "id": "slide_fg", "label": "Text color", "default": "#000000" },
+        { "type": "image_picker", "id": "bg_image", "label": "Background image" },
+        { "type": "video", "id": "bg_video", "label": "Background video (uploaded)", "info": "Native upload. Overrides image if set." },
+        { "type": "video_url", "id": "bg_video_url", "label": "Background video URL (YouTube/Vimeo)", "accept": ["youtube", "vimeo"], "info": "Used if no uploaded video is set." },
+        { "type": "range", "id": "overlay_opacity", "label": "Image/video overlay darkness", "min": 0, "max": 80, "step": 5, "unit": "%", "default": 0 },
+
+        { "type": "header", "content": "Content" },
+        { "type": "select", "id": "text_align", "label": "Text alignment",
+          "options": [
+            { "value": "left", "label": "Left" },
+            { "value": "center", "label": "Center" },
+            { "value": "right", "label": "Right" }
+          ],
+          "default": "center"
+        },
+        { "type": "text", "id": "eyebrow", "label": "Eyebrow / small label" },
+        { "type": "text", "id": "heading", "label": "Heading", "default": "BIG STATEMENT" },
+        { "type": "checkbox", "id": "italic_heading", "label": "Italic heading", "default": false },
+        { "type": "richtext", "id": "paragraph", "label": "Paragraph" },
+        { "type": "text", "id": "button_label", "label": "Button label" },
+        { "type": "url", "id": "button_link", "label": "Button link" }
+      ]
+    },
+    {
+      "type": "product_grid",
+      "name": "Product grid slide",
+      "settings": [
+        { "type": "color", "id": "slide_bg", "label": "Background color", "default": "#ffffff" },
+        { "type": "color", "id": "slide_fg", "label": "Text color", "default": "#000000" },
+        { "type": "text", "id": "title", "label": "Section title", "default": "NEW IN" },
+        { "type": "collection", "id": "collection", "label": "Collection" },
+        { "type": "range", "id": "product_count", "label": "Number of products", "min": 2, "max": 16, "step": 1, "default": 8 },
+        { "type": "range", "id": "columns", "label": "Columns (desktop)", "min": 2, "max": 6, "step": 1, "default": 4 },
+        { "type": "text", "id": "link_label", "label": "Link label", "default": "VIEW ALL" },
+        { "type": "url", "id": "link_url", "label": "Link URL" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Infinite loop",
+      "category": "Homepage",
+      "blocks": [
+        { "type": "hero", "settings": { "heading": "A", "eyebrow": "SECTION ONE" } },
+        { "type": "hero", "settings": { "heading": "B", "eyebrow": "SECTION TWO" } },
+        { "type": "hero", "settings": { "heading": "C", "eyebrow": "SECTION THREE" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

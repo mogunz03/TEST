@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "cart-becane",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

@@ -1,0 +1,110 @@
+{% comment %}
+  Floating Brand Logo
+  File: snippets/floating-logo.liquid
+  Usage: {% render 'floating-logo' %} inside <body> in layout/theme.liquid
+
+  Sticky logo pinned to the top-center of every page. Links to homepage.
+  Resolves logo source from: theme settings → Shopify brand → file path → text.
+{% endcomment %}
+
+{% liquid
+  assign logo_height        = 36
+  assign logo_height_mobile = 28
+  assign top_offset         = 20
+  assign top_offset_mobile  = 14
+  assign text_size          = 16
+  assign text_color         = '#000000'
+
+  comment
+    Source resolution chain. settings.logo (theme picker) is preferred; if it's
+    blank or stored as a Files string path, we fall back gracefully.
+  endcomment
+  assign logo_obj = settings.logo
+  if logo_obj == blank
+    assign logo_obj = shop.brand.logo
+  endif
+%}
+
+{% style %}
+  .fl-logo {
+    position: fixed;
+    top: {{ top_offset }}px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fl-logo-fade-in 0.5s ease-out 0.1s both;
+  }
+
+  .fl-logo > a {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: {{ text_color }};
+    transition: opacity 0.2s ease;
+  }
+  .fl-logo > a:hover { opacity: 0.7; }
+
+  .fl-logo img {
+    max-height: {{ logo_height }}px;
+    height: {{ logo_height }}px;
+    width: auto;
+    min-width: 60px;
+    object-fit: contain;
+    display: block;
+    /* Force SVG to render in solid black regardless of its internal fill */
+    filter: brightness(0);
+  }
+
+  .fl-logo__text {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Akzidenz-Grotesk", Helvetica, Arial, sans-serif;
+    font-size: {{ text_size }}px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    font-style: italic;
+  }
+
+  @keyframes fl-logo-fade-in {
+    from { opacity: 0; transform: translate(-50%, -8px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  @media screen and (max-width: 749px) {
+    .fl-logo { top: {{ top_offset_mobile }}px; }
+    .fl-logo img { max-height: {{ logo_height_mobile }}px; height: {{ logo_height_mobile }}px; }
+    .fl-logo__text { font-size: {{ text_size | minus: 2 }}px; }
+  }
+{% endstyle %}
+
+<div class="fl-logo">
+  <a href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }}">
+    {%- liquid
+      assign logo_src = ''
+      if logo_obj != blank
+        if logo_obj.src
+          assign logo_src = logo_obj | image_url: width: 600
+        else
+          assign logo_str = logo_obj | append: ''
+          if logo_str contains '//'
+            assign logo_src = logo_str
+          else
+            assign logo_src = logo_str | file_url
+          endif
+        endif
+      endif
+    -%}
+    {%- if logo_src != '' -%}
+      <img src="{{ logo_src }}" alt="{{ shop.name | escape }}">
+    {%- else -%}
+      <span class="fl-logo__text">{{ shop.name | default: 'STORE' }}</span>
+    {%- endif -%}
+  </a>
+</div>

@@ -1,0 +1,1219 @@
+{% doc %}
+  @prompt
+    Create a full-viewport infinite scroll homepage section with the following spec:
+    
+    **Infinite Scroll Logic:**
+    - Render 3 identical copies of all blocks stacked top to bottom
+    - On page load, JS measures one copy's height and scrolls to the middle copy
+    - As user scrolls: approaching the top third → silently teleport down by one copy's height; approaching the bottom third → silently teleport up by one copy's height
+    - Use an `isTeleporting` flag to suppress scroll events during teleport and avoid 1-frame blips
+    - Result: seamless infinite loop in both directions (A→B→C→A→B→C)
+    
+    **Sticky Footer:**
+    - `position: fixed; bottom: 0` — always visible
+    - Bottom padding equal to `pill_clearance` setting so pill nav doesn't overlap
+    - Z-index: 100
+    
+    **Section-level settings:**
+    - `slide_height` — slide height in vh (default 90)
+    - `footer_height` — reserved footer height in px
+    - `pill_clearance` — bottom clearance in px for pill nav
+    - Colors: background, text, muted, accent, button background/foreground, footer background/foreground
+    - Typography: toggle between Helvetica and custom font (font_picker for heading + body)
+    - Footer: toggle on/off, border on/off, column count (1–6)
+    
+    **Block types:**
+    
+    1. **Hero slide** — per-slide bg color, optional bg image, optional bg video (video overrides image), darkness overlay (0–80%), text alignment (left/center/right), eyebrow text, heading with italic toggle, rich-text paragraph, button label + URL link
+    
+    2. **Product grid slide** — bg color, slide title, collection picker, product count (2–16), columns (2–6), "view all" link
+    
+    3. **Footer column** — title + either a Shopify navigation menu link list or fallback rich text
+    
+    Blocks are draggable and reorderable in the theme editor. Add as many of each type as needed., it needs tobe full width and responsive. , nice, add to that th eoptions to add buttons on the sections. and the the newsletter sign up stays needs to be in the footer centered and optional, the footer is transparent, add all the footer links in it. and for the slide style all the sections are seperated not linked like right now, where it's the same image applied verywhere, the options are image and videos could be uploaded. videos played on loop without video or sound controled shown, it does work but the infinity scroll only works when scrolling up not down, issue is the scroll is fine but need doe each sections to have independent and different images not all the same image, without changing anything else, make the footter background transparent
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-infinite-scroll-{{ ai_gen_id }} {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+  }
+
+  .ai-infinite-scroll-wrapper-{{ ai_gen_id }} {
+    width: 100%;
+  }
+
+  .ai-slide-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    height: {{ block.settings.slide_height }}vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .ai-slide-bg-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .ai-slide-bg-{{ ai_gen_id }} img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-slide-bg-{{ ai_gen_id }} video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ai-slide-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  .ai-slide-content-{{ ai_gen_id }} {
+    position: relative;
+    z-index: 3;
+    max-width: 1200px;
+    padding: 40px 20px;
+    width: 100%;
+  }
+
+  .ai-slide-eyebrow-{{ ai_gen_id }} {
+    font-size: clamp(12px, 2vw, 14px);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+  }
+
+  .ai-slide-heading-{{ ai_gen_id }} {
+    font-size: clamp(32px, 6vw, 72px);
+    line-height: 1.1;
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  .ai-slide-heading-{{ ai_gen_id }}.italic {
+    font-style: italic;
+  }
+
+  .ai-slide-paragraph-{{ ai_gen_id }} {
+    font-size: clamp(14px, 2vw, 18px);
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 600px;
+  }
+
+  .ai-slide-buttons-{{ ai_gen_id }} {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .ai-slide-button-{{ ai_gen_id }} {
+    padding: 14px 32px;
+    font-size: clamp(14px, 1.5vw, 16px);
+    text-decoration: none;
+    border-radius: {{ block.settings.button_border_radius }}px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  .ai-slide-button-primary-{{ ai_gen_id }} {
+    background-color: {{ block.settings.button_bg_color }};
+    color: {{ block.settings.button_text_color }};
+    border: 2px solid {{ block.settings.button_bg_color }};
+  }
+
+  .ai-slide-button-primary-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_bg_color }};
+    border-color: {{ block.settings.button_hover_bg_color }};
+  }
+
+  .ai-slide-button-secondary-{{ ai_gen_id }} {
+    background-color: transparent;
+    color: {{ block.settings.secondary_button_text_color }};
+    border: 2px solid {{ block.settings.secondary_button_border_color }};
+  }
+
+  .ai-slide-button-secondary-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.secondary_button_hover_bg_color }};
+    color: {{ block.settings.secondary_button_hover_text_color }};
+  }
+
+  .ai-footer-{{ ai_gen_id }} {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    color: {{ block.settings.footer_text_color }};
+    z-index: 100;
+    padding-bottom: {{ block.settings.pill_clearance }}px;
+  }
+
+  .ai-footer-inner-{{ ai_gen_id }} {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px 20px;
+  }
+
+  {% if block.settings.footer_border %}
+  .ai-footer-{{ ai_gen_id }} {
+    border-top: 1px solid {{ block.settings.footer_text_color | color_modify: 'alpha', 0.2 }};
+  }
+  {% endif %}
+
+  .ai-footer-grid-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .ai-footer-column-{{ ai_gen_id }} h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .ai-footer-column-{{ ai_gen_id }} ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .ai-footer-column-{{ ai_gen_id }} li {
+    margin-bottom: 8px;
+  }
+
+  .ai-footer-column-{{ ai_gen_id }} a {
+    color: {{ block.settings.footer_text_color }};
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+
+  .ai-footer-column-{{ ai_gen_id }} a:hover {
+    opacity: 1;
+  }
+
+  .ai-newsletter-{{ ai_gen_id }} {
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .ai-newsletter-heading-{{ ai_gen_id }} {
+    font-size: 18px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .ai-newsletter-form-{{ ai_gen_id }} {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .ai-newsletter-input-{{ ai_gen_id }} {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid {{ block.settings.footer_text_color | color_modify: 'alpha', 0.3 }};
+    border-radius: 4px;
+    background-color: transparent;
+    color: {{ block.settings.footer_text_color }};
+    font-size: 14px;
+  }
+
+  .ai-newsletter-input-{{ ai_gen_id }}::placeholder {
+    color: {{ block.settings.footer_text_color | color_modify: 'alpha', 0.6 }};
+  }
+
+  .ai-newsletter-button-{{ ai_gen_id }} {
+    padding: 12px 24px;
+    background-color: {{ block.settings.button_bg_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-newsletter-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_bg_color }};
+  }
+
+  .ai-newsletter-success-{{ ai_gen_id }},
+  .ai-newsletter-error-{{ ai_gen_id }} {
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  .ai-newsletter-success-{{ ai_gen_id }} {
+    color: #4caf50;
+  }
+
+  .ai-newsletter-error-{{ ai_gen_id }} {
+    color: #f44336;
+  }
+
+  .ai-text-left-{{ ai_gen_id }} {
+    text-align: left;
+  }
+
+  .ai-text-left-{{ ai_gen_id }} .ai-slide-paragraph-{{ ai_gen_id }},
+  .ai-text-left-{{ ai_gen_id }} .ai-slide-buttons-{{ ai_gen_id }} {
+    margin-left: 0;
+  }
+
+  .ai-text-center-{{ ai_gen_id }} {
+    text-align: center;
+  }
+
+  .ai-text-center-{{ ai_gen_id }} .ai-slide-paragraph-{{ ai_gen_id }},
+  .ai-text-center-{{ ai_gen_id }} .ai-slide-buttons-{{ ai_gen_id }} {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .ai-text-right-{{ ai_gen_id }} {
+    text-align: right;
+  }
+
+  .ai-text-right-{{ ai_gen_id }} .ai-slide-paragraph-{{ ai_gen_id }},
+  .ai-text-right-{{ ai_gen_id }} .ai-slide-buttons-{{ ai_gen_id }} {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  @media screen and (max-width: 989px) {
+    .ai-footer-grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-infinite-scroll-{{ ai_gen_id }} {
+      height: 100dvh;
+    }
+
+    .ai-slide-{{ ai_gen_id }} {
+      height: {{ block.settings.slide_height }}dvh;
+    }
+
+    .ai-footer-grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .ai-slide-buttons-{{ ai_gen_id }} {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ai-slide-button-{{ ai_gen_id }} {
+      text-align: center;
+    }
+
+    .ai-newsletter-form-{{ ai_gen_id }} {
+      flex-direction: column;
+    }
+  }
+{% endstyle %}
+
+<infinite-scroll-{{ ai_gen_id }} class="ai-infinite-scroll-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-infinite-scroll-wrapper-{{ ai_gen_id }}">
+    {% for copy in (1..3) %}
+      {% for i in (1..5) %}
+        {% assign slide_enabled_key = 'slide_' | append: i | append: '_enabled' %}
+        {% assign slide_image_key = 'slide_' | append: i | append: '_image' %}
+        {% assign slide_video_key = 'slide_' | append: i | append: '_video' %}
+        {% assign slide_bg_color_key = 'slide_' | append: i | append: '_bg_color' %}
+        {% assign slide_overlay_key = 'slide_' | append: i | append: '_overlay' %}
+        {% assign slide_eyebrow_key = 'slide_' | append: i | append: '_eyebrow' %}
+        {% assign slide_heading_key = 'slide_' | append: i | append: '_heading' %}
+        {% assign slide_italic_key = 'slide_' | append: i | append: '_heading_italic' %}
+        {% assign slide_paragraph_key = 'slide_' | append: i | append: '_paragraph' %}
+        {% assign slide_alignment_key = 'slide_' | append: i | append: '_alignment' %}
+        {% assign slide_primary_label_key = 'slide_' | append: i | append: '_primary_label' %}
+        {% assign slide_primary_url_key = 'slide_' | append: i | append: '_primary_url' %}
+        {% assign slide_secondary_label_key = 'slide_' | append: i | append: '_secondary_label' %}
+        {% assign slide_secondary_url_key = 'slide_' | append: i | append: '_secondary_url' %}
+        {% assign slide_text_color_key = 'slide_' | append: i | append: '_text_color' %}
+
+        {% if block.settings[slide_enabled_key] %}
+          <div class="ai-slide-{{ ai_gen_id }}" style="background-color: {{ block.settings[slide_bg_color_key] }};">
+            <div class="ai-slide-bg-{{ ai_gen_id }}">
+              {% if block.settings[slide_video_key] != blank %}
+                <video autoplay muted loop playsinline>
+                  <source src="{{ block.settings[slide_video_key] }}" type="video/mp4">
+                </video>
+              {% elsif block.settings[slide_image_key] %}
+                <img
+                  src="{{ block.settings[slide_image_key] | image_url: width: 2000 }}"
+                  alt="{{ block.settings[slide_image_key].alt | escape }}"
+                  loading="lazy"
+                  width="{{ block.settings[slide_image_key].width }}"
+                  height="{{ block.settings[slide_image_key].height }}"
+                >
+              {% endif %}
+            </div>
+
+            <div class="ai-slide-overlay-{{ ai_gen_id }}" style="background-color: rgba(0, 0, 0, {{ block.settings[slide_overlay_key] | divided_by: 100.0 }});"></div>
+
+            <div class="ai-slide-content-{{ ai_gen_id }} ai-text-{{ block.settings[slide_alignment_key] }}-{{ ai_gen_id }}" style="color: {{ block.settings[slide_text_color_key] }};">
+              {% if block.settings[slide_eyebrow_key] != blank %}
+                <div class="ai-slide-eyebrow-{{ ai_gen_id }}">{{ block.settings[slide_eyebrow_key] }}</div>
+              {% endif %}
+
+              {% if block.settings[slide_heading_key] != blank %}
+                <h2 class="ai-slide-heading-{{ ai_gen_id }} {% if block.settings[slide_italic_key] %}italic{% endif %}">
+                  {{ block.settings[slide_heading_key] }}
+                </h2>
+              {% endif %}
+
+              {% if block.settings[slide_paragraph_key] != blank %}
+                <div class="ai-slide-paragraph-{{ ai_gen_id }}">{{ block.settings[slide_paragraph_key] }}</div>
+              {% endif %}
+
+              <div class="ai-slide-buttons-{{ ai_gen_id }}">
+                {% if block.settings[slide_primary_label_key] != blank and block.settings[slide_primary_url_key] != blank %}
+                  <a href="{{ block.settings[slide_primary_url_key] }}" class="ai-slide-button-{{ ai_gen_id }} ai-slide-button-primary-{{ ai_gen_id }}">
+                    {{ block.settings[slide_primary_label_key] }}
+                  </a>
+                {% endif %}
+
+                {% if block.settings[slide_secondary_label_key] != blank and block.settings[slide_secondary_url_key] != blank %}
+                  <a href="{{ block.settings[slide_secondary_url_key] }}" class="ai-slide-button-{{ ai_gen_id }} ai-slide-button-secondary-{{ ai_gen_id }}">
+                    {{ block.settings[slide_secondary_label_key] }}
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+</infinite-scroll-{{ ai_gen_id }}>
+
+<div class="ai-footer-{{ ai_gen_id }}">
+  <div class="ai-footer-inner-{{ ai_gen_id }}">
+    <div class="ai-footer-grid-{{ ai_gen_id }}">
+      {% for i in (1..4) %}
+        {% assign column_title_key = 'footer_column_' | append: i | append: '_title' %}
+        {% assign column_menu_key = 'footer_column_' | append: i | append: '_menu' %}
+
+        {% if block.settings[column_title_key] != blank %}
+          <div class="ai-footer-column-{{ ai_gen_id }}">
+            <h3>{{ block.settings[column_title_key] }}</h3>
+            {% if block.settings[column_menu_key] != blank %}
+              <ul>
+                {% for link in linklists[block.settings[column_menu_key]].links %}
+                  <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if block.settings.show_newsletter %}
+      <div class="ai-newsletter-{{ ai_gen_id }}">
+        {%- form 'customer', class: 'ai-newsletter-form-wrapper-{{ ai_gen_id }}' -%}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          
+          {% if block.settings.newsletter_heading != blank %}
+            <h3 class="ai-newsletter-heading-{{ ai_gen_id }}">{{ block.settings.newsletter_heading }}</h3>
+          {% endif %}
+
+          <div class="ai-newsletter-form-{{ ai_gen_id }}">
+            <input
+              type="email"
+              name="contact[email]"
+              class="ai-newsletter-input-{{ ai_gen_id }}"
+              value="{{ form.email }}"
+              placeholder="{{ block.settings.newsletter_placeholder }}"
+              aria-required="true"
+              autocorrect="off"
+              autocapitalize="off"
+              autocomplete="email"
+              {% if form.errors %}
+                aria-invalid="true"
+                aria-describedby="ai-newsletter-error-{{ ai_gen_id }}"
+              {% endif %}
+              {% if form.posted_successfully? %}
+                aria-describedby="ai-newsletter-success-{{ ai_gen_id }}"
+              {% endif %}
+              required
+            >
+            <button type="submit" class="ai-newsletter-button-{{ ai_gen_id }}">
+              {{ block.settings.newsletter_button_label }}
+            </button>
+          </div>
+
+          {%- if form.errors -%}
+            <div id="ai-newsletter-error-{{ ai_gen_id }}" class="ai-newsletter-error-{{ ai_gen_id }}">
+              {{ form.errors.messages.email }}
+            </div>
+          {%- endif -%}
+
+          {%- if form.posted_successfully? -%}
+            <div id="ai-newsletter-success-{{ ai_gen_id }}" class="ai-newsletter-success-{{ ai_gen_id }}">
+              {{ block.settings.newsletter_success_message }}
+            </div>
+          {%- endif -%}
+        {%- endform -%}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  (function() {
+    class InfiniteScroll{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.isTeleporting = false;
+        this.copyHeight = 0;
+      }
+
+      connectedCallback() {
+        this.init();
+        window.addEventListener('resize', () => this.init());
+      }
+
+      init() {
+        const wrapper = this.querySelector('.ai-infinite-scroll-wrapper-{{ ai_gen_id }}');
+        const slides = wrapper.querySelectorAll('.ai-slide-{{ ai_gen_id }}');
+        const enabledSlides = Array.from(slides).filter(slide => slide.offsetHeight > 0);
+        const slideCount = enabledSlides.length / 3;
+        
+        this.copyHeight = 0;
+        for (let i = 0; i < slideCount; i++) {
+          this.copyHeight += enabledSlides[i].offsetHeight;
+        }
+
+        this.scrollTop = this.copyHeight;
+        this.addEventListener('scroll', () => this.handleScroll());
+      }
+
+      handleScroll() {
+        if (this.isTeleporting) return;
+
+        const scrollPos = this.scrollTop;
+        const threshold = this.copyHeight * 0.5;
+
+        if (scrollPos < threshold) {
+          this.isTeleporting = true;
+          this.scrollTop = scrollPos + this.copyHeight;
+          setTimeout(() => { this.isTeleporting = false; }, 50);
+        } else if (scrollPos > this.copyHeight + threshold) {
+          this.isTeleporting = true;
+          this.scrollTop = scrollPos - this.copyHeight;
+          setTimeout(() => { this.isTeleporting = false; }, 50);
+        }
+      }
+    }
+
+    customElements.define('infinite-scroll-{{ ai_gen_id }}', InfiniteScroll{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Infinite scroll homepage",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "slide_height",
+      "label": "Slide height",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "vh",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "pill_clearance",
+      "label": "Pill nav clearance",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Button style"
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color",
+      "label": "Primary background",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Primary text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_bg_color",
+      "label": "Primary hover background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_text_color",
+      "label": "Secondary text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_border_color",
+      "label": "Secondary border",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_hover_bg_color",
+      "label": "Secondary hover background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "secondary_button_hover_text_color",
+      "label": "Secondary hover text",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Slide 1"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_1_enabled",
+      "label": "Enable slide 1",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_1_image",
+      "label": "Background image"
+    },
+    {
+      "type": "url",
+      "id": "slide_1_video",
+      "label": "Background video URL"
+    },
+    {
+      "type": "color",
+      "id": "slide_1_bg_color",
+      "label": "Background color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "slide_1_overlay",
+      "label": "Overlay darkness",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "slide_1_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "select",
+      "id": "slide_1_alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "text",
+      "id": "slide_1_eyebrow",
+      "label": "Eyebrow text",
+      "default": "New Collection"
+    },
+    {
+      "type": "text",
+      "id": "slide_1_heading",
+      "label": "Heading",
+      "default": "Premium Streetwear"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_1_heading_italic",
+      "label": "Italic heading",
+      "default": false
+    },
+    {
+      "type": "richtext",
+      "id": "slide_1_paragraph",
+      "label": "Paragraph",
+      "default": "<p>Discover our latest minimalist designs</p>"
+    },
+    {
+      "type": "text",
+      "id": "slide_1_primary_label",
+      "label": "Primary button label",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "slide_1_primary_url",
+      "label": "Primary button link"
+    },
+    {
+      "type": "text",
+      "id": "slide_1_secondary_label",
+      "label": "Secondary button label",
+      "default": "Learn More"
+    },
+    {
+      "type": "url",
+      "id": "slide_1_secondary_url",
+      "label": "Secondary button link"
+    },
+    {
+      "type": "header",
+      "content": "Slide 2"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_2_enabled",
+      "label": "Enable slide 2",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_2_image",
+      "label": "Background image"
+    },
+    {
+      "type": "url",
+      "id": "slide_2_video",
+      "label": "Background video URL"
+    },
+    {
+      "type": "color",
+      "id": "slide_2_bg_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "slide_2_overlay",
+      "label": "Overlay darkness",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "slide_2_text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "select",
+      "id": "slide_2_alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "text",
+      "id": "slide_2_eyebrow",
+      "label": "Eyebrow text"
+    },
+    {
+      "type": "text",
+      "id": "slide_2_heading",
+      "label": "Heading",
+      "default": "Bold Typography"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_2_heading_italic",
+      "label": "Italic heading",
+      "default": false
+    },
+    {
+      "type": "richtext",
+      "id": "slide_2_paragraph",
+      "label": "Paragraph"
+    },
+    {
+      "type": "text",
+      "id": "slide_2_primary_label",
+      "label": "Primary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_2_primary_url",
+      "label": "Primary button link"
+    },
+    {
+      "type": "text",
+      "id": "slide_2_secondary_label",
+      "label": "Secondary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_2_secondary_url",
+      "label": "Secondary button link"
+    },
+    {
+      "type": "header",
+      "content": "Slide 3"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_3_enabled",
+      "label": "Enable slide 3",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_3_image",
+      "label": "Background image"
+    },
+    {
+      "type": "url",
+      "id": "slide_3_video",
+      "label": "Background video URL"
+    },
+    {
+      "type": "color",
+      "id": "slide_3_bg_color",
+      "label": "Background color",
+      "default": "#f1f1f1"
+    },
+    {
+      "type": "range",
+      "id": "slide_3_overlay",
+      "label": "Overlay darkness",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "slide_3_text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "select",
+      "id": "slide_3_alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "text",
+      "id": "slide_3_eyebrow",
+      "label": "Eyebrow text"
+    },
+    {
+      "type": "text",
+      "id": "slide_3_heading",
+      "label": "Heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_3_heading_italic",
+      "label": "Italic heading",
+      "default": false
+    },
+    {
+      "type": "richtext",
+      "id": "slide_3_paragraph",
+      "label": "Paragraph"
+    },
+    {
+      "type": "text",
+      "id": "slide_3_primary_label",
+      "label": "Primary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_3_primary_url",
+      "label": "Primary button link"
+    },
+    {
+      "type": "text",
+      "id": "slide_3_secondary_label",
+      "label": "Secondary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_3_secondary_url",
+      "label": "Secondary button link"
+    },
+    {
+      "type": "header",
+      "content": "Slide 4"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_4_enabled",
+      "label": "Enable slide 4",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_4_image",
+      "label": "Background image"
+    },
+    {
+      "type": "url",
+      "id": "slide_4_video",
+      "label": "Background video URL"
+    },
+    {
+      "type": "color",
+      "id": "slide_4_bg_color",
+      "label": "Background color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "slide_4_overlay",
+      "label": "Overlay darkness",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 30
+    },
+    {
+      "type": "color",
+      "id": "slide_4_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "select",
+      "id": "slide_4_alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "text",
+      "id": "slide_4_eyebrow",
+      "label": "Eyebrow text"
+    },
+    {
+      "type": "text",
+      "id": "slide_4_heading",
+      "label": "Heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_4_heading_italic",
+      "label": "Italic heading",
+      "default": false
+    },
+    {
+      "type": "richtext",
+      "id": "slide_4_paragraph",
+      "label": "Paragraph"
+    },
+    {
+      "type": "text",
+      "id": "slide_4_primary_label",
+      "label": "Primary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_4_primary_url",
+      "label": "Primary button link"
+    },
+    {
+      "type": "text",
+      "id": "slide_4_secondary_label",
+      "label": "Secondary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_4_secondary_url",
+      "label": "Secondary button link"
+    },
+    {
+      "type": "header",
+      "content": "Slide 5"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_5_enabled",
+      "label": "Enable slide 5",
+      "default": false
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_5_image",
+      "label": "Background image"
+    },
+    {
+      "type": "url",
+      "id": "slide_5_video",
+      "label": "Background video URL"
+    },
+    {
+      "type": "color",
+      "id": "slide_5_bg_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "slide_5_overlay",
+      "label": "Overlay darkness",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "slide_5_text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "select",
+      "id": "slide_5_alignment",
+      "label": "Text alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "text",
+      "id": "slide_5_eyebrow",
+      "label": "Eyebrow text"
+    },
+    {
+      "type": "text",
+      "id": "slide_5_heading",
+      "label": "Heading"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_5_heading_italic",
+      "label": "Italic heading",
+      "default": false
+    },
+    {
+      "type": "richtext",
+      "id": "slide_5_paragraph",
+      "label": "Paragraph"
+    },
+    {
+      "type": "text",
+      "id": "slide_5_primary_label",
+      "label": "Primary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_5_primary_url",
+      "label": "Primary button link"
+    },
+    {
+      "type": "text",
+      "id": "slide_5_secondary_label",
+      "label": "Secondary button label"
+    },
+    {
+      "type": "url",
+      "id": "slide_5_secondary_url",
+      "label": "Secondary button link"
+    },
+    {
+      "type": "header",
+      "content": "Footer"
+    },
+    {
+      "type": "color",
+      "id": "footer_text_color",
+      "label": "Text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "checkbox",
+      "id": "footer_border",
+      "label": "Show border",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "footer_column_1_title",
+      "label": "Column 1 title",
+      "default": "Shop"
+    },
+    {
+      "type": "link_list",
+      "id": "footer_column_1_menu",
+      "label": "Column 1 menu"
+    },
+    {
+      "type": "text",
+      "id": "footer_column_2_title",
+      "label": "Column 2 title",
+      "default": "About"
+    },
+    {
+      "type": "link_list",
+      "id": "footer_column_2_menu",
+      "label": "Column 2 menu"
+    },
+    {
+      "type": "text",
+      "id": "footer_column_3_title",
+      "label": "Column 3 title",
+      "default": "Support"
+    },
+    {
+      "type": "link_list",
+      "id": "footer_column_3_menu",
+      "label": "Column 3 menu"
+    },
+    {
+      "type": "text",
+      "id": "footer_column_4_title",
+      "label": "Column 4 title",
+      "default": "Follow"
+    },
+    {
+      "type": "link_list",
+      "id": "footer_column_4_menu",
+      "label": "Column 4 menu"
+    },
+    {
+      "type": "header",
+      "content": "Newsletter"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_newsletter",
+      "label": "Show newsletter signup",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "newsletter_heading",
+      "label": "Heading",
+      "default": "Stay Updated"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_placeholder",
+      "label": "Email placeholder",
+      "default": "Enter your email"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_button_label",
+      "label": "Button label",
+      "default": "Subscribe"
+    },
+    {
+      "type": "text",
+      "id": "newsletter_success_message",
+      "label": "Success message",
+      "default": "Thanks for subscribing!"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Infinite scroll homepage"
+    }
+  ]
+}
+{% endschema %}

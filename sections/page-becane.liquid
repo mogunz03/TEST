@@ -1,0 +1,514 @@
+{% comment %}
+  Becane Editorial Page
+  File: sections/page-becane.liquid
+  Use for: About Us, Feed, lookbook-style pages.
+
+  Repeatable blocks: hero, paragraph, image, video, columns, quote, spacer.
+{% endcomment %}
+
+{% liquid
+  if section.settings.font_preset == 'custom'
+    assign heading_font = section.settings.heading_font.family | append: ', ' | append: section.settings.heading_font.fallback_families
+    assign body_font    = section.settings.body_font.family    | append: ', ' | append: section.settings.body_font.fallback_families
+  else
+    assign heading_font = '-apple-system, BlinkMacSystemFont, "Helvetica Neue", "Akzidenz-Grotesk", Helvetica, Arial, sans-serif'
+    assign body_font    = heading_font
+  endif
+%}
+
+{%- if section.settings.font_preset == 'custom' -%}
+  {{ section.settings.heading_font | font_face: font_display: 'swap' }}
+  {{ section.settings.body_font    | font_face: font_display: 'swap' }}
+{%- endif -%}
+
+{% style %}
+  #pb-{{ section.id }} {
+    --pb-bg: {{ section.settings.bg_color }};
+    --pb-fg: {{ section.settings.text_color }};
+    --pb-muted: {{ section.settings.muted_color }};
+    --pb-accent: {{ section.settings.accent_color }};
+    --pb-font-h: {{ heading_font }};
+    --pb-font-b: {{ body_font }};
+    --pb-font-mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, monospace;
+
+    background: var(--pb-bg);
+    color: var(--pb-fg);
+    font-family: var(--pb-font-b);
+    padding: 80px 0 120px;
+    box-sizing: border-box;
+  }
+
+  #pb-{{ section.id }} *,
+  #pb-{{ section.id }} *::before,
+  #pb-{{ section.id }} *::after { box-sizing: border-box; }
+
+  .pb-eyebrow-{{ section.id }} {
+    font-family: var(--pb-font-h);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--pb-muted);
+    margin: 0 0 12px;
+    text-align: center;
+  }
+
+  .pb-title-{{ section.id }} {
+    font-family: var(--pb-font-h);
+    font-size: clamp(22px, 2.2vw, 32px);
+    font-weight: 600; letter-spacing: 0.02em;
+    text-transform: uppercase; line-height: 1.1;
+    margin: 0 auto 60px;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 24px;
+  }
+
+  /* HERO BLOCK */
+  .pb-hero-{{ section.id }} {
+    position: relative;
+    width: 100%;
+    min-height: 70vh;
+    margin: 0 0 80px;
+    overflow: hidden;
+    background: #eee;
+  }
+  .pb-hero-{{ section.id }} img,
+  .pb-hero-{{ section.id }} video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    position: absolute; inset: 0;
+  }
+  .pb-hero-{{ section.id }} iframe {
+    width: 100%; height: 100%;
+    border: none;
+    position: absolute; inset: 0;
+  }
+  .pb-hero__caption-{{ section.id }} {
+    position: relative; z-index: 2;
+    color: var(--pb-hero-fg, #fff);
+    padding: 80px 5vw;
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,var(--pb-hero-overlay, 0.2)) 100%);
+  }
+  .pb-hero__eyebrow-{{ section.id }} {
+    font-family: var(--pb-font-h);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    opacity: 0.9;
+    margin: 0 0 12px;
+  }
+  .pb-hero__heading-{{ section.id }} {
+    font-family: var(--pb-font-h);
+    font-size: clamp(32px, 5vw, 72px);
+    font-weight: 800; letter-spacing: -0.01em;
+    line-height: 1; text-transform: uppercase;
+    margin: 0;
+    max-width: 900px;
+  }
+  .pb-hero__heading-{{ section.id }}.is-italic { font-style: italic; }
+
+  /* PARAGRAPH BLOCK */
+  .pb-paragraph-{{ section.id }} {
+    max-width: 720px;
+    margin: 0 auto 48px;
+    padding: 0 24px;
+    font-family: var(--pb-font-b);
+    font-size: 16px; line-height: 1.7;
+    color: var(--pb-fg);
+  }
+  .pb-paragraph-{{ section.id }}.is-large { font-size: 20px; line-height: 1.5; }
+  .pb-paragraph-{{ section.id }} p { margin: 0 0 1.2em; }
+  .pb-paragraph-{{ section.id }} p:last-child { margin-bottom: 0; }
+  .pb-paragraph-{{ section.id }} a { color: var(--pb-fg); text-decoration: underline; text-underline-offset: 3px; }
+  .pb-paragraph-{{ section.id }} a:hover { color: var(--pb-accent); }
+
+  /* HEADING BLOCK */
+  .pb-heading-{{ section.id }} {
+    max-width: 900px;
+    margin: 0 auto 32px;
+    padding: 0 24px;
+    text-align: center;
+    font-family: var(--pb-font-h);
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--pb-fg);
+  }
+
+  /* IMAGE BLOCK */
+  .pb-image-{{ section.id }} {
+    margin: 0 0 48px;
+    padding: 0 24px;
+  }
+  .pb-image-{{ section.id }}.is-full { padding: 0; }
+  .pb-image__inner-{{ section.id }} {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .pb-image-{{ section.id }}.is-full .pb-image__inner-{{ section.id }} { max-width: 100%; }
+  .pb-image-{{ section.id }} img {
+    width: 100%; height: auto; display: block;
+  }
+  .pb-image__caption-{{ section.id }} {
+    margin-top: 10px;
+    font-family: var(--pb-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--pb-muted);
+    text-align: center;
+  }
+
+  /* VIDEO BLOCK */
+  .pb-video-{{ section.id }} {
+    margin: 0 auto 48px;
+    padding: 0 24px;
+    max-width: 1200px;
+  }
+  .pb-video-{{ section.id }}.is-full { padding: 0; max-width: 100%; }
+  .pb-video-{{ section.id }} video,
+  .pb-video-{{ section.id }} iframe {
+    width: 100%; display: block;
+    aspect-ratio: 16 / 9;
+    border: none;
+  }
+
+  /* TWO COLUMNS BLOCK */
+  .pb-columns-{{ section.id }} {
+    max-width: 1200px;
+    margin: 0 auto 48px;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .pb-columns-{{ section.id }}[data-reverse="true"] .pb-col-{{ section.id }}.is-media { order: 2; }
+  .pb-col-{{ section.id }} { min-width: 0; }
+  .pb-col-{{ section.id }} img,
+  .pb-col-{{ section.id }} video { width: 100%; height: auto; display: block; }
+  .pb-col__heading-{{ section.id }} {
+    font-family: var(--pb-font-h);
+    font-size: clamp(20px, 2vw, 28px);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .pb-col__text-{{ section.id }} {
+    font-family: var(--pb-font-b);
+    font-size: 15px; line-height: 1.7;
+  }
+  .pb-col__text-{{ section.id }} p { margin: 0 0 1em; }
+  .pb-col__text-{{ section.id }} p:last-child { margin-bottom: 0; }
+
+  /* QUOTE BLOCK */
+  .pb-quote-{{ section.id }} {
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .pb-quote__text-{{ section.id }} {
+    font-family: var(--pb-font-h);
+    font-size: clamp(20px, 2.6vw, 36px);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+    font-style: italic;
+    margin: 0 0 24px;
+  }
+  .pb-quote__cite-{{ section.id }} {
+    font-family: var(--pb-font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--pb-muted);
+    font-style: normal;
+  }
+
+  /* SPACER BLOCK */
+  .pb-spacer-{{ section.id }} { width: 100%; }
+
+  /* BUTTON */
+  .pb-btn-{{ section.id }} {
+    display: inline-block;
+    background: var(--pb-fg);
+    color: var(--pb-bg);
+    border: none;
+    padding: 14px 28px;
+    font-family: var(--pb-font-h);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    margin-top: 24px;
+  }
+  .pb-btn-{{ section.id }}:hover { opacity: 0.85; }
+
+  /* MOBILE */
+  @media screen and (max-width: 900px) {
+    #pb-{{ section.id }} { padding: 60px 0 80px; }
+    .pb-hero__caption-{{ section.id }} { padding: 60px 20px; }
+    .pb-columns-{{ section.id }} {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .pb-columns-{{ section.id }}[data-reverse="true"] .pb-col-{{ section.id }}.is-media { order: 0; }
+  }
+{% endstyle %}
+
+<div id="pb-{{ section.id }}">
+
+  {%- if section.settings.eyebrow != blank -%}
+    <div class="pb-eyebrow-{{ section.id }}">{{ section.settings.eyebrow }}</div>
+  {%- endif -%}
+
+  {%- if section.settings.title != blank -%}
+    <h1 class="pb-title-{{ section.id }}">{{ section.settings.title | default: page.title }}</h1>
+  {%- elsif page.title != blank and section.settings.show_page_title -%}
+    <h1 class="pb-title-{{ section.id }}">{{ page.title }}</h1>
+  {%- endif -%}
+
+  {%- for block in section.blocks -%}
+    {%- case block.type -%}
+
+      {%- when 'hero' -%}
+        {%- liquid
+          assign hero_bg_mode = 'none'
+          if block.settings.video != blank
+            assign hero_bg_mode = 'video'
+          elsif block.settings.video_url != blank
+            assign hero_bg_mode = 'iframe'
+          elsif block.settings.image != blank
+            assign hero_bg_mode = 'image'
+          endif
+        -%}
+        <section class="pb-hero-{{ section.id }}"
+                 style="--pb-hero-fg: {{ block.settings.text_color }}; --pb-hero-overlay: {{ block.settings.overlay | divided_by: 100.0 }};"
+                 {{ block.shopify_attributes }}>
+          {%- if hero_bg_mode == 'video' -%}
+            {{ block.settings.video | video_tag: image_size: '1600x', autoplay: true, loop: true, muted: true, controls: false, preload: 'metadata' }}
+          {%- elsif hero_bg_mode == 'iframe' -%}
+            {%- assign vurl = block.settings.video_url -%}
+            {%- if vurl.type == 'youtube' -%}
+              <iframe src="https://www.youtube.com/embed/{{ vurl.id }}?autoplay=1&mute=1&loop=1&playlist={{ vurl.id }}&controls=0&modestbranding=1&playsinline=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            {%- elsif vurl.type == 'vimeo' -%}
+              <iframe src="https://player.vimeo.com/video/{{ vurl.id }}?autoplay=1&muted=1&loop=1&background=1&controls=0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            {%- endif -%}
+          {%- elsif hero_bg_mode == 'image' -%}
+            <img src="{{ block.settings.image | image_url: width: 2400 }}" alt="{{ block.settings.heading | escape }}" loading="eager" width="2400" height="1600">
+          {%- endif -%}
+          <div class="pb-hero__caption-{{ section.id }}">
+            {%- if block.settings.eyebrow != blank -%}
+              <div class="pb-hero__eyebrow-{{ section.id }}">{{ block.settings.eyebrow }}</div>
+            {%- endif -%}
+            {%- if block.settings.heading != blank -%}
+              <h2 class="pb-hero__heading-{{ section.id }} {% if block.settings.italic %}is-italic{% endif %}">{{ block.settings.heading }}</h2>
+            {%- endif -%}
+          </div>
+        </section>
+
+      {%- when 'paragraph' -%}
+        <div class="pb-paragraph-{{ section.id }} {% if block.settings.large %}is-large{% endif %}" {{ block.shopify_attributes }}>
+          {{ block.settings.text }}
+          {%- if block.settings.button_label != blank and block.settings.button_link != blank -%}
+            <div style="margin-top: 24px;"><a class="pb-btn-{{ section.id }}" href="{{ block.settings.button_link }}">{{ block.settings.button_label }}</a></div>
+          {%- endif -%}
+        </div>
+
+      {%- when 'heading' -%}
+        <h2 class="pb-heading-{{ section.id }}" {{ block.shopify_attributes }}>{{ block.settings.heading }}</h2>
+
+      {%- when 'image' -%}
+        <div class="pb-image-{{ section.id }} {% if block.settings.full_width %}is-full{% endif %}" {{ block.shopify_attributes }}>
+          <div class="pb-image__inner-{{ section.id }}">
+            {%- if block.settings.image != blank -%}
+              <img src="{{ block.settings.image | image_url: width: 2000 }}"
+                   alt="{{ block.settings.caption | escape | default: block.settings.image.alt }}"
+                   loading="lazy"
+                   width="2000"
+                   height="{{ 2000 | divided_by: block.settings.image.aspect_ratio | round }}">
+            {%- endif -%}
+            {%- if block.settings.caption != blank -%}
+              <div class="pb-image__caption-{{ section.id }}">{{ block.settings.caption }}</div>
+            {%- endif -%}
+          </div>
+        </div>
+
+      {%- when 'video' -%}
+        <div class="pb-video-{{ section.id }} {% if block.settings.full_width %}is-full{% endif %}" {{ block.shopify_attributes }}>
+          {%- if block.settings.video != blank -%}
+            {{ block.settings.video | video_tag: image_size: '1600x', autoplay: block.settings.autoplay, loop: block.settings.loop, muted: block.settings.autoplay, controls: true, preload: 'metadata' }}
+          {%- elsif block.settings.video_url != blank -%}
+            {%- assign vurl = block.settings.video_url -%}
+            {%- if vurl.type == 'youtube' -%}
+              <iframe src="https://www.youtube.com/embed/{{ vurl.id }}" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+            {%- elsif vurl.type == 'vimeo' -%}
+              <iframe src="https://player.vimeo.com/video/{{ vurl.id }}" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>
+            {%- endif -%}
+          {%- endif -%}
+        </div>
+
+      {%- when 'columns' -%}
+        <div class="pb-columns-{{ section.id }}" data-reverse="{% if block.settings.reverse %}true{% else %}false{% endif %}" {{ block.shopify_attributes }}>
+          <div class="pb-col-{{ section.id }} is-media">
+            {%- if block.settings.media_image != blank -%}
+              <img src="{{ block.settings.media_image | image_url: width: 1200 }}" alt="{{ block.settings.heading | escape }}" loading="lazy">
+            {%- elsif block.settings.media_video != blank -%}
+              {{ block.settings.media_video | video_tag: image_size: '1200x', autoplay: false, loop: true, muted: true, controls: true, preload: 'metadata' }}
+            {%- endif -%}
+          </div>
+          <div class="pb-col-{{ section.id }} is-text">
+            {%- if block.settings.heading != blank -%}
+              <h3 class="pb-col__heading-{{ section.id }}">{{ block.settings.heading }}</h3>
+            {%- endif -%}
+            <div class="pb-col__text-{{ section.id }}">{{ block.settings.text }}</div>
+            {%- if block.settings.button_label != blank and block.settings.button_link != blank -%}
+              <a class="pb-btn-{{ section.id }}" href="{{ block.settings.button_link }}">{{ block.settings.button_label }}</a>
+            {%- endif -%}
+          </div>
+        </div>
+
+      {%- when 'quote' -%}
+        <figure class="pb-quote-{{ section.id }}" {{ block.shopify_attributes }}>
+          <blockquote class="pb-quote__text-{{ section.id }}">"{{ block.settings.text }}"</blockquote>
+          {%- if block.settings.cite != blank -%}
+            <figcaption class="pb-quote__cite-{{ section.id }}">— {{ block.settings.cite }}</figcaption>
+          {%- endif -%}
+        </figure>
+
+      {%- when 'spacer' -%}
+        <div class="pb-spacer-{{ section.id }}" style="height: {{ block.settings.height }}px;" {{ block.shopify_attributes }}></div>
+
+    {%- endcase -%}
+  {%- endfor -%}
+
+</div>
+
+{% schema %}
+{
+  "name": "Becane page",
+  "settings": [
+    { "type": "header", "content": "Page header" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow / category label" },
+    { "type": "text", "id": "title", "label": "Page title override", "info": "Leave blank to use the page's own title." },
+    { "type": "checkbox", "id": "show_page_title", "label": "Show page title", "default": true },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
+    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
+    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
+    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#ef5000" },
+
+    { "type": "header", "content": "Typography" },
+    {
+      "type": "radio",
+      "id": "font_preset",
+      "label": "Font preset",
+      "options": [
+        { "value": "helvetica", "label": "Helvetica / Akzidenz (system)" },
+        { "value": "custom", "label": "Custom fonts" }
+      ],
+      "default": "helvetica"
+    },
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" }
+  ],
+  "blocks": [
+    {
+      "type": "hero",
+      "name": "Hero",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Background image" },
+        { "type": "video", "id": "video", "label": "Background video (uploaded)" },
+        { "type": "video_url", "id": "video_url", "label": "Background video URL (YouTube/Vimeo)", "accept": ["youtube", "vimeo"] },
+        { "type": "range", "id": "overlay", "label": "Bottom gradient darkness", "min": 0, "max": 80, "step": 5, "unit": "%", "default": 20 },
+        { "type": "color", "id": "text_color", "label": "Caption text color", "default": "#ffffff" },
+        { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "checkbox", "id": "italic", "label": "Italic heading", "default": false }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "name": "Paragraph",
+      "settings": [
+        { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Write something here.</p>" },
+        { "type": "checkbox", "id": "large", "label": "Large text size", "default": false },
+        { "type": "text", "id": "button_label", "label": "Button label (optional)" },
+        { "type": "url", "id": "button_link", "label": "Button link (optional)" }
+      ]
+    },
+    {
+      "type": "heading",
+      "name": "Heading",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "SECTION" }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "checkbox", "id": "full_width", "label": "Full bleed (edge to edge)", "default": false },
+        { "type": "text", "id": "caption", "label": "Caption (optional)" }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "Video",
+      "settings": [
+        { "type": "video", "id": "video", "label": "Uploaded video" },
+        { "type": "video_url", "id": "video_url", "label": "Or YouTube/Vimeo URL", "accept": ["youtube", "vimeo"] },
+        { "type": "checkbox", "id": "full_width", "label": "Full bleed (edge to edge)", "default": false },
+        { "type": "checkbox", "id": "autoplay", "label": "Autoplay (muted)", "default": false },
+        { "type": "checkbox", "id": "loop", "label": "Loop", "default": false }
+      ]
+    },
+    {
+      "type": "columns",
+      "name": "Media + text columns",
+      "settings": [
+        { "type": "image_picker", "id": "media_image", "label": "Media image" },
+        { "type": "video", "id": "media_video", "label": "Or media video" },
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Column text.</p>" },
+        { "type": "text", "id": "button_label", "label": "Button label (optional)" },
+        { "type": "url", "id": "button_link", "label": "Button link (optional)" },
+        { "type": "checkbox", "id": "reverse", "label": "Media on right (instead of left)", "default": false }
+      ]
+    },
+    {
+      "type": "quote",
+      "name": "Quote",
+      "settings": [
+        { "type": "textarea", "id": "text", "label": "Quote", "default": "A pull quote sits here." },
+        { "type": "text", "id": "cite", "label": "Attribution" }
+      ]
+    },
+    {
+      "type": "spacer",
+      "name": "Spacer",
+      "settings": [
+        { "type": "range", "id": "height", "label": "Height", "min": 16, "max": 200, "step": 8, "unit": "px", "default": 48 }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Becane page",
+      "category": "Page",
+      "blocks": [
+        { "type": "hero", "settings": { "heading": "ABOUT", "eyebrow": "DAUZE" } },
+        { "type": "paragraph", "settings": { "large": true, "text": "<p>Introduce the brand here.</p>" } },
+        { "type": "paragraph", "settings": { "text": "<p>Add longer-form body copy below.</p>" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

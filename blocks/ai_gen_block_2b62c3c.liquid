@@ -1,0 +1,516 @@
+{% doc %}
+  @prompt
+    an auto animated sliding product gallery
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-product-gallery-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: {{ block.settings.border_radius }}px;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-product-gallery-track-{{ ai_gen_id }} {
+    display: flex;
+    transition: transform {{ block.settings.animation_speed }}s ease-in-out;
+    will-change: transform;
+  }
+
+  .ai-product-gallery-slide-{{ ai_gen_id }} {
+    flex: 0 0 {{ block.settings.slide_width }}%;
+    padding: {{ block.settings.slide_spacing }}px;
+    box-sizing: border-box;
+  }
+
+  .ai-product-card-{{ ai_gen_id }} {
+    background: {{ block.settings.card_background }};
+    border-radius: {{ block.settings.card_border_radius }}px;
+    padding: {{ block.settings.card_padding }}px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ai-product-card-{{ ai_gen_id }}:hover {
+    transform: translateY(-4px);
+  }
+
+  .ai-product-image-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border-radius: {{ block.settings.image_border_radius }}px;}
+
+  .ai-product-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;}
+
+  .ai-product-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-product-placeholder-{{ ai_gen_id }} svg {
+    width: 60%;
+    height: 60%;
+    opacity: 0.5;
+  }
+
+  .ai-product-title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_size }}px;
+    font-weight:600;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+  }
+
+  .ai-product-price-{{ ai_gen_id }} {
+    font-size: {{ block.settings.price_size }}px;
+    color: {{ block.settings.price_color }};
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .ai-product-button-{{ ai_gen_id }} {
+    background-color: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    padding: 10px 20px;
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+    margin-top: auto;
+  }
+
+  .ai-product-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_color }};
+  }
+
+  .ai-gallery-controls-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+  }
+
+  .ai-gallery-dot-{{ ai_gen_id }} {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-gallery-dot-{{ ai_gen_id }}.active {
+    background-color: {{ block.settings.dot_active_color }};
+  }
+
+  .ai-gallery-empty-{{ ai_gen_id }} {
+    padding: 60px 20px;
+    text-align: center;
+    color: #666;
+    font-size: 16px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .ai-product-gallery-slide-{{ ai_gen_id }} {
+      flex: 0 0 {{ block.settings.mobile_slide_width }}%;
+    }
+  }
+{% endstyle %}
+
+<auto-sliding-gallery-{{ ai_gen_id }}
+  class="ai-product-gallery-{{ ai_gen_id }}"
+  data-speed="{{ block.settings.animation_speed }}"
+  data-auto-play="{{ block.settings.auto_play }}"
+  data-pause-on-hover="{{ block.settings.pause_on_hover }}"
+  {{ block.shopify_attributes }}
+>
+  {% if block.settings.product_list != blank and block.settings.product_list.size > 0 %}
+    <div class="ai-product-gallery-track-{{ ai_gen_id }}">
+      {% for product in block.settings.product_list %}
+        <div class="ai-product-gallery-slide-{{ ai_gen_id }}">
+          <div class="ai-product-card-{{ ai_gen_id }}">
+            <div class="ai-product-image-wrapper-{{ ai_gen_id }}">
+              {% if product.featured_image %}
+                <img
+                  src="{{ product.featured_image | image_url: width: 400 }}"
+                  alt="{{ product.featured_image.alt | escape }}"
+                  class="ai-product-image-{{ ai_gen_id }}"
+                  loading="lazy"
+                  width="400"
+                  height="400"
+                >
+              {% else %}
+                <div class="ai-product-placeholder-{{ ai_gen_id }}">
+                  {{ 'product-1' | placeholder_svg_tag }}
+                </div>
+              {% endif %}
+            </div><h3 class="ai-product-title-{{ ai_gen_id }}">{{ product.title }}</h3>
+            <div class="ai-product-price-{{ ai_gen_id }}">{{ product.price | money }}</div>
+            <a href="{{ product.url }}" class="ai-product-button-{{ ai_gen_id }}">
+              {{ block.settings.button_text }}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if block.settings.show_dots and block.settings.product_list.size > 1 %}
+      <div class="ai-gallery-controls-{{ ai_gen_id }}">
+        {% for product in block.settings.product_list %}
+          <button
+            class="ai-gallery-dot-{{ ai_gen_id }} {% if forloop.first %}active{% endif %}"
+            data-slide="{{ forloop.index0 }}"
+            aria-label="Go to slide {{ forloop.index }}"
+          ></button>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="ai-gallery-empty-{{ ai_gen_id }}">
+      Select products to display in this gallery
+    </div>
+  {% endif %}
+</auto-sliding-gallery-{{ ai_gen_id }}><script>
+  (function() {
+    class AutoSlidingGallery{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.currentSlide = 0;
+        this.totalSlides = 0;
+        this.autoPlayInterval = null;
+        this.isPlaying = false;
+      }
+
+      connectedCallback() {
+        this.track = this.querySelector('.ai-product-gallery-track-{{ ai_gen_id }}');
+        this.slides = this.querySelectorAll('.ai-product-gallery-slide-{{ ai_gen_id }}');
+        this.dots = this.querySelectorAll('.ai-gallery-dot-{{ ai_gen_id }}');
+        
+        this.totalSlides = this.slides.length;
+        this.speed = parseFloat(this.dataset.speed) || 3;
+        this.autoPlay = this.dataset.autoPlay === 'true';
+        this.pauseOnHover = this.dataset.pauseOnHover === 'true';
+
+        if (this.totalSlides <= 1) return;
+
+        this.setupEventListeners();
+        
+        if (this.autoPlay) {
+          this.startAutoPlay();
+        }
+      }
+
+      setupEventListeners() {
+        this.dots.forEach((dot, index) => {
+          dot.addEventListener('click', () => {
+            this.goToSlide(index);
+          });
+        });
+
+        if (this.pauseOnHover) {
+          this.addEventListener('mouseenter', () => this.pauseAutoPlay());
+          this.addEventListener('mouseleave', () => {
+            if (this.autoPlay) this.startAutoPlay();
+          });
+        }
+      }
+
+      goToSlide(index) {
+        this.currentSlide = index;
+        this.updateSlidePosition();
+        this.updateDots();
+      }
+
+      nextSlide() {
+        this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+        this.updateSlidePosition();
+        this.updateDots();
+      }
+
+      updateSlidePosition() {
+        if (!this.track) return;
+        const slideWidth = 100 / this.totalSlides;
+        const translateX = -this.currentSlide * slideWidth;
+        this.track.style.transform = `translateX(${translateX}%)`;
+      }
+
+      updateDots() {
+        this.dots.forEach((dot, index) => {
+          dot.classList.toggle('active', index === this.currentSlide);
+        });
+      }
+
+      startAutoPlay() {
+        if (this.isPlaying || this.totalSlides <= 1) return;
+        
+        this.isPlaying = true;
+        this.autoPlayInterval = setInterval(() => {
+          this.nextSlide();
+        }, this.speed * 1000);
+      }
+
+      pauseAutoPlay() {
+        if (this.autoPlayInterval) {
+          clearInterval(this.autoPlayInterval);
+          this.autoPlayInterval = null;
+          this.isPlaying = false;
+        }
+      }
+
+      disconnectedCallback() {
+        this.pauseAutoPlay();
+      }
+    }
+
+    customElements.define('auto-sliding-gallery-{{ ai_gen_id }}', AutoSlidingGallery{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Auto sliding gallery",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Products"
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products",
+      "limit": 12
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "View product"
+    },
+    {
+      "type": "header",
+      "content": "Animation"
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_play",
+      "label": "Auto play",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "animation_speed",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "unit": "s",
+      "label": "Animation speed",
+      "default": 3
+    },
+    {
+      "type": "checkbox",
+      "id": "pause_on_hover",
+      "label": "Pause on hover",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "slide_width",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Slide width",
+      "default": 25
+    },
+    {
+      "type": "range",
+      "id": "mobile_slide_width",
+      "min": 50,
+      "max": 100,
+      "step": 10,
+      "unit": "%",
+      "label": "Mobile slide width",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "slide_spacing",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Slide spacing",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dots",
+      "label": "Show dots",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "dot_active_color",
+      "label": "Active dot color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Price",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_color",
+      "label": "Button hover",
+      "default": "#333333"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Gallery border radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Card border radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "image_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Image border radius",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Button border radius",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "min": 10,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Card padding",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Title size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "price_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Price size",
+      "default": 14
+    }
+  ],
+  "presets": [
+    {
+      "name": "Auto sliding gallery"
+    }
+  ]
+}
+{% endschema %}
