@@ -31,7 +31,7 @@
     --pd-accent: {{ section.settings.accent_color }};
     --pd-font-h: {{ heading_font }};
     --pd-font-b: {{ body_font }};
-    --pd-font-mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, monospace;
+    --pd-font-mono: var(--font-body--family);
 
     background: var(--pd-bg);
     color: var(--pd-fg);
@@ -60,7 +60,7 @@
 
   .pd-title-{{ section.id }} {
     font-family: var(--pd-font-h);
-    font-size: clamp(22px, 2.2vw, 32px);
+    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -162,6 +162,9 @@
   @media screen and (max-width: 900px) {
     #pd-{{ section.id }} { padding: 80px 20px 120px; }
   }
+
+  /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
+  .pd-prose-{{ section.id }} img { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
 {% endstyle %}
 
 <div id="pd-{{ section.id }}">
@@ -221,8 +224,8 @@
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" }
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" }
   ],
   "presets": [
     {

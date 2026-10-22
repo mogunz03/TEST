@@ -567,8 +567,8 @@
             "subtitle_size": 12,
             "product_title_size": 12,
             "product_price_size": 12,
-            "card_border_radius": 0,
-            "button_border_radius": 0
+            "card_border_radius": 16,
+            "button_border_radius": 12
           },
           "blocks": {}
         }

@@ -51,8 +51,14 @@
 %}
 
 {% style %}
+  /*
+    Reserve exactly the footer's height at the bottom of every page, so the last line
+    of content stops above the blurred footer instead of sliding underneath it.
+    --gf-h is measured in JS (below) and updates on resize / when the footer grows;
+    the calc() is only the pre-JS fallback.
+  */
   body {
-    padding-bottom: calc(60px + {{ pill_clearance }}px);
+    padding-bottom: var(--gf-h, calc(60px + {{ pill_clearance }}px));
   }
 
   .gf {

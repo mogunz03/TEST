@@ -1,0 +1,27 @@
+{% comment %}
+  DAUZE design tokens. One place for corner radii and the type scale used by the
+  custom sections, header pill and footer. Theme-wide radii / sizes for the stock
+  Horizon components come from Theme settings (config/settings_data.json).
+
+  Radii      soft, never above 20px
+  Type       small and quiet (Zara / Gucci): hierarchy comes from case, tracking
+             and spacing rather than from size or weight
+{% endcomment %}
+<style>
+  :root {
+    --dz-radius-sm: 12px; /* buttons, inputs, chips */
+    --dz-radius-md: 16px; /* cards, images, video */
+    --dz-radius-lg: 20px; /* drawers, sheets (maximum) */
+
+    --dz-fs-label: 11px;
+    --dz-fs-small: 12px;
+    --dz-fs-body: 14px;
+    --dz-fs-lead: 16px;
+    --dz-fs-heading: clamp(15px, 1.3vw, 18px);
+    --dz-fs-title: clamp(16px, 1.5vw, 20px);
+    --dz-fs-hero: clamp(20px, 2.4vw, 30px);
+
+    --dz-tracking-label: 0.06em;
+    --dz-tracking-title: 0.04em;
+  }
+</style>

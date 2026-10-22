@@ -108,7 +108,7 @@
 
   .il-heading-{{ section.id }} {
     font-family: var(--il-font-heading);
-    font-size: clamp(34px, 5.5vw, 84px);
+    font-size: var(--dz-fs-hero, clamp(20px, 2.4vw, 30px));
     font-weight: 600; letter-spacing: -0.01em;
     line-height: 1.04; text-transform: uppercase;
     margin: 0 0 32px;
@@ -150,7 +150,7 @@
   }
   .il-grid__title-{{ section.id }} {
     font-family: var(--il-font-heading);
-    font-size: clamp(22px, 2.6vw, 36px);
+    font-size: var(--dz-fs-heading, clamp(15px, 1.3vw, 18px));
     font-weight: 600; letter-spacing: -0.005em;
     text-transform: uppercase;
     margin: 0;
@@ -196,6 +196,12 @@
     .il-grid__items-{{ section.id }} { grid-template-columns: repeat(2, 1fr) !important; gap: 32px 20px; }
     .il-grid-{{ section.id }} { padding: 64px 24px; }
   }
+
+  /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
+  .il-btn-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
+  .il-card-{{ section.id }},
+  .il-card__img-{{ section.id }},
+  .il-card__img-{{ section.id }} img { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
 {% endstyle %}
 
 <div id="il-{{ section.id }}" data-il-root>
@@ -484,8 +490,8 @@
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" },
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" },
 
     { "type": "paragraph", "content": "Footer is handled site-wide by the global-footer snippet rendered from theme.liquid. No footer settings here." }
   ],

@@ -33,7 +33,7 @@
     --bc-btn-fg: {{ section.settings.btn_fg }};
     --bc-font-h: {{ heading_font }};
     --bc-font-b: {{ body_font }};
-    --bc-font-mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, monospace;
+    --bc-font-mono: var(--font-body--family);
 
     background: var(--bc-bg);
     color: var(--bc-fg);
@@ -67,7 +67,7 @@
   }
   .bcart__empty-title-{{ section.id }} {
     font-family: var(--bc-font-h);
-    font-size: clamp(22px, 2.2vw, 32px);
+    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -105,7 +105,7 @@
   }
   .bcart__title-{{ section.id }} {
     font-family: var(--bc-font-h);
-    font-size: clamp(22px, 2.2vw, 32px);
+    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -339,6 +339,17 @@
     .bcart__checkout-{{ section.id }},
     .bcart__continue-{{ section.id }} { max-width: 100%; }
   }
+
+  /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
+  .bcart__btn-{{ section.id }},
+  .bcart__checkout-{{ section.id }},
+  .bcart__continue-{{ section.id }},
+  .bcart__qty-{{ section.id }},
+  .bcart__note-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
+  .bcart__item-img-{{ section.id }},
+  .bcart__item-img-{{ section.id }} img,
+  .bcart__summary-{{ section.id }},
+  .bcart__empty-{{ section.id }} { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
 {% endstyle %}
 
 <div id="bcart-{{ section.id }}">
@@ -546,8 +557,8 @@
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" }
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" }
   ],
   "presets": [
     {

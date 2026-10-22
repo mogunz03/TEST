@@ -33,7 +33,7 @@
     --bcn-overlay-bg: {{ section.settings.overlay_bg }};
     --bcn-font-heading: {{ heading_font }};
     --bcn-font-body: {{ body_font }};
-    --bcn-font-mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, monospace;
+    --bcn-font-mono: var(--font-body--family);
     --bcn-pad-y: {{ section.settings.padding_y }}px;
     --bcn-pad-x: {{ section.settings.padding_x }}px;
     --bcn-gap: {{ section.settings.column_gap }}px;
@@ -78,7 +78,7 @@
 
   .bcn-title-{{ section.id }} {
     font-family: var(--bcn-font-heading);
-    font-size: clamp(22px, 2.2vw, 32px);
+    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
     font-weight: 600; letter-spacing: 0.02em;
     text-transform: uppercase; line-height: 1.1;
     margin: 0;
@@ -426,6 +426,17 @@
     .bcn-overlay__top-{{ section.id }},
     .bcn-overlay__bottom-{{ section.id }} { padding: 16px 20px; }
   }
+
+  /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
+  .bcn-atc-{{ section.id }},
+  .bcn-size-pill-{{ section.id }},
+  .bcn-media-badge-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
+  .bcn-media-item-{{ section.id }},
+  .bcn-media-item-{{ section.id }} video,
+  .bcn-media-item-{{ section.id }} iframe,
+  .bcn-overlay__slide-{{ section.id }},
+  .bcn-overlay__slide-{{ section.id }} video,
+  .bcn-overlay__slide-{{ section.id }} iframe { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
 {% endstyle %}
 
 <div id="bcn-product-{{ section.id }}">
@@ -869,8 +880,8 @@
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" },
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" },
     { "type": "checkbox", "id": "italic_title", "label": "Italic product title", "default": true },
 
     { "type": "header", "content": "Labels" },

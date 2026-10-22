@@ -42,7 +42,7 @@
     --bc-btn-fg: {{ section.settings.btn_fg }};
     --bc-font-h: {{ heading_font }};
     --bc-font-b: {{ body_font }};
-    --bc-font-mono: "SF Mono", "JetBrains Mono", "IBM Plex Mono", Menlo, monospace;
+    --bc-font-mono: var(--font-body--family);
 
     background: var(--bc-bg);
     color: var(--bc-fg);
@@ -100,7 +100,7 @@
 
   .bcoll__title-{{ section.id }} {
     font-family: var(--bc-font-h);
-    font-size: clamp(20px, 1.8vw, 28px);
+    font-size: var(--dz-fs-heading, clamp(15px, 1.3vw, 18px));
     font-weight: 500;
     letter-spacing: 0.02em;
     line-height: 1.2;
@@ -406,6 +406,14 @@
     .bcoll__refine-{{ section.id }} { grid-area: refine; justify-self: start; }
     .bcoll__count-{{ section.id }} { grid-area: count; justify-self: end; padding-top: 0; align-self: center; }
   }
+
+  /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
+  .bcoll__btn-primary-{{ section.id }},
+  .bcoll__btn-secondary-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
+  .bcoll__card-img-{{ section.id }},
+  .bcoll__card-img-{{ section.id }} img,
+  .bcoll__empty-{{ section.id }} { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
+  .bcoll__drawer-{{ section.id }} { border-radius: 0 var(--dz-radius-lg, 20px) var(--dz-radius-lg, 20px) 0; }
 {% endstyle %}
 
 <div id="bcoll-{{ section.id }}">
@@ -721,8 +729,8 @@
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "helvetica_n7" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "helvetica_n4" },
+    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
+    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" },
 
     { "type": "header", "content": "Labels & toggles" },
     { "type": "text", "id": "refine_label", "label": "Refine button label", "default": "REFINE" },
