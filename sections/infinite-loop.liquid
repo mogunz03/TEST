@@ -57,6 +57,7 @@
   .il-track-{{ section.id }} {
     display: flex;
     flex-direction: column;
+    overflow-anchor: none; /* scroll anchoring would fight the loop's own jumps */
   }
 
   .il-slide-{{ section.id }} {
@@ -320,87 +321,77 @@
     const copies = track.querySelectorAll('[data-il-copy]');
     if (copies.length !== 3) return;
 
+    const html = document.documentElement;
     let copyHeight = 0;
-    let isTeleporting = false;
-    let rafPending = false;
-    let lastScrollY = window.scrollY;
 
     function measure() {
-      // Slide heights are fixed via vh units, so this is stable — but we
-      // re-run it on image/iframe load anyway in case the merchant swaps
-      // in taller custom content later.
+      // Slide heights are fixed via vh units, so this is stable. It is re-run on
+      // image/iframe load and on resize in case the content grows.
       copyHeight = copies[0].getBoundingClientRect().height;
     }
 
-    // Recomputed fresh on every check instead of cached once at load.
-    // Caching this was the root cause of the "snaps to the very top"
-    // symptom: anything that shifts page height above the loop after
-    // init (an app embed block, an announcement bar, a sticky header
-    // that collapses on scroll) silently desyncs a cached trackTop,
-    // so the boundary math fires at the wrong scroll position and the
-    // teleport lands somewhere that reads as "back to the top" instead
-    // of the intended one-copy-back jump.
+    // Recomputed on every call (never cached): anything that shifts the page
+    // above the loop after init would otherwise desync the wrap maths.
     function getTrackTop() {
       return window.scrollY + track.getBoundingClientRect().top;
     }
 
-    function teleportTo(y) {
-      isTeleporting = true;
+    // IMPORTANT: assets/base.css sets `html { scroll-behavior: smooth }`. Per the
+    // CSSOM spec, scrollTo({ behavior: 'auto' }) defers to that CSS value, so the
+    // old "instant" teleport was actually an animated glide back through a whole
+    // copy of slides (the visible rewind / bump). Force it off for the jump only.
+    function jumpTo(y) {
+      const prev = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
       window.scrollTo({ top: y, behavior: 'auto' });
-      // longer flag window to absorb trackpad inertia after the jump
-      setTimeout(() => { isTeleporting = false; }, 80);
+      html.style.scrollBehavior = prev;
     }
 
-    function checkBounds() {
-      rafPending = false;
-      if (isTeleporting || copyHeight === 0) { lastScrollY = window.scrollY; return; }
+    // Native <video> backgrounds: carry the playhead from the copy we are leaving
+    // to its twin in the copy we land in, so the jump does not cut the footage.
+    function syncVideos(fromCopy, toCopy) {
+      const from = copies[fromCopy].querySelectorAll('video');
+      const to = copies[toCopy].querySelectorAll('video');
+      from.forEach((v, i) => {
+        const twin = to[i];
+        if (!twin) return;
+        try { twin.currentTime = v.currentTime; } catch (e) {}
+        if (!v.paused) twin.play().catch(() => {});
+      });
+    }
 
-      const currentScrollY = window.scrollY;
-      const scrollingUp = currentScrollY < lastScrollY;
-      const scrollWithinTrack = currentScrollY - getTrackTop();
+    // Keep the viewport inside the MIDDLE copy at all times. Copies are pixel-
+    // identical, so moving by exactly one copy height changes nothing on screen,
+    // and there is always a full copy of runway above and below: infinite in both
+    // directions, with no direction gating and no cached state.
+    function normalize() {
+      if (copyHeight < window.innerHeight * 1.2) return; // too short to loop safely
+      const rel = window.scrollY - getTrackTop();
+      if (rel >= copyHeight && rel < copyHeight * 2) return; // already in the middle copy
 
-      // Scrolled past the end of copy 1 (into copy 2) → snap back one
-      // copy. Copy 1 and copy 2 render identical content, so this jump
-      // is invisible — this is the A→B→C→A wrap the loop is built for.
-      if (scrollWithinTrack >= copyHeight * 2) {
-        const target = currentScrollY - copyHeight;
-        lastScrollY = target;
-        teleportTo(target);
-        return;
-      }
-
-      // Scrolled UP past the start of copy 0 → snap forward one copy.
-      // Gated to scrollingUp only: without this check, a normal
-      // first-time scroll DOWN into the section also satisfies the
-      // position test (scrollWithinTrack is negative before you ever
-      // reach the track), which fired an unwanted forward jump the
-      // instant you approached the loop from above.
-      if (scrollingUp && scrollWithinTrack < 0 && scrollWithinTrack > -copyHeight) {
-        const target = currentScrollY + copyHeight;
-        lastScrollY = target;
-        teleportTo(target);
-        return;
-      }
-
-      lastScrollY = currentScrollY;
+      let phase = rel % copyHeight;
+      if (phase < 0) phase += copyHeight;
+      const fromCopy = Math.min(2, Math.max(0, Math.floor(rel / copyHeight)));
+      syncVideos(fromCopy, 1);
+      jumpTo(getTrackTop() + copyHeight + phase);
     }
 
     function onScroll() {
-      if (rafPending) return;
-      rafPending = true;
-      requestAnimationFrame(checkBounds);
+      // Synchronous on purpose: scroll events fire before the frame is painted,
+      // so the correction lands in the same frame and is never seen.
+      normalize();
     }
 
     function init() {
       measure();
-      lastScrollY = window.scrollY;
+      normalize();
 
       // Re-measure when copy 0's height changes (images loaded, fonts swapped, etc).
       if ('ResizeObserver' in window) {
         const ro = new ResizeObserver(() => {
           // Debounce — don't measure on every micro-resize
           clearTimeout(window._ilResizeT);
-          window._ilResizeT = setTimeout(measure, 100);
+          window._ilResizeT = setTimeout(() => { measure(); normalize(); }, 100);
         });
         ro.observe(copies[0]);
       }
@@ -457,8 +448,11 @@
     let resizeT;
     window.addEventListener('resize', () => {
       clearTimeout(resizeT);
-      resizeT = setTimeout(measure, 150);
+      resizeT = setTimeout(() => { measure(); normalize(); }, 150);
     });
+
+    // Back/forward cache restores the page without re-running init
+    window.addEventListener('pageshow', (e) => { if (e.persisted) { measure(); normalize(); } });
 
     window.addEventListener('scroll', onScroll, { passive: true });
   })();
