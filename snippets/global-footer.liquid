@@ -60,7 +60,8 @@
     the calc() is only the pre-JS fallback.
   */
   body {
-    padding-bottom: var(--gf-h, calc(60px + {{ pill_clearance }}px));
+    /* footer height + a 24px gap: the last line of text never touches or hides under it */
+    padding-bottom: calc(var(--gf-h, calc(60px + {{ pill_clearance }}px)) + var(--dz-frame-gap, 24px));
   }
 
   .gf {
@@ -68,8 +69,8 @@
     left: 0; right: 0;
     bottom: 0;
     z-index: 99;
-    padding: 18px 5vw;
-    padding-bottom: calc(18px + {{ pill_clearance }}px);
+    padding: 24px 5vw;
+    padding-bottom: calc(24px + {{ pill_clearance }}px);
     color: {{ footer_fg }};
     pointer-events: none;
     backdrop-filter: blur(8px);
@@ -102,7 +103,7 @@
     gap: 16px;
     list-style: none;
     margin: 0;
-    padding: 10px 0; /* 10px above + 10px below = 20px of breathing room around the links */
+    padding: 20px 0; /* 20px above + 20px below the links: a taller footer with room to breathe */
     pointer-events: auto;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -246,6 +247,7 @@
     .gf:not(.gf--flow) { padding-top: 10px; padding-bottom: calc(10px + {{ pill_clearance }}px); }
     .gf:not(.gf--flow) .gf__inner { gap: 8px; }
     .gf:not(.gf--flow) .gf__copyright { display: none; }
+    .gf:not(.gf--flow) .gf__menu { padding: 14px 0; }
     .gf:not(.gf--flow) .gf__row2 {
       display: flex;
       flex-wrap: wrap;

@@ -75,7 +75,6 @@
     pointer-events: none;
     isolation: isolate;
     font-family: var(--font-body--family, inherit);
-    transition: bottom 0.25s ease;
   }
 
   /* Search panel: same glass as the bar, opens directly above it with a 20px gap */
@@ -96,19 +95,18 @@
     box-shadow: 0 8px 32px {{ shadow_color }};
     opacity: 0;
     visibility: hidden;
-    transform: translateY(8px);
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.25s ease, visibility 0s linear 0.25s;
   }
   .ai-pill-header.is-search-open .ai-pill-header__search {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
     pointer-events: auto;
-    transition: opacity 0.2s ease, transform 0.25s ease, visibility 0s;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .ai-pill-header__search { transition: none; transform: none; }
+  /* Motion: a plain opacity fade, and only for visitors who have not asked for reduced motion.
+     Anywhere it is not supported the panel simply appears. Nothing slides. */
+  @media (prefers-reduced-motion: no-preference) {
+    .ai-pill-header__search { transition: opacity 0.2s ease, visibility 0s linear 0.2s; }
+    .ai-pill-header.is-search-open .ai-pill-header__search { transition: opacity 0.2s ease, visibility 0s; }
   }
 
   .ai-pill-header__bar {
@@ -121,11 +119,6 @@
     border: 1px solid {{ border_color }};
     border-radius: var(--dz-radius-md, 16px);
     padding: {{ vertical_padding }}px {{ horizontal_padding }}px;
-    transition:
-      max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-      -webkit-backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-      backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     pointer-events: auto;
     box-shadow: 0 8px 32px {{ shadow_color }};
@@ -205,22 +198,19 @@
   .ai-pill-header__menu-icon { position: relative; }
 
   .ai-pill-header__menu-icon svg {
-    transition: opacity 0.3s ease, transform 0.3s ease;
     position: absolute;
     top: 0;
     left: 0;
   }
 
-  .ai-pill-header__menu-hamburger { opacity: 1; transform: rotate(0deg); }
-  .ai-pill-header__menu-close-svg { opacity: 0; transform: rotate(90deg); }
+  .ai-pill-header__menu-hamburger { opacity: 1; }
+  .ai-pill-header__menu-close-svg { opacity: 0; }
 
   .ai-pill-header__bar.menu-active .ai-pill-header__menu-hamburger {
     opacity: 0;
-    transform: rotate(-90deg);
   }
   .ai-pill-header__bar.menu-active .ai-pill-header__menu-close-svg {
     opacity: 1;
-    transform: rotate(0deg);
   }
 
   .ai-pill-header__logo {
@@ -290,8 +280,6 @@
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     padding-top: 0;
   }
 
@@ -324,7 +312,6 @@
   .ai-pill-header__chevron {
     width: 20px;
     height: 20px;
-    transition: transform 0.3s ease;
   }
 
   .ai-pill-header__chevron svg {
@@ -342,7 +329,6 @@
   .ai-pill-header__submenu {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
     padding-left: 20px;
   }
 

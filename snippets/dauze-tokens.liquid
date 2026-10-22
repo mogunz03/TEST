@@ -1,11 +1,11 @@
 {% comment %}
-  DAUZE design tokens. One place for corner radii and the type scale used by the
-  custom sections, header pill and footer. Theme-wide radii / sizes for the stock
-  Horizon components come from Theme settings (config/settings_data.json).
+  DAUZE design tokens. One place for corner radii, the type scale and the text-page
+  layout used by the custom sections, header pill and footer. Theme-wide radii / sizes
+  for the stock Horizon components come from Theme settings (config/settings_data.json).
 
   Radii      soft, never above 20px
-  Type       small and quiet (Zara / Gucci): hierarchy comes from case, tracking
-             and spacing rather than from size or weight
+  Type       small and quiet: hierarchy comes from case, tracking and spacing, not size
+  Motion     none, except plain opacity fades (see "Motion" below)
 {% endcomment %}
 <style>
   :root {
@@ -13,83 +13,97 @@
     --dz-radius-md: 16px; /* cards, images, video */
     --dz-radius-lg: 20px; /* drawers, sheets (maximum) */
 
-    --dz-fs-label: 11px;
-    --dz-fs-small: 12px;
-    --dz-fs-body: 14px;
-    --dz-fs-lead: 16px;
-    --dz-fs-heading: clamp(15px, 1.3vw, 18px);
-    --dz-fs-title: clamp(16px, 1.5vw, 20px);
-    --dz-fs-hero: clamp(20px, 2.4vw, 30px);
+    --dz-fs-label: 10px;
+    --dz-fs-small: 11px;
+    --dz-fs-body: 12px;
+    --dz-fs-lead: 13px;
+    --dz-fs-heading: clamp(12px, 1vw, 14px);
+    --dz-fs-title: clamp(12px, 1.1vw, 16px);
+    --dz-fs-hero: clamp(16px, 1.8vw, 24px);
 
-    --dz-tracking-label: 0.06em;
-    --dz-tracking-title: 0.04em;
+    --dz-tracking-label: 0.1em;
+    --dz-tracking-title: 0.08em;
 
-    /* Page frame (text pages) */
-    --dz-frame-top: 84px;     /* below the floating logo pill */
-    --dz-frame-gap: 12px;     /* space between frame and footer */
-    --dz-frame-side: 24px;
-    --dz-frame-width: 1040px;
-    --dz-frame-bg: #fff;
-    --dz-page-bg: #f4f4f4;
+    /* Text pages */
+    --dz-frame-top: 76px;     /* clear of the floating logo */
+    --dz-frame-gap: 24px;     /* always-empty strip between the text and the footer */
+    --dz-frame-bg: var(--color-background, #fff);
     --dz-hairline: rgb(0 0 0 / 0.1);
     --dz-pad-x: 32px;
+    --dz-col: 760px;          /* readable column width */
   }
   @media (max-width: 749px) {
-    :root { --dz-frame-top: 68px; --dz-frame-side: 12px; --dz-pad-x: 20px; }
+    :root { --dz-frame-top: 60px; --dz-pad-x: 20px; }
   }
 
   /* ------------------------------------------------------------------
-     PAGE FRAME
-     One layout for every text page (pages, legal pages, Shopify policy
-     pages): a card that sits between the logo and the footer. The title
-     stays put; only the body scrolls inside the card.
-     Frame bottom = measured footer height (--gf-h, set in global-footer).
+     Motion
+     Nothing slides, scales, spins or bounces. The only motion allowed is a plain
+     opacity fade. Those are written inside @media (prefers-reduced-motion:
+     no-preference), so a visitor who turned motion off gets none, and a browser
+     that cannot run the effect simply shows the end state.
      ------------------------------------------------------------------ */
-  body.dz-framed-page {
-    overflow: hidden;
-    padding-bottom: 0;
-    background: var(--dz-page-bg);
+  /* Page-to-page transition: keep the cross-fade, drop the "slide in from the top" the
+     theme adds on top of it. (Only browsers with View Transitions run this at all.) */
+  :root {
+    --view-transition-new-main-content: var(--animation-speed) var(--animation-easing) both fadeIn;
   }
+
+  /* ------------------------------------------------------------------
+     TEXT PAGES (pages, legal pages, Shopify policy pages)
+     No box, border or shadow: the text sits straight on the page. The title stays
+     put and only the text scrolls, in a region that ends --dz-frame-gap above the
+     footer, so nothing is ever covered. Region bottom = measured footer height
+     (--gf-h, set in global-footer).
+     ------------------------------------------------------------------ */
+  body.dz-framed-page { overflow: hidden; padding-bottom: 0; }
 
   .dz-frame {
     position: fixed;
     top: var(--dz-frame-top);
-    bottom: calc(var(--gf-h, 160px) + var(--dz-frame-gap));
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(var(--dz-frame-width), calc(100% - 2 * var(--dz-frame-side)));
+    bottom: calc(var(--gf-h, 190px) + var(--dz-frame-gap));
+    left: 0;
+    right: 0;
     display: block;              /* the theme default is a flex column; a plain block scrolls predictably */
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     background: var(--dz-frame-bg);
-    color: #000;
-    border: 1px solid var(--dz-hairline);
-    border-radius: var(--dz-radius-lg, 20px);
-    box-shadow: 0 12px 40px rgb(0 0 0 / 0.06);
     z-index: 1;
+    /* soft edge where the text meets the gap above the footer (static, not an animation) */
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
   }
   .dz-frame:focus { outline: none; }
-  .dz-frame:focus-visible { outline: 1px solid rgb(0 0 0 / 0.35); outline-offset: 2px; }
+  .dz-frame:focus-visible { outline: 1px solid rgb(0 0 0 / 0.35); outline-offset: -1px; }
 
-  /* Pinned header: our sections (.dz-head) and Shopify's policy pages (.shopify-policy__title)
-     look identical and stay at the top of the card while the body scrolls beneath. */
+  /* Pinned header: our sections (.dz-head) and Shopify's policy pages
+     (.shopify-policy__title) are identical. Solid page colour hides the text that
+     scrolls beneath; a short static gradient softens the edge. */
   .dz-head,
   .dz-frame .shopify-policy__title {
     position: sticky;
     top: 0;
     z-index: 3;
     margin: 0;
-    padding: 20px var(--dz-pad-x) 16px;
+    padding: 4px max(var(--dz-pad-x), calc((100% - var(--dz-col)) / 2)) 20px;
     background: var(--dz-frame-bg);
-    border-bottom: 1px solid var(--dz-hairline);
     text-align: left;
+  }
+  .dz-head::after,
+  .dz-frame .shopify-policy__title::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 100%;
+    height: 20px;
+    background: linear-gradient(to bottom, var(--dz-frame-bg), transparent);
+    pointer-events: none;
   }
   .dz-head__eyebrow {
     margin: 0 0 6px;
     font-size: var(--dz-fs-label);
-    font-weight: 500;
+    font-weight: 400;
     letter-spacing: var(--dz-tracking-label);
     text-transform: uppercase;
     opacity: 0.55;
@@ -98,10 +112,10 @@
   .dz-frame .shopify-policy__title h1 {
     margin: 0;
     font-size: var(--dz-fs-title);
-    font-weight: 500;
+    font-weight: 400;
     letter-spacing: var(--dz-tracking-title);
     text-transform: uppercase;
-    line-height: 1.2;
+    line-height: 1.3;
   }
   .dz-head__meta {
     margin: 6px 0 0;
@@ -111,33 +125,31 @@
     opacity: 0.55;
   }
 
-  /* Body of the card */
+  /* Body: one readable column, aligned with the title */
   .dz-body,
   .dz-frame .shopify-policy__body {
-    padding: 24px var(--dz-pad-x) 48px;
+    padding: 12px max(var(--dz-pad-x), calc((100% - var(--dz-col)) / 2)) 32px;
   }
   .dz-frame .shopify-policy__container { padding: 0; max-width: none; margin: 0; }
 
   /* One prose style for all of them */
   .dz-prose,
   .dz-frame .shopify-policy__body .rte {
-    max-width: 720px;
-    margin-inline: auto;
     font-size: var(--dz-fs-body);
-    line-height: 1.7;
+    line-height: 1.8;
   }
   .dz-prose > :first-child { margin-top: 0; }
   .dz-prose p, .dz-prose ul, .dz-prose ol,
-  .dz-frame .shopify-policy__body p, .dz-frame .shopify-policy__body ul, .dz-frame .shopify-policy__body ol { margin: 0 0 1.1em; }
+  .dz-frame .shopify-policy__body p, .dz-frame .shopify-policy__body ul, .dz-frame .shopify-policy__body ol { margin: 0 0 1.2em; }
   .dz-prose h1, .dz-prose h2, .dz-prose h3, .dz-prose h4,
   .dz-frame .shopify-policy__body h1, .dz-frame .shopify-policy__body h2,
   .dz-frame .shopify-policy__body h3, .dz-frame .shopify-policy__body h4 {
-    margin: 2em 0 0.7em;
+    margin: 2.4em 0 0.8em;
     font-size: var(--dz-fs-heading);
-    font-weight: 500;
+    font-weight: 400;
     letter-spacing: var(--dz-tracking-title);
     text-transform: uppercase;
-    line-height: 1.3;
+    line-height: 1.4;
   }
   .dz-prose h3, .dz-prose h4,
   .dz-frame .shopify-policy__body h3, .dz-frame .shopify-policy__body h4 { font-size: var(--dz-fs-body); }
@@ -145,13 +157,9 @@
   .dz-prose a:hover, .dz-frame .shopify-policy__body a:hover { color: var(--color-primary, #ef5000); }
   .dz-prose img, .dz-frame .shopify-policy__body img { max-width: 100%; height: auto; border-radius: var(--dz-radius-md, 16px); }
   .dz-prose blockquote, .dz-frame .shopify-policy__body blockquote {
-    margin: 1.5em 0; padding-left: 1em; border-left: 1px solid var(--dz-hairline); font-style: normal;
+    margin: 1.6em 0; padding-left: 1em; border-left: 1px solid var(--dz-hairline); font-style: normal;
   }
   .dz-prose table, .dz-frame .shopify-policy__body table { width: 100%; border-collapse: collapse; font-size: var(--dz-fs-small); }
   .dz-prose th, .dz-prose td,
   .dz-frame .shopify-policy__body th, .dz-frame .shopify-policy__body td { padding: 8px 10px; border-bottom: 1px solid var(--dz-hairline); text-align: left; }
-
-  @media (max-width: 749px) {
-    .dz-head__title, .dz-frame .shopify-policy__title h1 { font-size: 15px; }
-  }
 </style>

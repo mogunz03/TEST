@@ -36,23 +36,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fl-logo-fade-in 0.5s ease-out 0.1s both;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .fl-logo { animation: fl-logo-fade-in 0.4s ease-out both; }
   }
 
-  /* Same glass container as the bottom bar (snippets/pill-header.liquid), so the logo
-     reads as part of one system instead of floating loose over the content. */
   .fl-logo > a {
     pointer-events: auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 18px;
-    background: rgba(255, 255, 255, 0.2);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--dz-radius-md, 16px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     text-decoration: none;
     color: {{ text_color }};
     transition: opacity 0.2s ease;
@@ -81,9 +74,10 @@
     font-style: italic;
   }
 
+  /* fade only: no slide */
   @keyframes fl-logo-fade-in {
-    from { opacity: 0; transform: translate(-50%, -8px); }
-    to   { opacity: 1; transform: translate(-50%, 0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 
   @media screen and (max-width: 749px) {

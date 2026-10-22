@@ -75,7 +75,7 @@
     color: var(--bc-fg);
     padding: 6px 14px;
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease;
@@ -89,7 +89,7 @@
 
   .bcoll__breadcrumb-{{ section.id }} {
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--bc-muted);
     margin: 0 0 12px;
@@ -112,7 +112,7 @@
     justify-self: end;
     align-self: start;
     font-family: var(--bc-font-mono);
-    font-size: 11px;
+    font-size: 10px;
     color: var(--bc-fg);
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -164,14 +164,14 @@
   }
   .bcoll__card-title-{{ section.id }} {
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase;
     margin: 0;
     display: flex; align-items: center; gap: 6px;
   }
   .bcoll__card-price-{{ section.id }} {
     font-family: var(--bc-font-mono);
-    font-size: 11px;
+    font-size: 10px;
     color: var(--bc-muted);
     letter-spacing: 0.04em;
   }
@@ -198,7 +198,7 @@
     text-align: center;
     padding: 80px 20px;
     font-family: var(--bc-font-h);
-    font-size: 11px; letter-spacing: 0.1em;
+    font-size: 10px; letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--bc-muted);
   }
@@ -208,7 +208,7 @@
     display: flex; justify-content: center; gap: 8px;
     margin-top: 60px;
     font-family: var(--bc-font-mono);
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.06em;
   }
   .bcoll__pagination-{{ section.id }} a,
@@ -227,14 +227,16 @@
     width: 380px;
     max-width: 90vw;
     background: var(--bc-bg);
-    transform: translateX(-100%);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    /* fade only (no slide): hidden drawers stay out of the way via visibility */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
     z-index: 9998;
     display: flex;
     flex-direction: column;
     box-shadow: 4px 0 24px rgba(0,0,0,0.08);
   }
-  .bcoll__drawer-{{ section.id }}.is-open { transform: translateX(0); }
+  .bcoll__drawer-{{ section.id }}.is-open { opacity: 1; visibility: visible; transition: opacity 0.2s ease, visibility 0s; }
 
   .bcoll__overlay-{{ section.id }} {
     position: fixed; inset: 0;
@@ -255,7 +257,7 @@
   }
   .bcoll__drawer-title-{{ section.id }} {
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     margin: 0;
   }
@@ -284,14 +286,13 @@
     cursor: pointer;
     color: inherit;
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     text-align: left;
   }
   .bcoll__filter-chev-{{ section.id }} {
     font-family: var(--bc-font-mono);
-    font-size: 14px;
-    transition: transform 0.25s ease;
+    font-size: 12px;
   }
   .bcoll__filter-{{ section.id }}.is-open .bcoll__filter-chev-{{ section.id }} { transform: rotate(45deg); }
 
@@ -312,7 +313,7 @@
     display: flex; align-items: center; gap: 10px;
     cursor: pointer;
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 500;
+    font-size: 10px; font-weight: 500;
     letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--bc-muted);
     transition: color 0.15s ease;
@@ -350,7 +351,7 @@
     border-bottom: 1px solid var(--bc-hairline);
     color: var(--bc-fg);
     font-family: var(--bc-font-mono);
-    font-size: 11px;
+    font-size: 10px;
     padding: 6px 0;
     outline: none;
   }
@@ -370,7 +371,7 @@
     border: none;
     padding: 14px;
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     cursor: pointer;
     transition: opacity 0.2s ease;
@@ -383,7 +384,7 @@
     border: 1px solid var(--bc-fg);
     padding: 14px;
     font-family: var(--bc-font-h);
-    font-size: 11px; font-weight: 700;
+    font-size: 10px; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
     cursor: pointer;
     text-align: center;
@@ -603,7 +604,7 @@
       {%- endfor -%}
 
       {%- if filters.size == 0 -%}
-        <p style="padding: 24px 0; font-family: var(--bc-font-h); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bc-muted);">
+        <p style="padding: 24px 0; font-family: var(--bc-font-h); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--bc-muted);">
           No filters configured. Enable filters in Shopify admin → Online Store → Search & Discovery → Filters.
         </p>
       {%- endif -%}
