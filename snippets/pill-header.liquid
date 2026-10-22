@@ -52,18 +52,29 @@
 %}
 
 {% style %}
+  /*
+    Position stack (all JS-driven, all default to 0):
+      --pill-lift  height of Shopify's cookie banner, so the bar floats ABOVE it
+                   instead of covering its Accept / Decline buttons
+      --pill-kb    on-screen keyboard height, so the bar stays glued to where the
+                   user tapped search instead of jumping behind the keyboard
+    z-index is deliberately modest: the old 2147483000 outranked every banner,
+    drawer and consent dialog on the site.
+  */
   .ai-pill-header {
     position: fixed;
-    bottom: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--pill-lift, 0px) + var(--pill-kb, 0px));
     left: 50%;
     transform: translateX(-50%);
-    z-index: 2147483000;
+    z-index: 900;
     width: 100%;
     max-width: {{ max_width }}px;
     padding: 0 20px;
     display: block;
     pointer-events: none;
     isolation: isolate;
+    font-family: var(--font-body--family, inherit);
+    transition: bottom 0.25s ease;
   }
 
   .ai-pill-header__bar {
@@ -76,7 +87,12 @@
     border: 1px solid {{ border_color }};
     border-radius: 10px;
     padding: {{ vertical_padding }}px {{ horizontal_padding }}px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: var(--pill-lock-h, 0px);
+    transition:
+      max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      -webkit-backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     pointer-events: auto;
     box-shadow: 0 8px 32px {{ shadow_color }};
@@ -85,6 +101,7 @@
   .ai-pill-header__bar.menu-active {
     border-radius: 10px;
     max-height: 70vh;
+    max-height: min(70vh, 70dvh);
     overflow-y: auto;
     flex-direction: column;
     align-items: stretch;
@@ -194,18 +211,37 @@
     letter-spacing: 1px;
   }
 
-  .ai-pill-header__search-input {
+  /*
+    The theme's base.css paints every <input> with --color-input-background
+    (white) using the selector input:not([type='checkbox'], [type='radio']),
+    specificity (0,1,1). A single-class selector (0,1,0) loses, which is why
+    search turned white. Doubling the class (0,2,0) wins, including :hover/:focus.
+  */
+  .ai-pill-header .ai-pill-header__search-input,
+  .ai-pill-header .ai-pill-header__search-input:hover,
+  .ai-pill-header .ai-pill-header__search-input:focus {
     display: none;
     width: 100%;
     border: none;
+    border-radius: 0;
     background: transparent;
-    font-size: {{ search_font_size }}px;
+    box-shadow: none;
+    -webkit-appearance: none;
+    appearance: none;
+    font-family: inherit;
+    font-size: max(16px, {{ search_font_size }}px); /* 16px minimum stops iOS zooming the page on focus */
     color: {{ search_text_color }};
     outline: none;
     padding: 0 20px;
+    min-width: 0;
   }
 
-  .ai-pill-header__search-input::placeholder { color: {{ search_placeholder_color }}; }
+  .ai-pill-header .ai-pill-header__search-input::placeholder {
+    color: {{ search_placeholder_color }};
+    opacity: 1; /* base.css hides the placeholder once the field has text; keep it stable */
+  }
+  .ai-pill-header .ai-pill-header__search-input::-webkit-search-cancel-button,
+  .ai-pill-header .ai-pill-header__search-input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
 
   .ai-pill-header__bar.search-active .ai-pill-header__search-input { display: block; }
 
@@ -228,6 +264,7 @@
 
   .ai-pill-header__bar.menu-active .ai-pill-header__nav {
     max-height: 60vh;
+    max-height: min(60vh, 60dvh);
     opacity: 1;
     padding-top: {{ nav_top_spacing }}px;
     overflow-y: auto;
@@ -428,6 +465,7 @@
         this.navItems        = this.querySelectorAll('.ai-pill-header__nav-item');
 
         this.bind();
+        this.watchConsentBanner();
       }
 
       bind() {
@@ -469,8 +507,73 @@
         });
       }
 
-      openSearch()  { this.closeMenu(); this.bar.classList.add('search-active'); this.searchInput.focus(); }
-      closeSearch() { this.bar.classList.remove('search-active'); this.searchInput.value = ''; }
+      openSearch()  {
+        this.closeMenu();
+        // Freeze the bar's current height before icons/logo are swapped for the input,
+        // so the bar cannot collapse (the "shrinks at the bottom" bug on mobile).
+        this.style.setProperty('--pill-lock-h', this.bar.offsetHeight + 'px');
+        this.bar.classList.add('search-active');
+        this.trackKeyboard(true);
+        this.searchInput.focus({ preventScroll: true });
+      }
+      closeSearch() {
+        if (!this.bar.classList.contains('search-active')) return;
+        this.bar.classList.remove('search-active');
+        this.searchInput.value = '';
+        this.searchInput.blur();
+        this.trackKeyboard(false);
+        this.style.removeProperty('--pill-lock-h');
+      }
+
+      // Keep the bar above the on-screen keyboard (iOS Safari does not resize the
+      // layout viewport, so `position: fixed; bottom` would otherwise slide under it).
+      trackKeyboard(on) {
+        const vv = window.visualViewport;
+        if (!vv) return;
+        if (!this._syncKb) {
+          this._syncKb = () => {
+            const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+            this.style.setProperty('--pill-kb', kb + 'px');
+          };
+        }
+        if (on) {
+          vv.addEventListener('resize', this._syncKb);
+          vv.addEventListener('scroll', this._syncKb);
+          this._syncKb();
+        } else {
+          vv.removeEventListener('resize', this._syncKb);
+          vv.removeEventListener('scroll', this._syncKb);
+          this.style.removeProperty('--pill-kb');
+        }
+      }
+
+      // Float above Shopify's cookie banner (#shopify-pc__banner) instead of burying
+      // its Accept / Decline buttons. Re-measured whenever the banner appears,
+      // resizes (rotation, translated text) or is dismissed.
+      watchConsentBanner() {
+        const sync = () => {
+          const banner = document.getElementById('shopify-pc__banner');
+          const visible = banner && banner.offsetHeight > 0 && getComputedStyle(banner).visibility !== 'hidden';
+          this.style.setProperty('--pill-lift', visible ? banner.offsetHeight + 'px' : '0px');
+        };
+        sync();
+        if ('ResizeObserver' in window) {
+          this._ro = new ResizeObserver(sync);
+          const attach = () => {
+            const banner = document.getElementById('shopify-pc__banner');
+            if (banner) this._ro.observe(banner);
+          };
+          attach();
+          // The banner is injected late by Shopify and removed once answered
+          let queued = false;
+          new MutationObserver(() => {
+            if (queued) return;
+            queued = true;
+            requestAnimationFrame(() => { queued = false; attach(); sync(); });
+          }).observe(document.body, { childList: true });
+        }
+        window.addEventListener('resize', sync, { passive: true });
+      }
       toggleMenu()  { this.bar.classList.contains('menu-active') ? this.closeMenu() : this.openMenu(); }
       openMenu()    { this.closeSearch(); this.bar.classList.add('menu-active'); this.menuIcon.setAttribute('aria-expanded', 'true'); }
       closeMenu()   {
