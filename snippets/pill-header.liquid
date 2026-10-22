@@ -28,24 +28,24 @@
 
   assign logo_height           = 30
   assign logo_height_mobile    = 24
-  assign logo_text_size        = 18
-  assign logo_text_size_mobile = 14
+  assign logo_text_size        = 14
+  assign logo_text_size_mobile = 13
   assign logo_text_color       = '#000000'
 
   assign search_placeholder    = 'Search...'
-  assign search_font_size      = 16
+  assign search_font_size      = 14
   assign search_text_color     = '#000000'
   assign search_placeholder_color = '#999999'
 
   assign nav_top_spacing       = 20
-  assign nav_font_size         = 24
-  assign nav_font_size_mobile  = 18
+  assign nav_font_size         = 14
+  assign nav_font_size_mobile  = 14
   assign nav_text_color        = '#000000'
   assign nav_hover_color       = '#ef5000'
-  assign nav_spacing           = 15
+  assign nav_spacing           = 6
   assign nav_item_padding      = 10
-  assign submenu_font_size     = 16
-  assign submenu_font_size_mobile = 14
+  assign submenu_font_size     = 13
+  assign submenu_font_size_mobile = 13
   assign submenu_text_color    = '#666666'
   assign submenu_hover_color   = '#ef5000'
   assign submenu_item_padding  = 10
@@ -53,17 +53,17 @@
 
 {% style %}
   /*
-    Position stack (all JS-driven, all default to 0):
-      --pill-lift  height of Shopify's cookie banner, so the bar floats ABOVE it
-                   instead of covering its Accept / Decline buttons
-      --pill-kb    on-screen keyboard height, so the bar stays glued to where the
-                   user tapped search instead of jumping behind the keyboard
+    Position:
+      closed       bottom-centre. --pill-lift (JS) is the height of Shopify's cookie
+                   banner, so the bar floats ABOVE it instead of covering Accept / Decline.
+      search open  top-centre, 20px from the top edge. Being at the top also keeps it
+                   clear of the on-screen keyboard on phones.
     z-index is deliberately modest: the old 2147483000 outranked every banner,
     drawer and consent dialog on the site.
   */
   .ai-pill-header {
     position: fixed;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--pill-lift, 0px) + var(--pill-kb, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--pill-lift, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 900;
@@ -77,6 +77,20 @@
     transition: bottom 0.25s ease;
   }
 
+  .ai-pill-header.is-search-open {
+    bottom: auto;
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    animation: ai-pill-drop 0.25s ease both;
+  }
+
+  @keyframes ai-pill-drop {
+    from { opacity: 0; transform: translate(-50%, -10px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ai-pill-header.is-search-open { animation: none; }
+  }
+
   .ai-pill-header__bar {
     display: flex;
     align-items: center;
@@ -85,7 +99,7 @@
     backdrop-filter: blur({{ blur_strength }}px);
     -webkit-backdrop-filter: blur({{ blur_strength }}px);
     border: 1px solid {{ border_color }};
-    border-radius: 10px;
+    border-radius: var(--dz-radius-md, 16px);
     padding: {{ vertical_padding }}px {{ horizontal_padding }}px;
     min-height: var(--pill-lock-h, 0px);
     transition:
@@ -99,7 +113,7 @@
   }
 
   .ai-pill-header__bar.menu-active {
-    border-radius: 10px;
+    border-radius: var(--dz-radius-md, 16px);
     max-height: 70vh;
     max-height: min(70vh, 70dvh);
     overflow-y: auto;
@@ -110,7 +124,7 @@
     box-shadow: 0 12px 48px {{ shadow_color_expanded }};
   }
 
-  .ai-pill-header__bar.search-active { border-radius: 10px; }
+  .ai-pill-header__bar.search-active { border-radius: var(--dz-radius-md, 16px); }
 
   .ai-pill-header__top-row {
     display: flex;
@@ -229,11 +243,18 @@
     -webkit-appearance: none;
     appearance: none;
     font-family: inherit;
-    font-size: max(16px, {{ search_font_size }}px); /* 16px minimum stops iOS zooming the page on focus */
+    font-size: {{ search_font_size }}px;
     color: {{ search_text_color }};
     outline: none;
     padding: 0 20px;
     min-width: 0;
+  }
+
+  /* iOS zooms the page when a focused field is under 16px */
+  @media (pointer: coarse) {
+    .ai-pill-header .ai-pill-header__search-input,
+    .ai-pill-header .ai-pill-header__search-input:hover,
+    .ai-pill-header .ai-pill-header__search-input:focus { font-size: 16px; }
   }
 
   .ai-pill-header .ai-pill-header__search-input::placeholder {
@@ -283,7 +304,7 @@
     transition: color 0.3s ease;
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.06em;
   }
 
   .ai-pill-header__nav-link:hover { color: {{ nav_hover_color }}; }
@@ -505,6 +526,11 @@
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') { this.closeSearch(); this.closeMenu(); }
         });
+
+        // Any press outside the bar closes search / menu, whether or not anything was typed.
+        document.addEventListener('pointerdown', (e) => {
+          if (!this.bar.contains(e.target)) { this.closeSearch(); this.closeMenu(); }
+        });
       }
 
       openSearch()  {
@@ -513,38 +539,16 @@
         // so the bar cannot collapse (the "shrinks at the bottom" bug on mobile).
         this.style.setProperty('--pill-lock-h', this.bar.offsetHeight + 'px');
         this.bar.classList.add('search-active');
-        this.trackKeyboard(true);
+        this.classList.add('is-search-open');
         this.searchInput.focus({ preventScroll: true });
       }
       closeSearch() {
         if (!this.bar.classList.contains('search-active')) return;
         this.bar.classList.remove('search-active');
+        this.classList.remove('is-search-open');
         this.searchInput.value = '';
         this.searchInput.blur();
-        this.trackKeyboard(false);
         this.style.removeProperty('--pill-lock-h');
-      }
-
-      // Keep the bar above the on-screen keyboard (iOS Safari does not resize the
-      // layout viewport, so `position: fixed; bottom` would otherwise slide under it).
-      trackKeyboard(on) {
-        const vv = window.visualViewport;
-        if (!vv) return;
-        if (!this._syncKb) {
-          this._syncKb = () => {
-            const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-            this.style.setProperty('--pill-kb', kb + 'px');
-          };
-        }
-        if (on) {
-          vv.addEventListener('resize', this._syncKb);
-          vv.addEventListener('scroll', this._syncKb);
-          this._syncKb();
-        } else {
-          vv.removeEventListener('resize', this._syncKb);
-          vv.removeEventListener('scroll', this._syncKb);
-          this.style.removeProperty('--pill-kb');
-        }
       }
 
       // Float above Shopify's cookie banner (#shopify-pc__banner) instead of burying
