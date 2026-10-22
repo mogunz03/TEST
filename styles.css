@@ -30,7 +30,8 @@ nav div {
 nav div a {
   text-decoration: none;
   color: #000;
-  font-family: "Neue Montreal";
+  font-family: var(--font-body);
+  font-weight: 500;
 }
 
 .header {
@@ -42,7 +43,7 @@ nav div a {
 
 .header .h1 {
   position: relative;
-  font-family: "Carpenter";
+  font-family: var(--font-heading);
   font-size: 32vw;
   color: #1a1a1a;
   line-height: 1.125;
@@ -72,7 +73,7 @@ nav div a {
   color: #bcbcc4;
   padding: 0.2em 0.4em;
   font-size: 20vw;
-  font-family: "Carpenter";
+  font-family: var(--font-heading);
   z-index: 10000;
 }
 

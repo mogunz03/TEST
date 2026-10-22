@@ -1,0 +1,37 @@
+/* Headings: Libre Caslon Text (Google Fonts, loaded in <head>). Body: Metropolis (self-hosted, SIL OFL). */
+@font-face {
+  font-family: "Metropolis";
+  src: url("./assets/fonts/Metropolis-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Metropolis";
+  src: url("./assets/fonts/Metropolis-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Metropolis";
+  src: url("./assets/fonts/Metropolis-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Metropolis";
+  src: url("./assets/fonts/Metropolis-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-heading: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  --font-body: "Metropolis", "Helvetica Neue", Arial, sans-serif;
+}
