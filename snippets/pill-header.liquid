@@ -54,16 +54,17 @@
 {% style %}
   /*
     Position:
-      closed       bottom-centre. --pill-lift (JS) is the height of Shopify's cookie
-                   banner, so the bar floats ABOVE it instead of covering Accept / Decline.
-      search open  top-centre, 20px from the top edge. Being at the top also keeps it
-                   clear of the on-screen keyboard on phones.
+      bar          bottom-centre, and it never moves or changes size.
+                   --pill-lift (JS) is the height of Shopify's cookie banner, so the bar
+                   floats ABOVE it instead of covering Accept / Decline.
+                   --pill-kb (JS) is the on-screen keyboard height while search is open.
+      search       its own panel that opens directly ABOVE the bar, 20px clear of it.
     z-index is deliberately modest: the old 2147483000 outranked every banner,
     drawer and consent dialog on the site.
   */
   .ai-pill-header {
     position: fixed;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--pill-lift, 0px));
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--pill-lift, 0px) + var(--pill-kb, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 900;
@@ -77,18 +78,37 @@
     transition: bottom 0.25s ease;
   }
 
-  .ai-pill-header.is-search-open {
-    bottom: auto;
-    top: calc(20px + env(safe-area-inset-top, 0px));
-    animation: ai-pill-drop 0.25s ease both;
+  /* Search panel: same glass as the bar, opens directly above it with a 20px gap */
+  .ai-pill-header__search {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: calc(100% + 20px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: {{ vertical_padding }}px {{ horizontal_padding }}px;
+    background: {{ bar_background }};
+    -webkit-backdrop-filter: blur({{ blur_strength_expanded }}px);
+    backdrop-filter: blur({{ blur_strength_expanded }}px);
+    border: 1px solid {{ border_color }};
+    border-radius: var(--dz-radius-md, 16px);
+    box-shadow: 0 8px 32px {{ shadow_color }};
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.25s ease, visibility 0s linear 0.25s;
   }
-
-  @keyframes ai-pill-drop {
-    from { opacity: 0; transform: translate(-50%, -10px); }
-    to   { opacity: 1; transform: translate(-50%, 0); }
+  .ai-pill-header.is-search-open .ai-pill-header__search {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition: opacity 0.2s ease, transform 0.25s ease, visibility 0s;
   }
   @media (prefers-reduced-motion: reduce) {
-    .ai-pill-header.is-search-open { animation: none; }
+    .ai-pill-header__search { transition: none; transform: none; }
   }
 
   .ai-pill-header__bar {
@@ -101,7 +121,6 @@
     border: 1px solid {{ border_color }};
     border-radius: var(--dz-radius-md, 16px);
     padding: {{ vertical_padding }}px {{ horizontal_padding }}px;
-    min-height: var(--pill-lock-h, 0px);
     transition:
       max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
@@ -124,7 +143,6 @@
     box-shadow: 0 12px 48px {{ shadow_color_expanded }};
   }
 
-  .ai-pill-header__bar.search-active { border-radius: var(--dz-radius-md, 16px); }
 
   .ai-pill-header__top-row {
     display: flex;
@@ -234,7 +252,8 @@
   .ai-pill-header .ai-pill-header__search-input,
   .ai-pill-header .ai-pill-header__search-input:hover,
   .ai-pill-header .ai-pill-header__search-input:focus {
-    display: none;
+    display: block;
+    flex: 1 1 auto;
     width: 100%;
     border: none;
     border-radius: 0;
@@ -246,7 +265,7 @@
     font-size: {{ search_font_size }}px;
     color: {{ search_text_color }};
     outline: none;
-    padding: 0 20px;
+    padding: 0;
     min-width: 0;
   }
 
@@ -264,14 +283,7 @@
   .ai-pill-header .ai-pill-header__search-input::-webkit-search-cancel-button,
   .ai-pill-header .ai-pill-header__search-input::-webkit-search-decoration { -webkit-appearance: none; display: none; }
 
-  .ai-pill-header__bar.search-active .ai-pill-header__search-input { display: block; }
-
-  .ai-pill-header__bar.search-active .ai-pill-header__logo,
-  .ai-pill-header__bar.search-active .ai-pill-header__left-icons,
-  .ai-pill-header__bar.search-active .ai-pill-header__right-icons { display: none; }
-
-  .ai-pill-header__close-search { display: none; }
-  .ai-pill-header__bar.search-active .ai-pill-header__close-search { display: block; }
+  .ai-pill-header__search .ai-pill-header__icon { cursor: pointer; }
 
   .ai-pill-header__nav {
     width: 100%;
@@ -385,22 +397,6 @@
         {%- endif -%}
       </div>
 
-      <button class="ai-pill-header__icon ai-pill-header__close-search" aria-label="Close search" type="button">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-
-      <input
-        type="search"
-        name="q"
-        class="ai-pill-header__search-input"
-        placeholder="{{ search_placeholder }}"
-        aria-label="Search"
-        data-search-action="{{ routes.search_url }}"
-      >
-
       <div class="ai-pill-header__logo">
         <a href="{{ routes.root_url }}" style="display:flex;align-items:center;text-decoration:none;">
           {% if settings.logo != blank %}
@@ -470,6 +466,28 @@
     </nav>
 
   </div>
+
+  <div class="ai-pill-header__search" role="search">
+    <svg class="ai-pill-header__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.35-4.35"></path>
+    </svg>
+    <input
+      type="search"
+      name="q"
+      class="ai-pill-header__search-input"
+      placeholder="{{ search_placeholder }}"
+      aria-label="Search"
+      enterkeyhint="search"
+      data-search-action="{{ routes.search_url }}"
+    >
+    <button class="ai-pill-header__icon ai-pill-header__close-search" aria-label="Close search" type="button">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
 </pill-header>
 
 <script>
@@ -482,6 +500,7 @@
         this.searchIcon      = this.querySelector('.ai-pill-header__search-icon');
         this.closeSearchIcon = this.querySelector('.ai-pill-header__close-search');
         this.searchInput     = this.querySelector('.ai-pill-header__search-input');
+        this.searchPanel     = this.querySelector('.ai-pill-header__search');
         this.menuIcon        = this.querySelector('.ai-pill-header__menu-icon');
         this.navItems        = this.querySelectorAll('.ai-pill-header__nav-item');
 
@@ -529,26 +548,52 @@
 
         // Any press outside the bar closes search / menu, whether or not anything was typed.
         document.addEventListener('pointerdown', (e) => {
-          if (!this.bar.contains(e.target)) { this.closeSearch(); this.closeMenu(); }
+          if (!this.bar.contains(e.target) && !this.searchPanel.contains(e.target)) { this.closeSearch(); this.closeMenu(); }
         });
       }
 
-      openSearch()  {
+      openSearch() {
         this.closeMenu();
-        // Freeze the bar's current height before icons/logo are swapped for the input,
-        // so the bar cannot collapse (the "shrinks at the bottom" bug on mobile).
-        this.style.setProperty('--pill-lock-h', this.bar.offsetHeight + 'px');
-        this.bar.classList.add('search-active');
         this.classList.add('is-search-open');
+        this.trackKeyboard(true);
         this.searchInput.focus({ preventScroll: true });
       }
       closeSearch() {
-        if (!this.bar.classList.contains('search-active')) return;
-        this.bar.classList.remove('search-active');
+        if (!this.classList.contains('is-search-open')) return;
         this.classList.remove('is-search-open');
         this.searchInput.value = '';
         this.searchInput.blur();
-        this.style.removeProperty('--pill-lock-h');
+        this.trackKeyboard(false);
+      }
+
+      // Phones: the on-screen keyboard does not resize the layout viewport on iOS, so a
+      // bottom-fixed bar would slide under it. Lift the bar + search panel by the keyboard
+      // height (visualViewport) while search is open.
+      trackKeyboard(on) {
+        const vv = window.visualViewport;
+        if (!vv) return;
+        if (!this._syncKb) {
+          this._syncKb = () => {
+            const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+            this.style.setProperty('--pill-kb', kb + 'px');
+          };
+        }
+        if (on) {
+          vv.addEventListener('resize', this._syncKb);
+          vv.addEventListener('scroll', this._syncKb);
+          this._syncKb();
+        } else {
+          vv.removeEventListener('resize', this._syncKb);
+          vv.removeEventListener('scroll', this._syncKb);
+          this.style.removeProperty('--pill-kb');
+        }
+      }
+      toggleMenu()  { this.bar.classList.contains('menu-active') ? this.closeMenu() : this.openMenu(); }
+      openMenu()    { this.closeSearch(); this.bar.classList.add('menu-active'); this.menuIcon.setAttribute('aria-expanded', 'true'); }
+      closeMenu()   {
+        this.bar.classList.remove('menu-active');
+        this.menuIcon && this.menuIcon.setAttribute('aria-expanded', 'false');
+        this.navItems.forEach(item => item.classList.remove('expanded'));
       }
 
       // Float above Shopify's cookie banner (#shopify-pc__banner) instead of burying
@@ -577,13 +622,6 @@
           }).observe(document.body, { childList: true });
         }
         window.addEventListener('resize', sync, { passive: true });
-      }
-      toggleMenu()  { this.bar.classList.contains('menu-active') ? this.closeMenu() : this.openMenu(); }
-      openMenu()    { this.closeSearch(); this.bar.classList.add('menu-active'); this.menuIcon.setAttribute('aria-expanded', 'true'); }
-      closeMenu()   {
-        this.bar.classList.remove('menu-active');
-        this.menuIcon && this.menuIcon.setAttribute('aria-expanded', 'false');
-        this.navItems.forEach(item => item.classList.remove('expanded'));
       }
     }
 
