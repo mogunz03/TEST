@@ -1,0 +1,90 @@
+{
+  "sections": {
+    "main": {
+      "type": "gallery-editorial",
+      "blocks": {
+        "tile_1": {
+          "type": "image",
+          "settings": {
+            "span": "7",
+            "start": "1",
+            "ratio": "4 / 5"
+          }
+        },
+        "tile_2": {
+          "type": "text",
+          "settings": {
+            "span": "3",
+            "start": "9",
+            "offset": "l",
+            "size": "statement"
+          }
+        },
+        "tile_3": {
+          "type": "image",
+          "settings": {
+            "span": "4",
+            "start": "2",
+            "offset": "m",
+            "ratio": "3 / 4"
+          }
+        },
+        "tile_4": {
+          "type": "embed",
+          "settings": {
+            "span": "6",
+            "start": "7",
+            "offset": "s",
+            "ratio": "16 / 9"
+          }
+        },
+        "tile_5": {
+          "type": "image",
+          "settings": {
+            "span": "3",
+            "ratio": "2 / 3"
+          }
+        },
+        "tile_6": {
+          "type": "image",
+          "settings": {
+            "span": "3",
+            "offset": "m",
+            "ratio": "2 / 3"
+          }
+        },
+        "tile_7": {
+          "type": "video",
+          "settings": {
+            "span": "5",
+            "offset": "s",
+            "ratio": "4 / 5"
+          }
+        },
+        "tile_8": {
+          "type": "link",
+          "settings": {
+            "span": "4",
+            "align": "end"
+          }
+        }
+      },
+      "block_order": [
+        "tile_1",
+        "tile_2",
+        "tile_3",
+        "tile_4",
+        "tile_5",
+        "tile_6",
+        "tile_7",
+        "tile_8"
+      ],
+      "settings": {
+        "heading": "GALLERY"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

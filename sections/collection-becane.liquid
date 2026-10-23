@@ -133,89 +133,121 @@
   }
 
   .bcoll__count-{{ section.id }} {
-    justify-self: end;
-    align-self: start;
     font-family: var(--bc-font-mono);
     font-size: 10px;
-    color: var(--bc-fg);
+    color: var(--bc-muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding-top: 8px;
     white-space: nowrap;
   }
 
-  /* PRODUCT GRID */
+  /* PRODUCT GRID: a numbered contact sheet. Hairline cells, small centred products that melt into
+     the page, name + price on hover. Columns come from --bcoll-cols (settings, then the visitor's slider). */
   .bcoll__grid-{{ section.id }} {
+    --bcoll-cols: {{ section.settings.columns }};
     display: grid;
-    grid-template-columns: repeat({{ section.settings.columns }}, 1fr);
-    gap: {{ section.settings.row_gap }}px {{ section.settings.col_gap }}px;
-    max-width: 1800px;
-    margin: 0 auto;
+    grid-template-columns: repeat(var(--bcoll-cols), minmax(0, 1fr));
+    margin: 0 calc(var(--bc-pad-x) * -1);     /* edge to edge */
+    border-top: 1px solid var(--bc-hairline);
   }
+  @media screen and (max-width: 1099px) { .bcoll__grid-{{ section.id }} { --bcoll-cols: {{ section.settings.columns | at_most: 4 }}; } }
+  @media screen and (max-width: 749px)  { .bcoll__grid-{{ section.id }} { --bcoll-cols: {{ section.settings.columns_mobile }}; } }
 
   .bcoll__card-{{ section.id }} {
-    display: block;
-    text-decoration: none;
-    color: inherit;
     position: relative;
-  }
-
-  .bcoll__card-img-{{ section.id }} {
-    width: 100%;
-    aspect-ratio: {{ section.settings.image_aspect }};
-    overflow: hidden;
-    background: #ececec;
-    position: relative;
-  }
-  .bcoll__card-img-{{ section.id }} img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: opacity 0.4s ease;
-  }
-  .bcoll__card-img-{{ section.id }} img.is-hover {
-    position: absolute; inset: 0;
-    opacity: 0;
-  }
-  .bcoll__card-{{ section.id }}:hover .bcoll__card-img-{{ section.id }} img.is-primary { opacity: 0; }
-  .bcoll__card-{{ section.id }}:hover .bcoll__card-img-{{ section.id }} img.is-hover { opacity: 1; }
-
-  .bcoll__card-info-{{ section.id }} {
-    padding: 10px 0 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    aspect-ratio: 1 / 1;
+    border-right: 1px solid var(--bc-hairline);
+    border-bottom: 1px solid var(--bc-hairline);
+    text-decoration: none;
+    color: inherit;
   }
-  .bcoll__card-title-{{ section.id }} {
-    font-family: var(--bc-font-h);
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    margin: 0;
-    display: flex; align-items: center; gap: 6px;
+  .bcoll__card-img-{{ section.id }} {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 14% 14% 0;
   }
-  .bcoll__card-price-{{ section.id }} {
-    font-family: var(--bc-font-mono);
+  .bcoll__card-img-{{ section.id }} img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+    {% if section.settings.blend_images %}mix-blend-mode: multiply; /* white photo backgrounds melt into the page */{% endif %}
+  }
+  .bcoll__card-img-{{ section.id }} img.is-hover { opacity: 0; }
+  .bcoll__card-{{ section.id }}:hover .bcoll__card-img-{{ section.id }} img.is-primary { opacity: 0; }
+  .bcoll__card-{{ section.id }}:hover .bcoll__card-img-{{ section.id }} img.is-hover { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .bcoll__card-img-{{ section.id }} img { transition: opacity 0.3s ease; }   /* a fade, nothing moves */
+  }
+
+  .bcoll__card-meta-{{ section.id }} {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 0 14px 14px;
     font-size: 10px;
-    color: var(--bc-muted);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.3;
   }
+  .bcoll__card-num-{{ section.id }} { font-variant-numeric: tabular-nums; flex: none; }
+  .bcoll__card-name-{{ section.id }} {
+    flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    opacity: 0;
+  }
+  .bcoll__card-price-{{ section.id }} { flex: none; opacity: 0; color: var(--bc-muted); }
   .bcoll__card-price-{{ section.id }}.is-sale { color: var(--bc-accent); }
-  .bcoll__card-compare-{{ section.id }} {
-    text-decoration: line-through;
-    color: var(--bc-muted);
-    opacity: 0.6;
-    margin-left: 6px;
+  .bcoll__card-compare-{{ section.id }} { text-decoration: line-through; opacity: 0.6; margin-left: 6px; }
+  .bcoll__card-{{ section.id }}:hover .bcoll__card-name-{{ section.id }},
+  .bcoll__card-{{ section.id }}:hover .bcoll__card-price-{{ section.id }},
+  .bcoll__card-{{ section.id }}:focus-visible .bcoll__card-name-{{ section.id }},
+  .bcoll__card-{{ section.id }}:focus-visible .bcoll__card-price-{{ section.id }} { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .bcoll__card-name-{{ section.id }}, .bcoll__card-price-{{ section.id }} { transition: opacity 0.2s ease; }
+  }
+  /* no hover on touch screens: show the name instead, tucked under the number */
+  @media (hover: none) {
+    .bcoll__card-meta-{{ section.id }} { flex-wrap: wrap; row-gap: 2px; }
+    .bcoll__card-name-{{ section.id }} { opacity: 1; flex-basis: 100%; order: 3; }
+    .bcoll__card-price-{{ section.id }} { opacity: 1; margin-left: auto; }
   }
   .bcoll__wishlist-{{ section.id }} {
-    background: none; border: none; padding: 0;
-    cursor: pointer; color: inherit;
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none; padding: 0; color: inherit;
     display: inline-flex; align-items: center;
   }
-  .bcoll__wishlist-{{ section.id }} svg {
-    width: 12px; height: 12px;
-    stroke: currentColor; fill: none;
-    stroke-width: 1.5;
+  .bcoll__wishlist-{{ section.id }} svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+  /* DENSITY SLIDER (top right): how many products per row */
+  .bcoll__right-{{ section.id }} {
+    justify-self: end; align-self: start;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
   }
+  .bcoll__density-{{ section.id }} {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .bcoll__density-{{ section.id }} output { min-width: 1ch; text-align: right; font-variant-numeric: tabular-nums; }
+  /* beats base.css's input:not([type=checkbox],[type=radio]) so the slider stays a thin line */
+  #bcoll-{{ section.id }} .bcoll__density-{{ section.id }} input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 96px; height: 20px; margin: 0; padding: 0;
+    background: transparent; border: 0; border-radius: 0; cursor: pointer;
+  }
+  #bcoll-{{ section.id }} .bcoll__density-{{ section.id }} input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: var(--bc-fg); }
+  #bcoll-{{ section.id }} .bcoll__density-{{ section.id }} input[type="range"]::-moz-range-track { height: 1px; background: var(--bc-fg); }
+  #bcoll-{{ section.id }} .bcoll__density-{{ section.id }} input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px; margin-top: -6px;
+    border-radius: 50%; background: var(--bc-bg); border: 1px solid var(--bc-fg);
+  }
+  #bcoll-{{ section.id }} .bcoll__density-{{ section.id }} input[type="range"]::-moz-range-thumb {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--bc-bg); border: 1px solid var(--bc-fg);
+  }
+  #bcoll-{{ section.id }} .bcoll__density-{{ section.id }} input[type="range"]:focus-visible { outline: 1px solid var(--bc-fg); outline-offset: 4px; }
 
   /* EMPTY STATE */
   .bcoll__empty-{{ section.id }} {
@@ -420,7 +452,6 @@
   /* MOBILE */
   @media screen and (max-width: 900px) {
     #bcoll-{{ section.id }} { padding: 60px 16px 100px; --bc-pad-x: 16px; }
-    .bcoll__grid-{{ section.id }} { grid-template-columns: repeat(2, 1fr) !important; gap: 24px 12px; }
     .bcoll__header-{{ section.id }} {
       grid-template-columns: 1fr 1fr;
       grid-template-areas: "title title" "refine count";
@@ -429,7 +460,7 @@
     }
     .bcoll__title-wrap-{{ section.id }} { grid-area: title; }
     .bcoll__refine-{{ section.id }} { grid-area: refine; justify-self: start; }
-    .bcoll__count-{{ section.id }} { grid-area: count; justify-self: end; padding-top: 0; align-self: center; }
+    .bcoll__right-{{ section.id }} { grid-area: count; align-self: center; }
   }
 
   /* BANNER: full-width video + centred intro, directly under the logo */
@@ -468,8 +499,6 @@
   /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
   .bcoll__btn-primary-{{ section.id }},
   .bcoll__btn-secondary-{{ section.id }} { border-radius: var(--dz-radius-sm, 8px); }
-  .bcoll__card-img-{{ section.id }},
-  .bcoll__card-img-{{ section.id }} img,
   .bcoll__empty-{{ section.id }} { border-radius: var(--dz-radius-md, 12px); overflow: hidden; }
   .bcoll__drawer-{{ section.id }} { border-radius: 0 var(--dz-radius-lg, 16px) var(--dz-radius-lg, 16px) 0; }
 {% endstyle %}
@@ -515,12 +544,20 @@
       <h1 class="bcoll__title-{{ section.id }}">{{ collection.title }}</h1>
     </div>
 
-    <div class="bcoll__count-{{ section.id }}">{{ collection.products_count }} ITEMS</div>
+    <div class="bcoll__right-{{ section.id }}">
+      <label class="bcoll__density-{{ section.id }}">
+        <span>{{ section.settings.density_label }}</span>
+        <input type="range" min="2" max="8" step="1" value="{{ section.settings.columns }}" data-bcoll-density aria-label="{{ section.settings.density_label | escape }}">
+        <output data-bcoll-density-out>{{ section.settings.columns }}</output>
+      </label>
+      <div class="bcoll__count-{{ section.id }}">{{ collection.products_count }} ITEMS</div>
+    </div>
 
   </div>
 
   {%- comment -%} GRID {%- endcomment -%}
   {%- paginate collection.products by section.settings.products_per_page -%}
+    {%- assign page_offset = paginate.current_page | minus: 1 | times: section.settings.products_per_page -%}
     {%- if collection.products.size > 0 -%}
       <div class="bcoll__grid-{{ section.id }}">
         {%- for product in collection.products -%}
@@ -529,13 +566,21 @@
           {%- assign on_sale = false -%}
           {%- if product.compare_at_price > product.price -%}{%- assign on_sale = true -%}{%- endif -%}
 
+          {%- assign n = forloop.index | plus: page_offset -%}
           <a class="bcoll__card-{{ section.id }}" href="{{ product.url }}">
+            {%- if section.settings.show_wishlist_icon -%}
+              <span class="bcoll__wishlist-{{ section.id }}" aria-hidden="true">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
+            {%- endif -%}
             <div class="bcoll__card-img-{{ section.id }}">
               {%- if primary_img -%}
                 <img class="is-primary"
                      src="{{ primary_img | image_url: width: 800 }}"
                      alt="{{ product.title | escape }}"
-                     loading="lazy"
+                     loading="{% if forloop.index > 12 %}lazy{% else %}eager{% endif %}"
                      width="800"
                      height="{{ 800 | divided_by: primary_img.aspect_ratio | round }}">
               {%- endif -%}
@@ -548,23 +593,15 @@
                      height="{{ 800 | divided_by: hover_img.aspect_ratio | round }}">
               {%- endif -%}
             </div>
-            <div class="bcoll__card-info-{{ section.id }}">
-              <div class="bcoll__card-title-{{ section.id }}">
-                <span>{{ product.title }}</span>
-                {%- if section.settings.show_wishlist_icon -%}
-                  <span class="bcoll__wishlist-{{ section.id }}" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor">
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                    </svg>
-                  </span>
-                {%- endif -%}
-              </div>
-              <div class="bcoll__card-price-{{ section.id }} {% if on_sale %}is-sale{% endif %}">
+            <div class="bcoll__card-meta-{{ section.id }}">
+              <span class="bcoll__card-num-{{ section.id }}">{% if n < 10 %}0{% endif %}{{ n }}</span>
+              <span class="bcoll__card-name-{{ section.id }}">{{ product.title }}</span>
+              <span class="bcoll__card-price-{{ section.id }} {% if on_sale %}is-sale{% endif %}">
                 {{ product.price | money_without_trailing_zeros }}
                 {%- if on_sale -%}
                   <span class="bcoll__card-compare-{{ section.id }}">{{ product.compare_at_price | money_without_trailing_zeros }}</span>
                 {%- endif -%}
-              </div>
+              </span>
             </div>
           </a>
         {%- endfor -%}
@@ -771,6 +808,37 @@
       v.pause(); v.removeAttribute('autoplay'); v.controls = true;
     }
   })();
+
+  // Density slider: how many products per row. Remembered per device size, applied instantly.
+  (function () {
+    var root = document.getElementById('bcoll-{{ section.id }}');
+    if (!root) return;
+    var grid = root.querySelector('.bcoll__grid-{{ section.id }}');
+    var rng = root.querySelector('[data-bcoll-density]');
+    var out = root.querySelector('[data-bcoll-density-out]');
+    if (!grid || !rng) return;
+    var DESKTOP = { min: 2, max: 8, def: {{ section.settings.columns }} };
+    var MOBILE  = { min: 1, max: 4, def: {{ section.settings.columns_mobile }} };
+    var mq = window.matchMedia('(max-width: 749px)');
+    var tablet = window.matchMedia('(max-width: 1099px)');
+    function conf() {
+      if (mq.matches) return { c: MOBILE, k: 'dauze:cols:m' };
+      return { c: { min: DESKTOP.min, max: DESKTOP.max, def: tablet.matches ? Math.min(DESKTOP.def, 4) : DESKTOP.def }, k: 'dauze:cols:d' };
+    }
+    function set(v) { rng.value = v; grid.style.setProperty('--bcoll-cols', v); if (out) out.textContent = v; }
+    function apply() {
+      var x = conf(), v = x.c.def;
+      rng.min = x.c.min; rng.max = x.c.max;
+      try { var s = parseInt(localStorage.getItem(x.k), 10); if (s >= x.c.min && s <= x.c.max) v = s; } catch (e) {}
+      set(v);
+    }
+    rng.addEventListener('input', function () {
+      set(parseInt(rng.value, 10));
+      try { localStorage.setItem(conf().k, rng.value); } catch (e) {}
+    });
+    if (mq.addEventListener) { mq.addEventListener('change', apply); tablet.addEventListener('change', apply); }
+    apply();
+  })();
 </script>
 
 {% schema %}
@@ -784,11 +852,21 @@
     {
       "type": "range",
       "id": "columns",
-      "label": "Columns (desktop)",
+      "label": "Products per row (desktop)",
       "min": 2,
-      "max": 6,
+      "max": 8,
       "step": 1,
-      "default": 4
+      "default": 6,
+      "info": "The starting value. Visitors can change it with the slider at the top right."
+    },
+    {
+      "type": "range",
+      "id": "columns_mobile",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 2,
+      "label": "Products per row (phone)"
     },
     {
       "type": "range",
@@ -808,50 +886,6 @@
       "step": 4,
       "unit": "px",
       "default": 24
-    },
-    {
-      "type": "range",
-      "id": "row_gap",
-      "label": "Row gap",
-      "min": 16,
-      "max": 80,
-      "step": 4,
-      "unit": "px",
-      "default": 48
-    },
-    {
-      "type": "range",
-      "id": "col_gap",
-      "label": "Column gap",
-      "min": 4,
-      "max": 40,
-      "step": 2,
-      "unit": "px",
-      "default": 16
-    },
-    {
-      "type": "select",
-      "id": "image_aspect",
-      "label": "Card image aspect ratio",
-      "options": [
-        {
-          "value": "1 / 1",
-          "label": "Square (1:1)"
-        },
-        {
-          "value": "3 / 4",
-          "label": "Portrait (3:4)"
-        },
-        {
-          "value": "4 / 5",
-          "label": "Tall (4:5)"
-        },
-        {
-          "value": "2 / 3",
-          "label": "Tall portrait (2:3)"
-        }
-      ],
-      "default": "3 / 4"
     },
     {
       "type": "header",
@@ -1014,6 +1048,19 @@
       "id": "intro_fallback",
       "label": "Default intro text (optional)",
       "info": "Only used by collections that have no description."
+    },
+    {
+      "type": "text",
+      "id": "density_label",
+      "label": "Slider label",
+      "default": "GRID"
+    },
+    {
+      "type": "checkbox",
+      "id": "blend_images",
+      "label": "Blend product photos into the page",
+      "default": true,
+      "info": "White photo backgrounds disappear into the page colour."
     }
   ],
   "presets": [

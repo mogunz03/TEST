@@ -296,12 +296,9 @@
       "type": "collection-becane",
       "name": "Becane collection",
       "settings": {
-        "columns": 4,
+        "columns": 6,
         "products_per_page": 24,
         "padding_x": 24,
-        "row_gap": 20,
-        "col_gap": 10,
-        "image_aspect": "2 / 3",
         "text_color": "#000000",
         "muted_color": "#8a8a8a",
         "hairline_color": "#d8d8d8",
@@ -315,7 +312,8 @@
         "show_breadcrumb": true,
         "home_label": "HOME",
         "show_wishlist_icon": true,
-        "empty_text": "NO PRODUCTS MATCH THESE FILTERS"
+        "empty_text": "NO PRODUCTS MATCH THESE FILTERS",
+        "columns_mobile": 2
       }
     }
   },

@@ -49,8 +49,15 @@
   {%- liquid
     assign dz_framed = false
     case request.page_type
-      when 'page', 'policy'
+      when 'policy'
         assign dz_framed = true
+      when 'page'
+        comment
+          the Gallery template is a full-bleed editorial layout, not a text page
+        endcomment
+        if template.suffix != 'gallery'
+          assign dz_framed = true
+        endif
     endcase
   -%}
   <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}{% if dz_framed %} dz-framed-page{% endif %}">

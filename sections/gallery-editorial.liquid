@@ -1,0 +1,1454 @@
+{% comment %}
+  Editorial gallery (sections/gallery-editorial.liquid)
+
+  A 12-column grid where every tile picks its own width, start column, height ratio and vertical drop,
+  so the page reads like a magazine spread instead of a uniform wall of thumbnails.
+  Tiles: image, uploaded video, YouTube / Vimeo embed, text, big typographic link.
+  Empty tiles are not rendered on the live site (the theme editor shows a placeholder), so an
+  unfinished gallery never looks broken. No hover or scroll animation.
+{% endcomment %}
+
+{%- liquid
+  assign edge_full = false
+  if section.settings.edge == 'full'
+    assign edge_full = true
+  endif
+  assign ld_count = 0
+-%}
+
+{% style %}
+  #gl-{{ section.id }} {
+    --gl-gap: {{ section.settings.gap }}px;
+    --gl-pad: {% if edge_full %}0px{% else %}24px{% endif %};
+    box-sizing: border-box;
+    max-width: {{ section.settings.max_width }}px;
+    margin: 0 auto;
+    padding: 76px var(--gl-pad) 80px;
+    color: var(--color-foreground, #000);
+  }
+  #gl-{{ section.id }} *, #gl-{{ section.id }} *::before, #gl-{{ section.id }} *::after { box-sizing: border-box; }
+
+  #gl-{{ section.id }} .gl__head { text-align: center; margin: 0 0 clamp(32px, 5vw, 72px); padding: 0 24px; }
+  #gl-{{ section.id }} .gl__title {
+    margin: 0; font-size: var(--dz-fs-title, 14px); font-weight: 400; line-height: 1.2;
+    letter-spacing: var(--dz-tracking-title, 0.08em); text-transform: uppercase;
+  }
+  #gl-{{ section.id }} .gl__sub { margin: 10px auto 0; max-width: 48ch; font-size: var(--dz-fs-body, 12px); line-height: 1.8; opacity: 0.6; }
+
+  #gl-{{ section.id }} .gl__grid {
+    counter-reset: gl;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gl-gap);
+    row-gap: calc(var(--gl-gap) * 2.5);
+    align-items: start;
+  }
+  #gl-{{ section.id }} .gl__item {
+    grid-column: var(--start, auto) / span var(--span, 6);
+    margin: var(--offset, 0) 0 0;
+    align-self: var(--align, start);
+    min-width: 0;
+  }
+  #gl-{{ section.id }} .gl__item--media { counter-increment: gl; }
+
+  /* media */
+  #gl-{{ section.id }} .gl__media { position: relative; overflow: hidden; aspect-ratio: var(--ratio, 4 / 5); background: rgb(0 0 0 / 0.04); /* holds the tile's shape while media loads */ }
+  {% if section.settings.rounded %}#gl-{{ section.id }} .gl__media { border-radius: var(--dz-radius-md, 12px); }{% endif %}
+  #gl-{{ section.id }} .gl__media img,
+  #gl-{{ section.id }} .gl__media video,
+  #gl-{{ section.id }} .gl__media iframe {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block; border: 0;
+  }
+  #gl-{{ section.id }} .gl__media--auto { aspect-ratio: auto; }
+  #gl-{{ section.id }} .gl__media--auto img { position: static; height: auto; }
+  #gl-{{ section.id }} .gl__media--auto.gl__media--moving { aspect-ratio: 16 / 9; }
+  #gl-{{ section.id }} .gl__link { display: block; color: inherit; text-decoration: none; }
+  #gl-{{ section.id }} .gl__link:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
+  #gl-{{ section.id }} .gl__placeholder {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgb(0 0 0 / 0.05); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6;
+  }
+  #gl-{{ section.id }} .gl__item--text .gl__placeholder,
+  #gl-{{ section.id }} .gl__item--link .gl__placeholder { position: static; min-height: 96px; }
+
+  /* captions, numbered like the collection grid */
+  #gl-{{ section.id }} .gl__cap {
+    display: flex; gap: 10px; margin: 10px 0 0;
+    font-size: var(--dz-fs-label, 10px); line-height: 1.4;
+    letter-spacing: var(--dz-tracking-label, 0.1em); text-transform: uppercase;
+  }
+  #gl-{{ section.id }} .gl__num { flex: none; font-variant-numeric: tabular-nums; }
+  #gl-{{ section.id }} .gl__num::before { content: counter(gl, decimal-leading-zero); }
+
+  /* text */
+  #gl-{{ section.id }} .gl__text > :first-child { margin-top: 0; }
+  #gl-{{ section.id }} .gl__text > :last-child { margin-bottom: 0; }
+  #gl-{{ section.id }} .gl__text p { margin: 0 0 1em; }
+  #gl-{{ section.id }} .gl__text--caption { font-size: var(--dz-fs-label, 10px); line-height: 1.9; letter-spacing: var(--dz-tracking-label, 0.1em); text-transform: uppercase; }
+  #gl-{{ section.id }} .gl__text--body { font-size: var(--dz-fs-body, 12px); line-height: 1.8; max-width: 36ch; }
+  #gl-{{ section.id }} .gl__text--statement { font-size: clamp(18px, 2.2vw, 32px); line-height: 1.25; letter-spacing: 0.01em; }
+  #gl-{{ section.id }} .gl__text--center { text-align: center; margin-inline: auto; }
+
+  /* link */
+  #gl-{{ section.id }} .gl__eyebrow { margin: 0 0 10px; font-size: var(--dz-fs-label, 10px); letter-spacing: var(--dz-tracking-label, 0.1em); text-transform: uppercase; opacity: 0.55; }
+  #gl-{{ section.id }} .gl__biglink {
+    display: inline-block; color: inherit; text-decoration: none;
+    font-size: clamp(16px, 2vw, 28px); line-height: 1.2; letter-spacing: 0.04em; text-transform: uppercase;
+    padding-bottom: 4px; border-bottom: 1px solid currentColor;
+  }
+  #gl-{{ section.id }} .gl__biglink:hover { color: var(--color-primary, #ef5000); }
+
+  @media screen and (max-width: 749px) {
+    #gl-{{ section.id }} { --gl-pad: {% if edge_full %}0px{% else %}16px{% endif %}; padding-top: 60px; }
+    #gl-{{ section.id }} .gl__grid { grid-template-columns: repeat(6, minmax(0, 1fr)); row-gap: calc(var(--gl-gap) * 2); }
+    #gl-{{ section.id }} .gl__item {
+      grid-column: span var(--m-span, 6);
+      margin-top: calc(var(--offset, 0px) * 0.2);
+      align-self: start;
+    }
+  }
+{% endstyle %}
+
+<section id="gl-{{ section.id }}" aria-label="{{ section.settings.heading | default: page.title | escape }}">
+
+  {%- if section.settings.heading != blank or section.settings.subheading != blank -%}
+    <header class="gl__head">
+      {%- if section.settings.heading != blank -%}<h1 class="gl__title">{{ section.settings.heading }}</h1>{%- endif -%}
+      {%- if section.settings.subheading != blank -%}<p class="gl__sub">{{ section.settings.subheading }}</p>{%- endif -%}
+    </header>
+  {%- endif -%}
+
+  <div class="gl__grid">
+    {%- for block in section.blocks -%}
+      {%- liquid
+        assign span_n = block.settings.span | plus: 0
+        assign m_span = 6
+        if span_n <= 4
+          assign m_span = 3
+        endif
+
+        case block.settings.offset
+          when 's'
+            assign offset_css = 'clamp(24px, 4vw, 56px)'
+          when 'm'
+            assign offset_css = 'clamp(48px, 9vw, 128px)'
+          when 'l'
+            assign offset_css = 'clamp(80px, 15vw, 220px)'
+          else
+            assign offset_css = '0px'
+        endcase
+
+        assign item_style = '--span:' | append: span_n | append: ';--m-span:' | append: m_span | append: ';--offset:' | append: offset_css | append: ';--align:' | append: block.settings.align
+        if block.settings.start != 'auto' and block.settings.start != blank
+          assign item_style = item_style | append: ';--start:' | append: block.settings.start
+        endif
+        if block.settings.ratio != blank and block.settings.ratio != 'auto'
+          assign item_style = item_style | append: ';--ratio:' | append: block.settings.ratio
+        endif
+        assign ratio_auto = false
+        if block.settings.ratio == 'auto'
+          assign ratio_auto = true
+        endif
+        assign load_mode = 'lazy'
+        if forloop.index <= 2
+          assign load_mode = 'eager'
+        endif
+        assign sizes_attr = '(min-width: 750px) ' | append: span_n | append: '0vw, 100vw'
+      -%}
+
+      {%- case block.type -%}
+
+        {%- when 'image' -%}
+          {%- if block.settings.image != blank or request.design_mode -%}
+            <figure class="gl__item gl__item--media" style="{{ item_style }}" {{ block.shopify_attributes }}>
+              {%- if block.settings.link != blank -%}
+                <a class="gl__link" href="{{ block.settings.link }}"{% if block.settings.link contains '://' %} target="_blank" rel="noopener"{% endif %}>
+              {%- endif -%}
+              <div class="gl__media{% if ratio_auto %} gl__media--auto{% endif %}">
+                {%- if block.settings.image != blank -%}
+                  {%- assign alt_text = block.settings.image.alt | default: block.settings.caption | default: section.settings.heading -%}
+                  {{ block.settings.image | image_url: width: 2400 | image_tag: widths: '400, 700, 1000, 1400, 1800, 2400', sizes: sizes_attr, loading: load_mode, alt: alt_text }}
+                {%- else -%}
+                  <div class="gl__placeholder">Image</div>
+                {%- endif -%}
+              </div>
+              {%- if block.settings.link != blank -%}</a>{%- endif -%}
+              {%- if block.settings.caption != blank or section.settings.numbering -%}
+                <figcaption class="gl__cap">
+                  {%- if section.settings.numbering -%}<span class="gl__num"></span>{%- endif -%}
+                  <span>{{ block.settings.caption }}</span>
+                </figcaption>
+              {%- endif -%}
+            </figure>
+          {%- endif -%}
+
+        {%- when 'video' -%}
+          {%- if block.settings.video != blank or request.design_mode -%}
+            <figure class="gl__item gl__item--media" style="{{ item_style }}" {{ block.shopify_attributes }}>
+              <div class="gl__media gl__media--moving{% if ratio_auto %} gl__media--auto{% endif %}">
+                {%- if block.settings.video != blank -%}
+                  {%- if block.settings.controls -%}
+                    {{ block.settings.video | video_tag: image_size: '1600x', autoplay: false, loop: false, muted: false, controls: true, preload: 'metadata' }}
+                  {%- else -%}
+                    {{ block.settings.video | video_tag: image_size: '1600x', autoplay: true, loop: true, muted: true, controls: false, preload: 'metadata' }}
+                  {%- endif -%}
+                {%- else -%}
+                  <div class="gl__placeholder">Video</div>
+                {%- endif -%}
+              </div>
+              {%- if block.settings.caption != blank or section.settings.numbering -%}
+                <figcaption class="gl__cap">
+                  {%- if section.settings.numbering -%}<span class="gl__num"></span>{%- endif -%}
+                  <span>{{ block.settings.caption }}</span>
+                </figcaption>
+              {%- endif -%}
+            </figure>
+          {%- endif -%}
+
+        {%- when 'embed' -%}
+          {%- assign vurl = block.settings.video_url -%}
+          {%- if vurl != blank or request.design_mode -%}
+            <figure class="gl__item gl__item--media" style="{{ item_style }}" {{ block.shopify_attributes }}>
+              <div class="gl__media gl__media--moving{% if ratio_auto %} gl__media--auto{% endif %}">
+                {%- if vurl != blank -%}
+                  {%- if vurl.type == 'youtube' -%}
+                    {%- if block.settings.mode == 'background' -%}
+                      <iframe data-src="https://www.youtube.com/embed/{{ vurl.id }}?autoplay=1&mute=1&loop=1&playlist={{ vurl.id }}&controls=0&modestbranding=1&rel=0&playsinline=1" title="{{ block.settings.caption | default: 'Video' | escape }}" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+                    {%- else -%}
+                      <iframe data-src="https://www.youtube.com/embed/{{ vurl.id }}?modestbranding=1&rel=0&playsinline=1" title="{{ block.settings.caption | default: 'Video' | escape }}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>
+                    {%- endif -%}
+                  {%- elsif vurl.type == 'vimeo' -%}
+                    {%- if block.settings.mode == 'background' -%}
+                      <iframe data-src="https://player.vimeo.com/video/{{ vurl.id }}?background=1&autoplay=1&muted=1&loop=1" title="{{ block.settings.caption | default: 'Video' | escape }}" allow="autoplay; encrypted-media" loading="lazy"></iframe>
+                    {%- else -%}
+                      <iframe data-src="https://player.vimeo.com/video/{{ vurl.id }}?title=0&byline=0&portrait=0" title="{{ block.settings.caption | default: 'Video' | escape }}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>
+                    {%- endif -%}
+                  {%- endif -%}
+                {%- else -%}
+                  <div class="gl__placeholder">YouTube / Vimeo</div>
+                {%- endif -%}
+              </div>
+              {%- if block.settings.caption != blank or section.settings.numbering -%}
+                <figcaption class="gl__cap">
+                  {%- if section.settings.numbering -%}<span class="gl__num"></span>{%- endif -%}
+                  <span>{{ block.settings.caption }}</span>
+                </figcaption>
+              {%- endif -%}
+            </figure>
+          {%- endif -%}
+
+        {%- when 'text' -%}
+          {%- if block.settings.text != blank or request.design_mode -%}
+            <div class="gl__item gl__item--text" style="{{ item_style }}" {{ block.shopify_attributes }}>
+              {%- if block.settings.text != blank -%}
+                <div class="gl__text gl__text--{{ block.settings.size }}{% if block.settings.center %} gl__text--center{% endif %}">{{ block.settings.text }}</div>
+              {%- else -%}
+                <div class="gl__placeholder">Text</div>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+
+        {%- when 'link' -%}
+          {%- if block.settings.label != blank and block.settings.url != blank or request.design_mode -%}
+            <div class="gl__item gl__item--link" style="{{ item_style }}" {{ block.shopify_attributes }}>
+              {%- if block.settings.label != blank and block.settings.url != blank -%}
+                {%- if block.settings.eyebrow != blank -%}<p class="gl__eyebrow">{{ block.settings.eyebrow }}</p>{%- endif -%}
+                <a class="gl__biglink" href="{{ block.settings.url }}"{% if block.settings.url contains '://' %} target="_blank" rel="noopener"{% endif %}>{{ block.settings.label }}<span aria-hidden="true"> &nearr;</span></a>
+              {%- else -%}
+                <div class="gl__placeholder">Link</div>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+
+      {%- endcase -%}
+    {%- endfor -%}
+  </div>
+
+  {%- comment -%} structured data: the gallery and its images, for search engines {%- endcomment -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ImageGallery",
+      "name": {{ section.settings.heading | default: page.title | json }},
+      "url": {{ canonical_url | json }},
+      "image": [
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'image' and block.settings.image != blank -%}
+            {%- if ld_count > 0 -%},{%- endif -%}
+            {
+              "@type": "ImageObject",
+              "contentUrl": {{ block.settings.image | image_url: width: 1600 | json }},
+              "caption": {{ block.settings.caption | default: block.settings.image.alt | default: '' | json }}
+            }
+            {%- assign ld_count = ld_count | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+      ]
+    }
+  </script>
+</section>
+
+<script>
+  (function () {
+    var root = document.getElementById('gl-{{ section.id }}');
+    if (!root) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var frames = Array.prototype.slice.call(root.querySelectorAll('iframe[data-src]'));
+    var vids = Array.prototype.slice.call(root.querySelectorAll('video[autoplay]'));
+
+    // Load embeds only when they are close to the screen; play uploaded loops only while visible.
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          var el = e.target;
+          if (el.tagName === 'IFRAME') {
+            if (e.isIntersecting && !el.getAttribute('src')) { el.setAttribute('src', el.getAttribute('data-src')); io.unobserve(el); }
+          } else if (e.isIntersecting && !reduce) {
+            var p = el.play(); if (p && p.catch) p.catch(function () {});
+          } else {
+            el.pause();
+          }
+        });
+      }, { rootMargin: '200px', threshold: 0.1 });
+      frames.concat(vids).forEach(function (el) { io.observe(el); });
+    } else {
+      frames.forEach(function (f) { f.setAttribute('src', f.getAttribute('data-src')); });
+    }
+    // visitors who asked for reduced motion get still videos with controls
+    if (reduce) vids.forEach(function (v) { v.pause(); v.removeAttribute('autoplay'); v.controls = true; });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Editorial gallery",
+  "tag": "section",
+  "class": "gallery-editorial",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Title",
+      "default": "GALLERY"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Short line under the title"
+    },
+    {
+      "type": "header",
+      "content": "Grid"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Space between tiles",
+      "min": 0,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "edge",
+      "label": "Width",
+      "options": [
+        {
+          "value": "margins",
+          "label": "Inside the page margins"
+        },
+        {
+          "value": "full",
+          "label": "Edge to edge"
+        }
+      ],
+      "default": "margins"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum width",
+      "min": 1000,
+      "max": 2600,
+      "step": 100,
+      "unit": "px",
+      "default": 2000
+    },
+    {
+      "type": "checkbox",
+      "id": "numbering",
+      "label": "Number the images and videos (01, 02...)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "rounded",
+      "label": "Soft rounded corners on images and videos",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "Image",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link (optional)",
+          "info": "Opens the page when the image is clicked. An https:// link opens in a new tab, handy for an Instagram post."
+        },
+        {
+          "type": "header",
+          "content": "Position in the grid"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Width",
+          "options": [
+            {
+              "value": "12",
+              "label": "Full width"
+            },
+            {
+              "value": "9",
+              "label": "Three quarters"
+            },
+            {
+              "value": "8",
+              "label": "Two thirds"
+            },
+            {
+              "value": "7",
+              "label": "7 of 12"
+            },
+            {
+              "value": "6",
+              "label": "Half"
+            },
+            {
+              "value": "5",
+              "label": "5 of 12"
+            },
+            {
+              "value": "4",
+              "label": "One third"
+            },
+            {
+              "value": "3",
+              "label": "One quarter"
+            },
+            {
+              "value": "2",
+              "label": "One sixth"
+            }
+          ],
+          "default": "6"
+        },
+        {
+          "type": "select",
+          "id": "ratio",
+          "label": "Shape",
+          "options": [
+            {
+              "value": "4 / 5",
+              "label": "Portrait 4:5"
+            },
+            {
+              "value": "3 / 4",
+              "label": "Portrait 3:4"
+            },
+            {
+              "value": "2 / 3",
+              "label": "Tall 2:3"
+            },
+            {
+              "value": "1 / 1",
+              "label": "Square"
+            },
+            {
+              "value": "5 / 4",
+              "label": "Landscape 5:4"
+            },
+            {
+              "value": "3 / 2",
+              "label": "Landscape 3:2"
+            },
+            {
+              "value": "16 / 9",
+              "label": "Wide 16:9"
+            },
+            {
+              "value": "21 / 9",
+              "label": "Cinema 21:9"
+            },
+            {
+              "value": "auto",
+              "label": "Original shape"
+            }
+          ],
+          "default": "4 / 5"
+        },
+        {
+          "type": "select",
+          "id": "start",
+          "label": "Start column",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Automatic"
+            },
+            {
+              "value": "1",
+              "label": "Column 1"
+            },
+            {
+              "value": "2",
+              "label": "Column 2"
+            },
+            {
+              "value": "3",
+              "label": "Column 3"
+            },
+            {
+              "value": "4",
+              "label": "Column 4"
+            },
+            {
+              "value": "5",
+              "label": "Column 5"
+            },
+            {
+              "value": "6",
+              "label": "Column 6"
+            },
+            {
+              "value": "7",
+              "label": "Column 7"
+            },
+            {
+              "value": "8",
+              "label": "Column 8"
+            },
+            {
+              "value": "9",
+              "label": "Column 9"
+            }
+          ],
+          "default": "auto",
+          "info": "Leave on Automatic for normal flow. Pick a column to indent a tile."
+        },
+        {
+          "type": "select",
+          "id": "offset",
+          "label": "Vertical drop",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "s",
+              "label": "Small drop"
+            },
+            {
+              "value": "m",
+              "label": "Medium drop"
+            },
+            {
+              "value": "l",
+              "label": "Large drop"
+            }
+          ],
+          "default": "none",
+          "info": "Pushes the tile down for an uneven, editorial rhythm."
+        },
+        {
+          "type": "select",
+          "id": "align",
+          "label": "Alignment in its row",
+          "options": [
+            {
+              "value": "start",
+              "label": "Top"
+            },
+            {
+              "value": "center",
+              "label": "Middle"
+            },
+            {
+              "value": "end",
+              "label": "Bottom"
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "Video (uploaded)",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video"
+        },
+        {
+          "type": "checkbox",
+          "id": "controls",
+          "label": "Show play controls",
+          "default": false,
+          "info": "Off: plays silently on a loop while on screen, like a moving photograph. On: the visitor presses play."
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption"
+        },
+        {
+          "type": "header",
+          "content": "Position in the grid"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Width",
+          "options": [
+            {
+              "value": "12",
+              "label": "Full width"
+            },
+            {
+              "value": "9",
+              "label": "Three quarters"
+            },
+            {
+              "value": "8",
+              "label": "Two thirds"
+            },
+            {
+              "value": "7",
+              "label": "7 of 12"
+            },
+            {
+              "value": "6",
+              "label": "Half"
+            },
+            {
+              "value": "5",
+              "label": "5 of 12"
+            },
+            {
+              "value": "4",
+              "label": "One third"
+            },
+            {
+              "value": "3",
+              "label": "One quarter"
+            },
+            {
+              "value": "2",
+              "label": "One sixth"
+            }
+          ],
+          "default": "6"
+        },
+        {
+          "type": "select",
+          "id": "ratio",
+          "label": "Shape",
+          "options": [
+            {
+              "value": "4 / 5",
+              "label": "Portrait 4:5"
+            },
+            {
+              "value": "3 / 4",
+              "label": "Portrait 3:4"
+            },
+            {
+              "value": "2 / 3",
+              "label": "Tall 2:3"
+            },
+            {
+              "value": "1 / 1",
+              "label": "Square"
+            },
+            {
+              "value": "5 / 4",
+              "label": "Landscape 5:4"
+            },
+            {
+              "value": "3 / 2",
+              "label": "Landscape 3:2"
+            },
+            {
+              "value": "16 / 9",
+              "label": "Wide 16:9"
+            },
+            {
+              "value": "21 / 9",
+              "label": "Cinema 21:9"
+            },
+            {
+              "value": "auto",
+              "label": "Original shape"
+            }
+          ],
+          "default": "16 / 9"
+        },
+        {
+          "type": "select",
+          "id": "start",
+          "label": "Start column",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Automatic"
+            },
+            {
+              "value": "1",
+              "label": "Column 1"
+            },
+            {
+              "value": "2",
+              "label": "Column 2"
+            },
+            {
+              "value": "3",
+              "label": "Column 3"
+            },
+            {
+              "value": "4",
+              "label": "Column 4"
+            },
+            {
+              "value": "5",
+              "label": "Column 5"
+            },
+            {
+              "value": "6",
+              "label": "Column 6"
+            },
+            {
+              "value": "7",
+              "label": "Column 7"
+            },
+            {
+              "value": "8",
+              "label": "Column 8"
+            },
+            {
+              "value": "9",
+              "label": "Column 9"
+            }
+          ],
+          "default": "auto",
+          "info": "Leave on Automatic for normal flow. Pick a column to indent a tile."
+        },
+        {
+          "type": "select",
+          "id": "offset",
+          "label": "Vertical drop",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "s",
+              "label": "Small drop"
+            },
+            {
+              "value": "m",
+              "label": "Medium drop"
+            },
+            {
+              "value": "l",
+              "label": "Large drop"
+            }
+          ],
+          "default": "none",
+          "info": "Pushes the tile down for an uneven, editorial rhythm."
+        },
+        {
+          "type": "select",
+          "id": "align",
+          "label": "Alignment in its row",
+          "options": [
+            {
+              "value": "start",
+              "label": "Top"
+            },
+            {
+              "value": "center",
+              "label": "Middle"
+            },
+            {
+              "value": "end",
+              "label": "Bottom"
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    },
+    {
+      "type": "embed",
+      "name": "Video (YouTube / Vimeo)",
+      "settings": [
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "label": "Video link",
+          "accept": [
+            "youtube",
+            "vimeo"
+          ]
+        },
+        {
+          "type": "select",
+          "id": "mode",
+          "label": "Playback",
+          "options": [
+            {
+              "value": "controls",
+              "label": "With play button"
+            },
+            {
+              "value": "background",
+              "label": "Silent loop"
+            }
+          ],
+          "default": "controls"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption"
+        },
+        {
+          "type": "header",
+          "content": "Position in the grid"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Width",
+          "options": [
+            {
+              "value": "12",
+              "label": "Full width"
+            },
+            {
+              "value": "9",
+              "label": "Three quarters"
+            },
+            {
+              "value": "8",
+              "label": "Two thirds"
+            },
+            {
+              "value": "7",
+              "label": "7 of 12"
+            },
+            {
+              "value": "6",
+              "label": "Half"
+            },
+            {
+              "value": "5",
+              "label": "5 of 12"
+            },
+            {
+              "value": "4",
+              "label": "One third"
+            },
+            {
+              "value": "3",
+              "label": "One quarter"
+            },
+            {
+              "value": "2",
+              "label": "One sixth"
+            }
+          ],
+          "default": "6"
+        },
+        {
+          "type": "select",
+          "id": "ratio",
+          "label": "Shape",
+          "options": [
+            {
+              "value": "4 / 5",
+              "label": "Portrait 4:5"
+            },
+            {
+              "value": "3 / 4",
+              "label": "Portrait 3:4"
+            },
+            {
+              "value": "2 / 3",
+              "label": "Tall 2:3"
+            },
+            {
+              "value": "1 / 1",
+              "label": "Square"
+            },
+            {
+              "value": "5 / 4",
+              "label": "Landscape 5:4"
+            },
+            {
+              "value": "3 / 2",
+              "label": "Landscape 3:2"
+            },
+            {
+              "value": "16 / 9",
+              "label": "Wide 16:9"
+            },
+            {
+              "value": "21 / 9",
+              "label": "Cinema 21:9"
+            },
+            {
+              "value": "auto",
+              "label": "Original shape"
+            }
+          ],
+          "default": "16 / 9"
+        },
+        {
+          "type": "select",
+          "id": "start",
+          "label": "Start column",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Automatic"
+            },
+            {
+              "value": "1",
+              "label": "Column 1"
+            },
+            {
+              "value": "2",
+              "label": "Column 2"
+            },
+            {
+              "value": "3",
+              "label": "Column 3"
+            },
+            {
+              "value": "4",
+              "label": "Column 4"
+            },
+            {
+              "value": "5",
+              "label": "Column 5"
+            },
+            {
+              "value": "6",
+              "label": "Column 6"
+            },
+            {
+              "value": "7",
+              "label": "Column 7"
+            },
+            {
+              "value": "8",
+              "label": "Column 8"
+            },
+            {
+              "value": "9",
+              "label": "Column 9"
+            }
+          ],
+          "default": "auto",
+          "info": "Leave on Automatic for normal flow. Pick a column to indent a tile."
+        },
+        {
+          "type": "select",
+          "id": "offset",
+          "label": "Vertical drop",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "s",
+              "label": "Small drop"
+            },
+            {
+              "value": "m",
+              "label": "Medium drop"
+            },
+            {
+              "value": "l",
+              "label": "Large drop"
+            }
+          ],
+          "default": "none",
+          "info": "Pushes the tile down for an uneven, editorial rhythm."
+        },
+        {
+          "type": "select",
+          "id": "align",
+          "label": "Alignment in its row",
+          "options": [
+            {
+              "value": "start",
+              "label": "Top"
+            },
+            {
+              "value": "center",
+              "label": "Middle"
+            },
+            {
+              "value": "end",
+              "label": "Bottom"
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text"
+        },
+        {
+          "type": "select",
+          "id": "size",
+          "label": "Size",
+          "options": [
+            {
+              "value": "caption",
+              "label": "Small caps"
+            },
+            {
+              "value": "body",
+              "label": "Paragraph"
+            },
+            {
+              "value": "statement",
+              "label": "Large statement"
+            }
+          ],
+          "default": "body"
+        },
+        {
+          "type": "checkbox",
+          "id": "center",
+          "label": "Centre the text",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Position in the grid"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Width",
+          "options": [
+            {
+              "value": "12",
+              "label": "Full width"
+            },
+            {
+              "value": "9",
+              "label": "Three quarters"
+            },
+            {
+              "value": "8",
+              "label": "Two thirds"
+            },
+            {
+              "value": "7",
+              "label": "7 of 12"
+            },
+            {
+              "value": "6",
+              "label": "Half"
+            },
+            {
+              "value": "5",
+              "label": "5 of 12"
+            },
+            {
+              "value": "4",
+              "label": "One third"
+            },
+            {
+              "value": "3",
+              "label": "One quarter"
+            },
+            {
+              "value": "2",
+              "label": "One sixth"
+            }
+          ],
+          "default": "4"
+        },
+        {
+          "type": "select",
+          "id": "start",
+          "label": "Start column",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Automatic"
+            },
+            {
+              "value": "1",
+              "label": "Column 1"
+            },
+            {
+              "value": "2",
+              "label": "Column 2"
+            },
+            {
+              "value": "3",
+              "label": "Column 3"
+            },
+            {
+              "value": "4",
+              "label": "Column 4"
+            },
+            {
+              "value": "5",
+              "label": "Column 5"
+            },
+            {
+              "value": "6",
+              "label": "Column 6"
+            },
+            {
+              "value": "7",
+              "label": "Column 7"
+            },
+            {
+              "value": "8",
+              "label": "Column 8"
+            },
+            {
+              "value": "9",
+              "label": "Column 9"
+            }
+          ],
+          "default": "auto",
+          "info": "Leave on Automatic for normal flow. Pick a column to indent a tile."
+        },
+        {
+          "type": "select",
+          "id": "offset",
+          "label": "Vertical drop",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "s",
+              "label": "Small drop"
+            },
+            {
+              "value": "m",
+              "label": "Medium drop"
+            },
+            {
+              "value": "l",
+              "label": "Large drop"
+            }
+          ],
+          "default": "none",
+          "info": "Pushes the tile down for an uneven, editorial rhythm."
+        },
+        {
+          "type": "select",
+          "id": "align",
+          "label": "Alignment in its row",
+          "options": [
+            {
+              "value": "start",
+              "label": "Top"
+            },
+            {
+              "value": "center",
+              "label": "Middle"
+            },
+            {
+              "value": "end",
+              "label": "Bottom"
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    },
+    {
+      "type": "link",
+      "name": "Link",
+      "settings": [
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Small text above"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Link text",
+          "info": "e.g. Instagram, YouTube, Shop the collection"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Link"
+        },
+        {
+          "type": "header",
+          "content": "Position in the grid"
+        },
+        {
+          "type": "select",
+          "id": "span",
+          "label": "Width",
+          "options": [
+            {
+              "value": "12",
+              "label": "Full width"
+            },
+            {
+              "value": "9",
+              "label": "Three quarters"
+            },
+            {
+              "value": "8",
+              "label": "Two thirds"
+            },
+            {
+              "value": "7",
+              "label": "7 of 12"
+            },
+            {
+              "value": "6",
+              "label": "Half"
+            },
+            {
+              "value": "5",
+              "label": "5 of 12"
+            },
+            {
+              "value": "4",
+              "label": "One third"
+            },
+            {
+              "value": "3",
+              "label": "One quarter"
+            },
+            {
+              "value": "2",
+              "label": "One sixth"
+            }
+          ],
+          "default": "4"
+        },
+        {
+          "type": "select",
+          "id": "start",
+          "label": "Start column",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Automatic"
+            },
+            {
+              "value": "1",
+              "label": "Column 1"
+            },
+            {
+              "value": "2",
+              "label": "Column 2"
+            },
+            {
+              "value": "3",
+              "label": "Column 3"
+            },
+            {
+              "value": "4",
+              "label": "Column 4"
+            },
+            {
+              "value": "5",
+              "label": "Column 5"
+            },
+            {
+              "value": "6",
+              "label": "Column 6"
+            },
+            {
+              "value": "7",
+              "label": "Column 7"
+            },
+            {
+              "value": "8",
+              "label": "Column 8"
+            },
+            {
+              "value": "9",
+              "label": "Column 9"
+            }
+          ],
+          "default": "auto",
+          "info": "Leave on Automatic for normal flow. Pick a column to indent a tile."
+        },
+        {
+          "type": "select",
+          "id": "offset",
+          "label": "Vertical drop",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "s",
+              "label": "Small drop"
+            },
+            {
+              "value": "m",
+              "label": "Medium drop"
+            },
+            {
+              "value": "l",
+              "label": "Large drop"
+            }
+          ],
+          "default": "none",
+          "info": "Pushes the tile down for an uneven, editorial rhythm."
+        },
+        {
+          "type": "select",
+          "id": "align",
+          "label": "Alignment in its row",
+          "options": [
+            {
+              "value": "start",
+              "label": "Top"
+            },
+            {
+              "value": "center",
+              "label": "Middle"
+            },
+            {
+              "value": "end",
+              "label": "Bottom"
+            }
+          ],
+          "default": "start"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Editorial gallery",
+      "blocks": [
+        {
+          "type": "image",
+          "settings": {
+            "span": "7",
+            "start": "1",
+            "ratio": "4 / 5"
+          }
+        },
+        {
+          "type": "text",
+          "settings": {
+            "span": "3",
+            "start": "9",
+            "offset": "l",
+            "size": "statement"
+          }
+        },
+        {
+          "type": "image",
+          "settings": {
+            "span": "4",
+            "start": "2",
+            "offset": "m",
+            "ratio": "3 / 4"
+          }
+        },
+        {
+          "type": "embed",
+          "settings": {
+            "span": "6",
+            "start": "7",
+            "offset": "s",
+            "ratio": "16 / 9"
+          }
+        },
+        {
+          "type": "image",
+          "settings": {
+            "span": "3",
+            "ratio": "2 / 3"
+          }
+        },
+        {
+          "type": "image",
+          "settings": {
+            "span": "3",
+            "offset": "m",
+            "ratio": "2 / 3"
+          }
+        },
+        {
+          "type": "video",
+          "settings": {
+            "span": "5",
+            "offset": "s",
+            "ratio": "4 / 5"
+          }
+        },
+        {
+          "type": "link",
+          "settings": {
+            "span": "4",
+            "align": "end"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

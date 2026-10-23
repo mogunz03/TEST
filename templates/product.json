@@ -33,10 +33,36 @@
             "table": "Size | Waist | Hips | Inseam\nXS | 70-75 | 88-93 | 78\nS | 76-81 | 94-99 | 79\nM | 82-87 | 100-105 | 80\nL | 88-93 | 106-111 | 81\nXL | 94-99 | 112-117 | 82",
             "notes": "<p><strong>Waist</strong> around the narrowest part. <strong>Hips</strong> around the widest part. <strong>Inseam</strong> from the crotch to the ankle.</p><p>Body measurements. Fit varies by style, cut and fabric: if you are between two sizes, choose the larger for a looser fit.</p>"
           }
+        },
+        "material": {
+          "type": "accordion",
+          "settings": {
+            "title": "MATERIAL",
+            "acc_id": "material",
+            "use_size_charts": false,
+            "use_product_description": false,
+            "metafield_namespace": "custom",
+            "metafield_key": "materials",
+            "content": ""
+          }
+        },
+        "shipping": {
+          "type": "accordion",
+          "settings": {
+            "title": "SHIPPING",
+            "acc_id": "shipping",
+            "use_size_charts": false,
+            "use_product_description": false,
+            "metafield_namespace": "",
+            "metafield_key": "",
+            "content": "<p>Shipping cost and delivery time are calculated at checkout, based on your address.</p><p>Full details are in our <a href=\"/policies/shipping-policy\">shipping policy</a> and <a href=\"/policies/refund-policy\">returns policy</a>.</p>"
+          }
         }
       },
       "block_order": [
         "size_chart",
+        "material",
+        "shipping",
         "chart_tops",
         "chart_pants"
       ]
