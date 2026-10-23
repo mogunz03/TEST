@@ -411,7 +411,7 @@
         <div class="pb-columns-{{ section.id }}" data-reverse="{% if block.settings.reverse %}true{% else %}false{% endif %}" {{ block.shopify_attributes }}>
           <div class="pb-col-{{ section.id }} is-media">
             {%- if block.settings.media_image != blank -%}
-              <img src="{{ block.settings.media_image | image_url: width: 1200 }}" alt="{{ block.settings.heading | escape }}" loading="lazy">
+              <img src="{{ block.settings.media_image | image_url: width: 1200 }}" alt="{{ block.settings.heading | escape }}" loading="lazy" width="1200" height="{{ 1200 | divided_by: block.settings.media_image.aspect_ratio | round }}">
             {%- elsif block.settings.media_video != blank -%}
               {{ block.settings.media_video | video_tag: image_size: '1200x', autoplay: false, loop: true, muted: true, controls: true, preload: 'metadata' }}
             {%- endif -%}

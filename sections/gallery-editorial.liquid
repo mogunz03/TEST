@@ -4,11 +4,17 @@
   A 12-column grid where every tile picks its own width, start column, height ratio and vertical drop,
   so the page reads like a magazine spread instead of a uniform wall of thumbnails.
   Tiles: image, uploaded video, YouTube / Vimeo embed, text, big typographic link.
-  Empty tiles are not rendered on the live site (the theme editor shows a placeholder), so an
-  unfinished gallery never looks broken. No hover or scroll animation.
+  Empty tiles show as flat colour blocks while "Show colour blocks for empty tiles" is on (and always
+  in the theme editor), so the layout can be judged before any content exists. Turn it off to hide
+  empty tiles on the live site. No hover or scroll animation.
 {% endcomment %}
 
 {%- liquid
+  assign show_ph = section.settings.show_placeholders
+  if request.design_mode
+    assign show_ph = true
+  endif
+  assign ph_palette = '#e4e1dc,#d3cec6,#c4beb4,#dad6cf,#b9b3a8,#ebe8e3' | split: ','
   assign edge_full = false
   if section.settings.edge == 'full'
     assign edge_full = true
@@ -63,14 +69,16 @@
   #gl-{{ section.id }} .gl__media--auto { aspect-ratio: auto; }
   #gl-{{ section.id }} .gl__media--auto img { position: static; height: auto; }
   #gl-{{ section.id }} .gl__media--auto.gl__media--moving { aspect-ratio: 16 / 9; }
+  #gl-{{ section.id }} .gl__media--auto:has(> .gl__placeholder) { aspect-ratio: 4 / 5; }
   #gl-{{ section.id }} .gl__link { display: block; color: inherit; text-decoration: none; }
   #gl-{{ section.id }} .gl__link:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
   #gl-{{ section.id }} .gl__placeholder {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: rgb(0 0 0 / 0.05); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6;
+    background: var(--ph, #e4e1dc); color: rgb(0 0 0 / 0.55); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
   }
   #gl-{{ section.id }} .gl__item--text .gl__placeholder,
-  #gl-{{ section.id }} .gl__item--link .gl__placeholder { position: static; min-height: 96px; }
+  #gl-{{ section.id }} .gl__item--link .gl__placeholder { position: static; min-height: 140px; border-radius: var(--dz-radius-md, 12px); }
+  #gl-{{ section.id }} .gl__media:has(> .gl__placeholder) { border-radius: var(--dz-radius-md, 12px); overflow: hidden; }
 
   /* captions, numbered like the collection grid */
   #gl-{{ section.id }} .gl__cap {
@@ -150,6 +158,8 @@
         if block.settings.ratio == 'auto'
           assign ratio_auto = true
         endif
+        assign ph_i = forloop.index0 | modulo: 6
+        assign item_style = item_style | append: ';--ph:' | append: ph_palette[ph_i]
         assign load_mode = 'lazy'
         if forloop.index <= 2
           assign load_mode = 'eager'
@@ -160,7 +170,7 @@
       {%- case block.type -%}
 
         {%- when 'image' -%}
-          {%- if block.settings.image != blank or request.design_mode -%}
+          {%- if block.settings.image != blank or show_ph -%}
             <figure class="gl__item gl__item--media" style="{{ item_style }}" {{ block.shopify_attributes }}>
               {%- if block.settings.link != blank -%}
                 <a class="gl__link" href="{{ block.settings.link }}"{% if block.settings.link contains '://' %} target="_blank" rel="noopener"{% endif %}>
@@ -184,7 +194,7 @@
           {%- endif -%}
 
         {%- when 'video' -%}
-          {%- if block.settings.video != blank or request.design_mode -%}
+          {%- if block.settings.video != blank or show_ph -%}
             <figure class="gl__item gl__item--media" style="{{ item_style }}" {{ block.shopify_attributes }}>
               <div class="gl__media gl__media--moving{% if ratio_auto %} gl__media--auto{% endif %}">
                 {%- if block.settings.video != blank -%}
@@ -208,7 +218,7 @@
 
         {%- when 'embed' -%}
           {%- assign vurl = block.settings.video_url -%}
-          {%- if vurl != blank or request.design_mode -%}
+          {%- if vurl != blank or show_ph -%}
             <figure class="gl__item gl__item--media" style="{{ item_style }}" {{ block.shopify_attributes }}>
               <div class="gl__media gl__media--moving{% if ratio_auto %} gl__media--auto{% endif %}">
                 {%- if vurl != blank -%}
@@ -239,7 +249,7 @@
           {%- endif -%}
 
         {%- when 'text' -%}
-          {%- if block.settings.text != blank or request.design_mode -%}
+          {%- if block.settings.text != blank or show_ph -%}
             <div class="gl__item gl__item--text" style="{{ item_style }}" {{ block.shopify_attributes }}>
               {%- if block.settings.text != blank -%}
                 <div class="gl__text gl__text--{{ block.settings.size }}{% if block.settings.center %} gl__text--center{% endif %}">{{ block.settings.text }}</div>
@@ -250,9 +260,11 @@
           {%- endif -%}
 
         {%- when 'link' -%}
-          {%- if block.settings.label != blank and block.settings.url != blank or request.design_mode -%}
+          {%- assign link_ready = false -%}
+          {%- if block.settings.label != blank and block.settings.url != blank -%}{%- assign link_ready = true -%}{%- endif -%}
+          {%- if link_ready or show_ph -%}
             <div class="gl__item gl__item--link" style="{{ item_style }}" {{ block.shopify_attributes }}>
-              {%- if block.settings.label != blank and block.settings.url != blank -%}
+              {%- if link_ready -%}
                 {%- if block.settings.eyebrow != blank -%}<p class="gl__eyebrow">{{ block.settings.eyebrow }}</p>{%- endif -%}
                 <a class="gl__biglink" href="{{ block.settings.url }}"{% if block.settings.url contains '://' %} target="_blank" rel="noopener"{% endif %}>{{ block.settings.label }}<span aria-hidden="true"> &nearr;</span></a>
               {%- else -%}
@@ -385,6 +397,13 @@
       "type": "checkbox",
       "id": "numbering",
       "label": "Number the images and videos (01, 02...)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_placeholders",
+      "label": "Show colour blocks for empty tiles",
+      "info": "Lets you see the layout before adding content. Turn off when the gallery is filled in.",
       "default": true
     },
     {

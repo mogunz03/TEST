@@ -163,4 +163,27 @@
   .dz-prose table, .dz-frame .shopify-policy__body table { width: 100%; border-collapse: collapse; font-size: var(--dz-fs-small); }
   .dz-prose th, .dz-prose td,
   .dz-frame .shopify-policy__body th, .dz-frame .shopify-policy__body td { padding: 8px 10px; border-bottom: 1px solid var(--dz-hairline); text-align: left; }
+
+  /* ------------------------------------------------------------------
+     STOCK PAGES (search, 404, blog, article, collections list, password)
+     Same voice as the custom pages: small uppercase tracked headings, hairlines,
+     page colour behind everything, soft corners.
+     ------------------------------------------------------------------ */
+  {%- case request.page_type -%}
+  {%- when 'search', '404', 'blog', 'article', 'list-collections', 'password' %}
+  main h1, main h2, main h3, main .h1, main .h2, main .h3,
+  .password-content h1 {
+    font-size: var(--dz-fs-title);
+    font-weight: 400;
+    letter-spacing: var(--dz-tracking-title);
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+  main p, main .rte, main li { font-size: var(--dz-fs-body); line-height: 1.7; }
+  main .button, main button[type="submit"], .password-content button { border-radius: var(--dz-radius-sm); font-size: var(--dz-fs-small); letter-spacing: var(--dz-tracking-label); text-transform: uppercase; }
+  main input, main select, main textarea, .password-content input { border-radius: var(--dz-radius-sm); font-size: var(--dz-fs-body); }
+  main img, main video { border-radius: var(--dz-radius-md); }
+  main a:not(.button) { text-underline-offset: 3px; }
+  main time, main .blog-post-details, .blog-post-comment__date { font-size: var(--dz-fs-label); letter-spacing: var(--dz-tracking-label); text-transform: uppercase; opacity: 0.6; }
+  {%- endcase %}
 </style>

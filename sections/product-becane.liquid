@@ -574,7 +574,7 @@
                       data-bcn-thumb
                       data-bcn-thumb-index="{{ forloop.index0 }}"
                       aria-label="View media {{ forloop.index }}">
-                <img src="{{ media.preview_image | image_url: width: 160 }}" alt="" loading="lazy">
+                <img src="{{ media.preview_image | image_url: width: 160 }}" alt="" loading="lazy" width="160" height="{{ 160 | divided_by: media.preview_image.aspect_ratio | round }}">
                 {%- if media.media_type != 'image' -%}
                   <span class="bcn-media-badge-{{ section.id }}">{% if media.media_type == 'video' or media.media_type == 'external_video' %}▶{% else %}3D{% endif %}</span>
                 {%- endif -%}
@@ -669,7 +669,7 @@
               <img src="{{ media | image_url: width: 1600 }}"
                    alt="{{ product.title | escape }} {{ forloop.index }}"
                    loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                   width="1600" height="1600">
+                   width="1600" height="{{ 1600 | divided_by: media.aspect_ratio | round }}">
             {%- when 'video' -%}
               {{ media | video_tag: image_size: '1600x', autoplay: false, loop: true, muted: true, controls: true }}
             {%- when 'external_video' -%}
@@ -677,7 +677,7 @@
             {%- when 'model' -%}
               {{ media | model_viewer_tag }}
             {%- else -%}
-              <img src="{{ media.preview_image | image_url: width: 1600 }}" alt="{{ product.title | escape }}">
+              <img src="{{ media.preview_image | image_url: width: 1600 }}" alt="{{ product.title | escape }}" width="1600" height="{{ 1600 | divided_by: media.preview_image.aspect_ratio | round }}">
           {%- endcase -%}
         </div>
       {%- endfor -%}
@@ -699,7 +699,7 @@
         <div class="bcn-overlay__slide-{{ section.id }}" data-bcn-slide data-bcn-slide-index="{{ forloop.index0 }}">
           {%- case media.media_type -%}
             {%- when 'image' -%}
-              <img src="{{ media | image_url: width: 2000 }}" alt="{{ product.title | escape }} {{ forloop.index }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+              <img src="{{ media | image_url: width: 2000 }}" alt="{{ product.title | escape }} {{ forloop.index }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" width="2000" height="{{ 2000 | divided_by: media.aspect_ratio | round }}">
             {%- when 'video' -%}
               {{ media | video_tag: image_size: '2000x', autoplay: false, loop: false, muted: false, controls: true }}
             {%- when 'external_video' -%}
@@ -707,7 +707,7 @@
             {%- when 'model' -%}
               {{ media | model_viewer_tag }}
             {%- else -%}
-              <img src="{{ media.preview_image | image_url: width: 2000 }}" alt="">
+              <img src="{{ media.preview_image | image_url: width: 2000 }}" alt="" width="2000" height="{{ 2000 | divided_by: media.preview_image.aspect_ratio | round }}">
           {%- endcase -%}
         </div>
       {%- endfor -%}
@@ -991,6 +991,10 @@
       });
     });
   })();
+</script>
+
+<script type="application/ld+json">
+  {{ product | structured_data }}
 </script>
 
 {% schema %}

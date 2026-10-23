@@ -105,7 +105,7 @@
       endif
     -%}
     {%- if logo_src != '' -%}
-      <img src="{{ logo_src }}" alt="{{ shop.name | escape }}">
+      <img src="{{ logo_src }}" alt="{{ shop.name | escape }}" width="120" height="40">
     {%- else -%}
       <span class="fl-logo__text">{{ shop.name | default: 'STORE' }}</span>
     {%- endif -%}
