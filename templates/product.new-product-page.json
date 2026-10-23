@@ -562,7 +562,7 @@
             "subtitle_size": 10,
             "product_title_size": 10,
             "product_price_size": 10,
-            "card_border_radius": 16,
+            "card_border_radius": 12,
             "speed": 60
           },
           "blocks": {}

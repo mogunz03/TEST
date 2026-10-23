@@ -86,10 +86,13 @@
     display: inline;
   }
 
+  /* the price is as big as the product name it sits beside */
   .bcn-price-inline-{{ section.id }} {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-    color: var(--bcn-fg); margin-left: 12px;
-    vertical-align: top; text-transform: uppercase;
+    font-family: var(--bcn-font-heading);
+    font-size: var(--dz-fs-title, clamp(16px, 1.5vw, 20px));
+    font-weight: 600; letter-spacing: 0.02em; line-height: 1.1;
+    color: var(--bcn-fg); margin-left: 16px;
+    vertical-align: baseline; text-transform: uppercase; font-style: normal;
   }
 
   .bcn-img-counter-{{ section.id }} {
@@ -217,7 +220,7 @@
   .bcn-acc__inner-{{ section.id }} th,
   .bcn-acc__inner-{{ section.id }} td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--bcn-hairline); font-weight: 400; }
   .bcn-acc__inner-{{ section.id }} th { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
-  .bcn-acc__inner-{{ section.id }} img { max-width: 100%; height: auto; display: block; border-radius: var(--dz-radius-md, 16px); }
+  .bcn-acc__inner-{{ section.id }} img { max-width: 100%; height: auto; display: block; border-radius: var(--dz-radius-md, 12px); }
   .bcn-acc__inner-{{ section.id }} a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
   /* SIZE CHART: tabs by category, cm / in switch, plain table (no animation) */
@@ -257,9 +260,8 @@
   }
   .bcn-back-{{ section.id }}:hover { color: var(--bcn-accent); }
 
-  .bcn-atc-sticky-{{ section.id }} {
-    position: sticky; bottom: 40px; margin-top: auto;
-  }
+  /* desktop: an ordinary block right under the description. (Phones keep the fixed bar, see the media query.) */
+  .bcn-atc-sticky-{{ section.id }} { position: static; margin: 0; }
 
   .bcn-atc-{{ section.id }} {
     display: inline-flex; align-items: center; gap: 24px;
@@ -274,7 +276,6 @@
   .bcn-atc-{{ section.id }}:hover { opacity: 0.85; }
   .bcn-atc-{{ section.id }}:disabled { background: var(--bcn-muted); cursor: not-allowed; opacity: 1; }
 
-  .bcn-atc__price-{{ section.id }} { font-weight: 500; opacity: 0.8; }
 
   /* enable scroll snap on the page while this section is in view.
      Using 'proximity' so users can still scroll past the section
@@ -476,29 +477,16 @@
   /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
   .bcn-atc-{{ section.id }},
   .bcn-size-pill-{{ section.id }},
-  .bcn-media-badge-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
+  .bcn-media-badge-{{ section.id }} { border-radius: var(--dz-radius-sm, 8px); }
   .bcn-media-item-{{ section.id }},
   .bcn-media-item-{{ section.id }} video,
   .bcn-media-item-{{ section.id }} iframe,
   .bcn-overlay__slide-{{ section.id }},
   .bcn-overlay__slide-{{ section.id }} video,
-  .bcn-overlay__slide-{{ section.id }} iframe { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
+  .bcn-overlay__slide-{{ section.id }} iframe { border-radius: var(--dz-radius-md, 12px); overflow: hidden; }
 {% endstyle %}
 
 {%- liquid
-  assign has_size_guide = false
-  for b in section.blocks
-    if b.type == 'accordion' and b.settings.acc_id == 'size-guide'
-      capture sg_html
-        render 'becane-acc-content', block: b, product: product, section_blocks: section.blocks
-      endcapture
-      assign sg_text = sg_html | strip
-      if sg_text != blank
-        assign has_size_guide = true
-      endif
-    endif
-  endfor
-
   assign back_url = routes.all_products_collection_url
   if collection != blank
     assign back_url = collection.url
@@ -543,6 +531,12 @@
         </div>
       {%- endif -%}
 
+      <div class="bcn-atc-sticky-{{ section.id }}">
+        <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available %}disabled{% endunless %}>
+          <span data-bcn-atc-label>{% if current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
+        </button>
+      </div>
+
       {%- if product.media.size > 0 -%}
         <div class="bcn-img-counter-{{ section.id }}">
           <button class="bcn-img-counter__label-{{ section.id }}"
@@ -585,9 +579,6 @@
           <div class="bcn-variant-group-{{ section.id }}">
             <div class="bcn-variant-group__head-{{ section.id }}">
               <div class="bcn-label-{{ section.id }}">{{ option.name }}</div>
-              {%- if is_size and section.settings.show_size_guide_link and has_size_guide -%}
-                <button type="button" class="bcn-variant-link-{{ section.id }}" data-bcn-open-acc="size-guide">{{ section.settings.size_guide_label }}</button>
-              {%- endif -%}
             </div>
 
             <ul class="bcn-variant-list-{{ section.id }}" data-bcn-option-index="{{ option.position }}">
@@ -641,12 +632,6 @@
         {%- endfor -%}
       </div>
 
-      <div class="bcn-atc-sticky-{{ section.id }}">
-        <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available %}disabled{% endunless %}>
-          <span data-bcn-atc-label>{% if current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
-          <span class="bcn-atc__price-{{ section.id }}" data-bcn-atc-price>{{ current_variant.price | money_without_trailing_zeros }}</span>
-        </button>
-      </div>
 
     </div>
 
@@ -708,7 +693,6 @@
     <div class="bcn-overlay__bottom-{{ section.id }}">
       <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available %}disabled{% endunless %}>
         <span data-bcn-atc-label>{% if current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
-        <span class="bcn-atc__price-{{ section.id }}" data-bcn-atc-price>{{ current_variant.price | money_without_trailing_zeros }}</span>
       </button>
     </div>
   </div>
@@ -928,17 +912,6 @@
       if (head) head.addEventListener('click', () => acc.classList.toggle('is-open'));
     });
 
-    root.querySelectorAll('[data-bcn-open-acc]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.bcnOpenAcc;
-        const target = root.querySelector('[data-bcn-acc-id="' + id + '"]');
-        if (target) {
-          target.classList.add('is-open');
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-    });
-
     const form = root.querySelector('[data-bcn-form]');
     atcButtons.forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -1145,19 +1118,6 @@
       "id": "close_label",
       "label": "Overlay close label",
       "default": "CLOSE"
-    },
-    {
-      "type": "checkbox",
-      "id": "show_size_guide_link",
-      "label": "Show 'Size guide' link next to size variant",
-      "default": true
-    },
-    {
-      "type": "text",
-      "id": "size_guide_label",
-      "label": "Size guide link text",
-      "default": "SIZE GUIDE",
-      "info": "The link only appears on products that have a size chart (see the 'Size chart' accordion block)."
     },
     {
       "type": "checkbox",

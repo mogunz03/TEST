@@ -259,7 +259,7 @@
   .dz-frame .pb-paragraph-{{ section.id }} { font-size: var(--dz-fs-body); line-height: 1.7; }
   .dz-frame .pb-paragraph-{{ section.id }}.is-large { font-size: var(--dz-fs-lead, 16px); }
   .dz-frame .pb-hero-{{ section.id }} {
-    width: auto; margin: 0 0 32px; border-radius: var(--dz-radius-md, 16px);
+    width: auto; margin: 0 0 32px; border-radius: var(--dz-radius-md, 12px);
     min-height: min(46dvh, 400px);
   }
   .dz-frame .pb-hero__caption-{{ section.id }} { min-height: min(46dvh, 400px); padding: 28px; }
@@ -278,7 +278,7 @@
     width: 100%; padding: 12px 14px;
     font: inherit; font-size: var(--dz-fs-body, 14px); letter-spacing: 0; text-transform: none;
     color: #000; background: #fff;
-    border: 1px solid rgb(0 0 0 / 0.2); border-radius: var(--dz-radius-sm, 12px);
+    border: 1px solid rgb(0 0 0 / 0.2); border-radius: var(--dz-radius-sm, 8px);
     outline: none; resize: vertical;
   }
   .pb-form-{{ section.id }} .pb-form__field-{{ section.id }} input:focus,
@@ -289,19 +289,19 @@
   }
   .pb-form__msg-{{ section.id }} {
     margin: 0; padding: 12px 14px; font-size: var(--dz-fs-small, 12px);
-    border-radius: var(--dz-radius-sm, 12px); background: rgb(0 0 0 / 0.05);
+    border-radius: var(--dz-radius-sm, 8px); background: rgb(0 0 0 / 0.05);
   }
   .pb-form__msg-{{ section.id }}.is-error { background: rgb(200 30 30 / 0.08); }
   .pb-form-{{ section.id }} .pb-btn-{{ section.id }} { justify-self: start; margin-top: 0; }
   @media (max-width: 600px) { .pb-form__grid-{{ section.id }} { grid-template-columns: 1fr; } }
 
   /* SHAPE: soft corners (tokens in snippets/dauze-tokens.liquid) */
-  .pb-btn-{{ section.id }} { border-radius: var(--dz-radius-sm, 12px); }
+  .pb-btn-{{ section.id }} { border-radius: var(--dz-radius-sm, 8px); }
   .pb-image-{{ section.id }}:not(.is-full) img,
   .pb-video-{{ section.id }}:not(.is-full) video,
   .pb-video-{{ section.id }}:not(.is-full) iframe,
   .pb-col-{{ section.id }} img,
-  .pb-col-{{ section.id }} video { border-radius: var(--dz-radius-md, 16px); overflow: hidden; }
+  .pb-col-{{ section.id }} video { border-radius: var(--dz-radius-md, 12px); overflow: hidden; }
 {% endstyle %}
 
 {%- liquid

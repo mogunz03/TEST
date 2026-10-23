@@ -3,15 +3,15 @@
   layout used by the custom sections, header pill and footer. Theme-wide radii / sizes
   for the stock Horizon components come from Theme settings (config/settings_data.json).
 
-  Radii      soft, never above 20px
+  Radii      soft but restrained: 8 / 12 / 16px
   Type       small and quiet: hierarchy comes from case, tracking and spacing, not size
   Motion     none, except plain opacity fades (see "Motion" below)
 {% endcomment %}
 <style>
   :root {
-    --dz-radius-sm: 12px; /* buttons, inputs, chips */
-    --dz-radius-md: 16px; /* cards, images, video */
-    --dz-radius-lg: 20px; /* drawers, sheets (maximum) */
+    --dz-radius-sm: 8px;  /* buttons, inputs, chips */
+    --dz-radius-md: 12px; /* cards, images, video */
+    --dz-radius-lg: 16px; /* drawers, sheets (maximum) */
 
     --dz-fs-label: 10px;
     --dz-fs-small: 11px;
@@ -156,7 +156,7 @@
   .dz-frame .shopify-policy__body h3, .dz-frame .shopify-policy__body h4 { font-size: var(--dz-fs-body); }
   .dz-prose a, .dz-frame .shopify-policy__body a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .dz-prose a:hover, .dz-frame .shopify-policy__body a:hover { color: var(--color-primary, #ef5000); }
-  .dz-prose img, .dz-frame .shopify-policy__body img { max-width: 100%; height: auto; border-radius: var(--dz-radius-md, 16px); }
+  .dz-prose img, .dz-frame .shopify-policy__body img { max-width: 100%; height: auto; border-radius: var(--dz-radius-md, 12px); }
   .dz-prose blockquote, .dz-frame .shopify-policy__body blockquote {
     margin: 1.6em 0; padding-left: 1em; border-left: 1px solid var(--dz-hairline); font-style: normal;
   }
