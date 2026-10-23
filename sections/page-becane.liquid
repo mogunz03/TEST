@@ -23,7 +23,7 @@
 
 {% style %}
   #pb-{{ section.id }} {
-    --pb-bg: {{ section.settings.bg_color }};
+    --pb-bg: {{ section.settings.bg_color | default: 'var(--color-background)' }};
     --pb-fg: {{ section.settings.text_color }};
     --pb-muted: {{ section.settings.muted_color }};
     --pb-accent: {{ section.settings.accent_color }};
@@ -497,120 +497,338 @@
 {
   "name": "Becane page",
   "settings": [
-    { "type": "header", "content": "Page header" },
-    { "type": "text", "id": "eyebrow", "label": "Eyebrow / category label" },
-    { "type": "text", "id": "title", "label": "Page title override", "info": "Leave blank to use the page's own title." },
-    { "type": "checkbox", "id": "show_page_title", "label": "Show page title", "default": true },
-    { "type": "checkbox", "id": "show_page_content", "label": "Show the page's own content", "info": "Used when no 'Page content' block is added below. The text you write in Online Store > Pages.", "default": true },
-
-    { "type": "header", "content": "Colors" },
-    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
-    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
-    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
-    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#ef5000" },
-
-    { "type": "header", "content": "Typography" },
+    {
+      "type": "header",
+      "content": "Page header"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow / category label"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Page title override",
+      "info": "Leave blank to use the page's own title."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_page_title",
+      "label": "Show page title",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_page_content",
+      "label": "Show the page's own content",
+      "info": "Used when no 'Page content' block is added below. The text you write in Online Store > Pages.",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "info": "Leave empty to match the site background (Theme settings > Colors > Scheme 1), so every page shares one colour."
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Primary text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#8a8a8a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#ef5000"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
     {
       "type": "radio",
       "id": "font_preset",
       "label": "Font preset",
       "options": [
-        { "value": "helvetica", "label": "Match site typography (recommended)" },
-        { "value": "custom", "label": "Custom fonts" }
+        {
+          "value": "helvetica",
+          "label": "Match site typography (recommended)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom fonts"
+        }
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" }
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font (custom only)",
+      "default": "montserrat_n5"
+    },
+    {
+      "type": "font_picker",
+      "id": "body_font",
+      "label": "Body font (custom only)",
+      "default": "montserrat_n4"
+    }
   ],
   "blocks": [
     {
       "type": "hero",
       "name": "Hero",
       "settings": [
-        { "type": "image_picker", "id": "image", "label": "Background image" },
-        { "type": "video", "id": "video", "label": "Background video (uploaded)" },
-        { "type": "video_url", "id": "video_url", "label": "Background video URL (YouTube/Vimeo)", "accept": ["youtube", "vimeo"] },
-        { "type": "range", "id": "overlay", "label": "Bottom gradient darkness", "min": 0, "max": 80, "step": 5, "unit": "%", "default": 20 },
-        { "type": "color", "id": "text_color", "label": "Caption text color", "default": "#ffffff" },
-        { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
-        { "type": "text", "id": "heading", "label": "Heading" },
-        { "type": "checkbox", "id": "italic", "label": "Italic heading", "default": false }
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Background image"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Background video (uploaded)"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "label": "Background video URL (YouTube/Vimeo)",
+          "accept": [
+            "youtube",
+            "vimeo"
+          ]
+        },
+        {
+          "type": "range",
+          "id": "overlay",
+          "label": "Bottom gradient darkness",
+          "min": 0,
+          "max": 80,
+          "step": 5,
+          "unit": "%",
+          "default": 20
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "label": "Caption text color",
+          "default": "#ffffff"
+        },
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Eyebrow"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "checkbox",
+          "id": "italic",
+          "label": "Italic heading",
+          "default": false
+        }
       ]
     },
     {
       "type": "paragraph",
       "name": "Paragraph",
       "settings": [
-        { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Write something here.</p>" },
-        { "type": "checkbox", "id": "large", "label": "Large text size", "default": false },
-        { "type": "text", "id": "button_label", "label": "Button label (optional)" },
-        { "type": "url", "id": "button_link", "label": "Button link (optional)" }
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>Write something here.</p>"
+        },
+        {
+          "type": "checkbox",
+          "id": "large",
+          "label": "Large text size",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label (optional)"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button link (optional)"
+        }
       ]
     },
     {
       "type": "heading",
       "name": "Heading",
       "settings": [
-        { "type": "text", "id": "heading", "label": "Heading", "default": "SECTION" }
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "SECTION"
+        }
       ]
     },
     {
       "type": "image",
       "name": "Image",
       "settings": [
-        { "type": "image_picker", "id": "image", "label": "Image" },
-        { "type": "checkbox", "id": "full_width", "label": "Full bleed (edge to edge)", "default": false },
-        { "type": "text", "id": "caption", "label": "Caption (optional)" }
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "checkbox",
+          "id": "full_width",
+          "label": "Full bleed (edge to edge)",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption (optional)"
+        }
       ]
     },
     {
       "type": "video",
       "name": "Video",
       "settings": [
-        { "type": "video", "id": "video", "label": "Uploaded video" },
-        { "type": "video_url", "id": "video_url", "label": "Or YouTube/Vimeo URL", "accept": ["youtube", "vimeo"] },
-        { "type": "checkbox", "id": "full_width", "label": "Full bleed (edge to edge)", "default": false },
-        { "type": "checkbox", "id": "autoplay", "label": "Autoplay (muted)", "default": false },
-        { "type": "checkbox", "id": "loop", "label": "Loop", "default": false }
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Uploaded video"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "label": "Or YouTube/Vimeo URL",
+          "accept": [
+            "youtube",
+            "vimeo"
+          ]
+        },
+        {
+          "type": "checkbox",
+          "id": "full_width",
+          "label": "Full bleed (edge to edge)",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "autoplay",
+          "label": "Autoplay (muted)",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "loop",
+          "label": "Loop",
+          "default": false
+        }
       ]
     },
     {
       "type": "columns",
       "name": "Media + text columns",
       "settings": [
-        { "type": "image_picker", "id": "media_image", "label": "Media image" },
-        { "type": "video", "id": "media_video", "label": "Or media video" },
-        { "type": "text", "id": "heading", "label": "Heading" },
-        { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Column text.</p>" },
-        { "type": "text", "id": "button_label", "label": "Button label (optional)" },
-        { "type": "url", "id": "button_link", "label": "Button link (optional)" },
-        { "type": "checkbox", "id": "reverse", "label": "Media on right (instead of left)", "default": false }
+        {
+          "type": "image_picker",
+          "id": "media_image",
+          "label": "Media image"
+        },
+        {
+          "type": "video",
+          "id": "media_video",
+          "label": "Or media video"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>Column text.</p>"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label (optional)"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button link (optional)"
+        },
+        {
+          "type": "checkbox",
+          "id": "reverse",
+          "label": "Media on right (instead of left)",
+          "default": false
+        }
       ]
     },
     {
       "type": "quote",
       "name": "Quote",
       "settings": [
-        { "type": "textarea", "id": "text", "label": "Quote", "default": "A pull quote sits here." },
-        { "type": "text", "id": "cite", "label": "Attribution" }
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Quote",
+          "default": "A pull quote sits here."
+        },
+        {
+          "type": "text",
+          "id": "cite",
+          "label": "Attribution"
+        }
       ]
     },
     {
       "type": "spacer",
       "name": "Spacer",
       "settings": [
-        { "type": "range", "id": "height", "label": "Height", "min": 16, "max": 200, "step": 8, "unit": "px", "default": 48 }
+        {
+          "type": "range",
+          "id": "height",
+          "label": "Height",
+          "min": 16,
+          "max": 200,
+          "step": 8,
+          "unit": "px",
+          "default": 48
+        }
       ]
-    }
-
-    ,
+    },
     {
       "type": "page_content",
       "name": "Page content",
       "limit": 1,
       "settings": [
-        { "type": "paragraph", "content": "Shows the text written for this page in Online Store > Pages." }
+        {
+          "type": "paragraph",
+          "content": "Shows the text written for this page in Online Store > Pages."
+        }
       ]
     },
     {
@@ -618,9 +836,24 @@
       "name": "Contact form",
       "limit": 1,
       "settings": [
-        { "type": "text", "id": "button_label", "label": "Button label", "default": "Send" },
-        { "type": "text", "id": "success_message", "label": "Success message", "default": "Thanks for contacting us. We'll get back to you as soon as possible." },
-        { "type": "checkbox", "id": "show_phone", "label": "Ask for a phone number", "default": false }
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label",
+          "default": "Send"
+        },
+        {
+          "type": "text",
+          "id": "success_message",
+          "label": "Success message",
+          "default": "Thanks for contacting us. We'll get back to you as soon as possible."
+        },
+        {
+          "type": "checkbox",
+          "id": "show_phone",
+          "label": "Ask for a phone number",
+          "default": false
+        }
       ]
     }
   ],

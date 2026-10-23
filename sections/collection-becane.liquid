@@ -56,7 +56,7 @@
 
 {% style %}
   #bcoll-{{ section.id }} {
-    --bc-bg: {{ section.settings.bg_color }};
+    --bc-bg: {{ section.settings.bg_color | default: 'var(--color-background)' }};
     --bc-fg: {{ section.settings.text_color }};
     --bc-muted: {{ section.settings.muted_color }};
     --bc-hairline: {{ section.settings.hairline_color }};
@@ -777,62 +777,244 @@
 {
   "name": "Becane collection",
   "settings": [
-    { "type": "header", "content": "Layout" },
-    { "type": "range", "id": "columns", "label": "Columns (desktop)", "min": 2, "max": 6, "step": 1, "default": 4 },
-    { "type": "range", "id": "products_per_page", "label": "Products per page", "min": 8, "max": 48, "step": 4, "default": 24 },
-    { "type": "range", "id": "padding_x", "label": "Horizontal padding", "min": 0, "max": 80, "step": 4, "unit": "px", "default": 24 },
-    { "type": "range", "id": "row_gap", "label": "Row gap", "min": 16, "max": 80, "step": 4, "unit": "px", "default": 48 },
-    { "type": "range", "id": "col_gap", "label": "Column gap", "min": 4, "max": 40, "step": 2, "unit": "px", "default": 16 },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns (desktop)",
+      "min": 2,
+      "max": 6,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Products per page",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding_x",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "row_gap",
+      "label": "Row gap",
+      "min": 16,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "col_gap",
+      "label": "Column gap",
+      "min": 4,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
     {
       "type": "select",
       "id": "image_aspect",
       "label": "Card image aspect ratio",
       "options": [
-        { "value": "1 / 1",  "label": "Square (1:1)" },
-        { "value": "3 / 4",  "label": "Portrait (3:4)" },
-        { "value": "4 / 5",  "label": "Tall (4:5)" },
-        { "value": "2 / 3",  "label": "Tall portrait (2:3)" }
+        {
+          "value": "1 / 1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "3 / 4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "4 / 5",
+          "label": "Tall (4:5)"
+        },
+        {
+          "value": "2 / 3",
+          "label": "Tall portrait (2:3)"
+        }
       ],
       "default": "3 / 4"
     },
-
-    { "type": "header", "content": "Colors" },
-    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
-    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
-    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
-    { "type": "color", "id": "hairline_color", "label": "Hairline / dividers", "default": "#d8d8d8" },
-    { "type": "color", "id": "accent_color", "label": "Accent / sale color", "default": "#ef5000" },
-    { "type": "color", "id": "btn_bg", "label": "Primary button bg", "default": "#000000" },
-    { "type": "color", "id": "btn_fg", "label": "Primary button text", "default": "#ffffff" },
-
-    { "type": "header", "content": "Typography" },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "info": "Leave empty to match the site background (Theme settings > Colors > Scheme 1), so every page shares one colour."
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Primary text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#8a8a8a"
+    },
+    {
+      "type": "color",
+      "id": "hairline_color",
+      "label": "Hairline / dividers",
+      "default": "#d8d8d8"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent / sale color",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg",
+      "label": "Primary button bg",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "btn_fg",
+      "label": "Primary button text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
     {
       "type": "radio",
       "id": "font_preset",
       "label": "Font preset",
       "options": [
-        { "value": "helvetica", "label": "Match site typography (recommended)" },
-        { "value": "custom", "label": "Custom fonts" }
+        {
+          "value": "helvetica",
+          "label": "Match site typography (recommended)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom fonts"
+        }
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" },
-
-    { "type": "header", "content": "Labels & toggles" },
-    { "type": "text", "id": "refine_label", "label": "Refine button label", "default": "REFINE" },
-    { "type": "checkbox", "id": "show_breadcrumb", "label": "Show breadcrumb (Home / Collection)", "default": true },
-    { "type": "text", "id": "home_label", "label": "Home breadcrumb label", "default": "HOME" },
-    { "type": "checkbox", "id": "show_wishlist_icon", "label": "Show wishlist icon on card titles (visual only)", "default": true },
-    { "type": "text", "id": "empty_text", "label": "Empty state text", "default": "NO PRODUCTS MATCH THESE FILTERS" },
-
-    { "type": "header", "content": "Collection banner (video + intro)" },
-    { "type": "checkbox", "id": "show_banner_video", "label": "Show the collection video", "default": true, "info": "Each collection has its own video: Settings > Custom data > Collections > Add definition > namespace and key 'custom.banner_video', type File (video). A collection without one shows no video." },
-    { "type": "video", "id": "banner_video", "label": "Default video (optional)", "info": "Only used by collections that have no video of their own." },
-    { "type": "video_url", "id": "banner_video_url", "label": "Default video link (optional)", "accept": ["youtube", "vimeo"] },
-    { "type": "range", "id": "banner_height", "label": "Maximum video height", "min": 30, "max": 90, "step": 5, "unit": "%", "default": 55, "info": "Percentage of the screen height. Around 55 keeps the intro text visible above the footer on a laptop." },
-    { "type": "checkbox", "id": "show_intro", "label": "Show the intro text", "default": true, "info": "The collection's own description (Products > Collections), centred under the video." },
-    { "type": "richtext", "id": "intro_fallback", "label": "Default intro text (optional)", "info": "Only used by collections that have no description." }
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font (custom only)",
+      "default": "montserrat_n5"
+    },
+    {
+      "type": "font_picker",
+      "id": "body_font",
+      "label": "Body font (custom only)",
+      "default": "montserrat_n4"
+    },
+    {
+      "type": "header",
+      "content": "Labels & toggles"
+    },
+    {
+      "type": "text",
+      "id": "refine_label",
+      "label": "Refine button label",
+      "default": "REFINE"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumb",
+      "label": "Show breadcrumb (Home / Collection)",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "home_label",
+      "label": "Home breadcrumb label",
+      "default": "HOME"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_wishlist_icon",
+      "label": "Show wishlist icon on card titles (visual only)",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty state text",
+      "default": "NO PRODUCTS MATCH THESE FILTERS"
+    },
+    {
+      "type": "header",
+      "content": "Collection banner (video + intro)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_banner_video",
+      "label": "Show the collection video",
+      "default": true,
+      "info": "Each collection has its own video: Settings > Custom data > Collections > Add definition > namespace and key 'custom.banner_video', type File (video). A collection without one shows no video."
+    },
+    {
+      "type": "video",
+      "id": "banner_video",
+      "label": "Default video (optional)",
+      "info": "Only used by collections that have no video of their own."
+    },
+    {
+      "type": "video_url",
+      "id": "banner_video_url",
+      "label": "Default video link (optional)",
+      "accept": [
+        "youtube",
+        "vimeo"
+      ]
+    },
+    {
+      "type": "range",
+      "id": "banner_height",
+      "label": "Maximum video height",
+      "min": 30,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 55,
+      "info": "Percentage of the screen height. Around 55 keeps the intro text visible above the footer on a laptop."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_intro",
+      "label": "Show the intro text",
+      "default": true,
+      "info": "The collection's own description (Products > Collections), centred under the video."
+    },
+    {
+      "type": "richtext",
+      "id": "intro_fallback",
+      "label": "Default intro text (optional)",
+      "info": "Only used by collections that have no description."
+    }
   ],
   "presets": [
     {

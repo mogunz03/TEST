@@ -24,7 +24,7 @@
 
 {% style %}
   #bcart-{{ section.id }} {
-    --bc-bg: {{ section.settings.bg_color }};
+    --bc-bg: {{ section.settings.bg_color | default: 'var(--color-background)' }};
     --bc-fg: {{ section.settings.text_color }};
     --bc-muted: {{ section.settings.muted_color }};
     --bc-hairline: {{ section.settings.hairline_color }};
@@ -517,48 +517,179 @@
 {
   "name": "Becane cart",
   "settings": [
-    { "type": "header", "content": "Cart titles" },
-    { "type": "text", "id": "title", "label": "Cart page title", "default": "YOUR CART" },
-    { "type": "text", "id": "subtotal_label", "label": "Subtotal label", "default": "SUBTOTAL" },
-    { "type": "text", "id": "discount_label", "label": "Discount label", "default": "DISCOUNT" },
-    { "type": "text", "id": "tax_note", "label": "Tax/shipping note", "default": "Taxes and shipping calculated at checkout" },
-    { "type": "text", "id": "checkout_label", "label": "Checkout button label", "default": "CHECKOUT" },
-    { "type": "text", "id": "continue_label", "label": "Continue shopping link label", "default": "Continue shopping" },
-    { "type": "text", "id": "remove_label", "label": "Remove item label", "default": "REMOVE" },
-
-    { "type": "header", "content": "Empty state" },
-    { "type": "text", "id": "empty_eyebrow", "label": "Eyebrow", "default": "CART" },
-    { "type": "text", "id": "empty_title", "label": "Title", "default": "YOUR CART IS EMPTY" },
-    { "type": "text", "id": "empty_button_label", "label": "Button label", "default": "START SHOPPING" },
-    { "type": "url", "id": "empty_button_link", "label": "Button link (defaults to /collections/all)" },
-
-    { "type": "header", "content": "Cart note (optional)" },
-    { "type": "checkbox", "id": "show_note", "label": "Show order note field", "default": true },
-    { "type": "text", "id": "note_label", "label": "Note label", "default": "ORDER NOTE" },
-    { "type": "text", "id": "note_placeholder", "label": "Note placeholder", "default": "Special instructions for your order..." },
-
-    { "type": "header", "content": "Colors" },
-    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
-    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
-    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
-    { "type": "color", "id": "hairline_color", "label": "Hairline / dividers", "default": "#d8d8d8" },
-    { "type": "color", "id": "accent_color", "label": "Accent (link hover)", "default": "#ef5000" },
-    { "type": "color", "id": "btn_bg", "label": "Button background", "default": "#000000" },
-    { "type": "color", "id": "btn_fg", "label": "Button text", "default": "#ffffff" },
-
-    { "type": "header", "content": "Typography" },
+    {
+      "type": "header",
+      "content": "Cart titles"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Cart page title",
+      "default": "YOUR CART"
+    },
+    {
+      "type": "text",
+      "id": "subtotal_label",
+      "label": "Subtotal label",
+      "default": "SUBTOTAL"
+    },
+    {
+      "type": "text",
+      "id": "discount_label",
+      "label": "Discount label",
+      "default": "DISCOUNT"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "Tax/shipping note",
+      "default": "Taxes and shipping calculated at checkout"
+    },
+    {
+      "type": "text",
+      "id": "checkout_label",
+      "label": "Checkout button label",
+      "default": "CHECKOUT"
+    },
+    {
+      "type": "text",
+      "id": "continue_label",
+      "label": "Continue shopping link label",
+      "default": "Continue shopping"
+    },
+    {
+      "type": "text",
+      "id": "remove_label",
+      "label": "Remove item label",
+      "default": "REMOVE"
+    },
+    {
+      "type": "header",
+      "content": "Empty state"
+    },
+    {
+      "type": "text",
+      "id": "empty_eyebrow",
+      "label": "Eyebrow",
+      "default": "CART"
+    },
+    {
+      "type": "text",
+      "id": "empty_title",
+      "label": "Title",
+      "default": "YOUR CART IS EMPTY"
+    },
+    {
+      "type": "text",
+      "id": "empty_button_label",
+      "label": "Button label",
+      "default": "START SHOPPING"
+    },
+    {
+      "type": "url",
+      "id": "empty_button_link",
+      "label": "Button link (defaults to /collections/all)"
+    },
+    {
+      "type": "header",
+      "content": "Cart note (optional)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_note",
+      "label": "Show order note field",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "note_label",
+      "label": "Note label",
+      "default": "ORDER NOTE"
+    },
+    {
+      "type": "text",
+      "id": "note_placeholder",
+      "label": "Note placeholder",
+      "default": "Special instructions for your order..."
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "info": "Leave empty to match the site background (Theme settings > Colors > Scheme 1), so every page shares one colour."
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Primary text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#8a8a8a"
+    },
+    {
+      "type": "color",
+      "id": "hairline_color",
+      "label": "Hairline / dividers",
+      "default": "#d8d8d8"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (link hover)",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg",
+      "label": "Button background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "btn_fg",
+      "label": "Button text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
     {
       "type": "radio",
       "id": "font_preset",
       "label": "Font preset",
       "options": [
-        { "value": "helvetica", "label": "Match site typography (recommended)" },
-        { "value": "custom", "label": "Custom fonts" }
+        {
+          "value": "helvetica",
+          "label": "Match site typography (recommended)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom fonts"
+        }
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" }
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font (custom only)",
+      "default": "montserrat_n5"
+    },
+    {
+      "type": "font_picker",
+      "id": "body_font",
+      "label": "Body font (custom only)",
+      "default": "montserrat_n4"
+    }
   ],
   "presets": [
     {

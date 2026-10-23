@@ -23,14 +23,14 @@
 
 {% style %}
   #bcn-product-{{ section.id }} {
-    --bcn-bg: {{ section.settings.bg_color }};
+    --bcn-bg: {{ section.settings.bg_color | default: 'var(--color-background)' }};
     --bcn-fg: {{ section.settings.text_color }};
     --bcn-muted: {{ section.settings.muted_color }};
     --bcn-hairline: {{ section.settings.hairline_color }};
     --bcn-accent: {{ section.settings.accent_color }};
     --bcn-atc-bg: {{ section.settings.atc_bg }};
     --bcn-atc-fg: {{ section.settings.atc_fg }};
-    --bcn-overlay-bg: {{ section.settings.overlay_bg }};
+    --bcn-overlay-bg: {{ section.settings.overlay_bg | default: 'var(--color-background)' }};
     --bcn-font-heading: {{ heading_font }};
     --bcn-font-body: {{ body_font }};
     --bcn-font-mono: var(--font-body--family);
@@ -169,6 +169,8 @@
 
   .bcn-variant-option-{{ section.id }}:hover { color: var(--bcn-fg); }
   .bcn-variant-option-{{ section.id }}.is-selected { color: var(--bcn-fg); }
+  /* shown when Add to Cart is pressed before a size is chosen */
+  .bcn-variant-group-{{ section.id }}.is-prompt .bcn-label-{{ section.id }} { color: var(--bcn-accent); }
   .bcn-variant-option-{{ section.id }}[data-soldout="true"] {
     color: var(--bcn-hairline); text-decoration: line-through;
   }
@@ -487,6 +489,26 @@
 {% endstyle %}
 
 {%- liquid
+  comment
+    A size must be chosen on purpose. When the product has several sizes and the visitor did not
+    arrive on a specific variant (?variant=...), nothing is pre-selected and the button says
+    "select a size" instead of silently adding the first size. Colours stay pre-selected.
+  endcomment
+  assign has_variant_param = false
+  if product.selected_variant != blank
+    assign has_variant_param = true
+  endif
+
+  assign size_pending = false
+  for option in product.options_with_values
+    assign opt_lower = option.name | downcase
+    if opt_lower contains 'size' or opt_lower contains 'taille'
+      if option.values.size > 1 and product.selected_variant == blank
+        assign size_pending = true
+      endif
+    endif
+  endfor
+
   assign back_url = routes.all_products_collection_url
   if collection != blank
     assign back_url = collection.url
@@ -532,8 +554,8 @@
       {%- endif -%}
 
       <div class="bcn-atc-sticky-{{ section.id }}">
-        <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available %}disabled{% endunless %}>
-          <span data-bcn-atc-label>{% if current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
+        <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available or size_pending %}disabled{% endunless %}>
+          <span data-bcn-atc-label>{% if size_pending %}{{ section.settings.select_size_label }}{% elsif current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
         </button>
       </div>
 
@@ -576,7 +598,7 @@
             {%- assign is_size = true -%}
           {%- endif -%}
 
-          <div class="bcn-variant-group-{{ section.id }}">
+          <div class="bcn-variant-group-{{ section.id }}" {% if is_size %}data-bcn-size-group{% endif %}>
             <div class="bcn-variant-group__head-{{ section.id }}">
               <div class="bcn-label-{{ section.id }}">{{ option.name }}</div>
             </div>
@@ -587,6 +609,7 @@
                 {%- assign current_option_key = 'option' | append: option.position -%}
                 {%- assign current_option_value = current_variant[current_option_key] -%}
                 {%- if current_option_value == value -%}{%- assign is_selected = true -%}{%- endif -%}
+                {%- if is_size and size_pending -%}{%- assign is_selected = false -%}{%- endif -%}
 
                 <li>
                   <button type="button"
@@ -691,8 +714,8 @@
     </div>
 
     <div class="bcn-overlay__bottom-{{ section.id }}">
-      <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available %}disabled{% endunless %}>
-        <span data-bcn-atc-label>{% if current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
+      <button type="button" class="bcn-atc-{{ section.id }}" data-bcn-atc {% unless current_variant.available or size_pending %}disabled{% endunless %}>
+        <span data-bcn-atc-label>{% if size_pending %}{{ section.settings.select_size_label }}{% elsif current_variant.available %}{{ section.settings.atc_label }}{% else %}{{ section.settings.soldout_label }}{% endif %}</span>
       </button>
     </div>
   </div>
@@ -708,6 +731,7 @@
     const ATC_LABEL = {{ section.settings.atc_label | json }};
     const SOLDOUT_LABEL = {{ section.settings.soldout_label | json }};
     const ATC_SUCCESS = {{ section.settings.atc_success_label | json }};
+    const SELECT_SIZE_LABEL = {{ section.settings.select_size_label | json }};
 
     function formatMoney(cents) {
       const amount = (cents / 100).toFixed(2).replace(/\.00$/, '');
@@ -722,6 +746,14 @@
     const firstAvail = productData.variants.find(v => v.available) || productData.variants[0];
     let selectedOptions = firstAvail.options.slice();
 
+    // A size has to be chosen on purpose (unless there is only one, or the visitor landed on a
+    // specific ?variant=). Until then nothing looks selected and the button asks for a size.
+    const sizeIdx = (productData.options || []).findIndex(n => /size|taille/i.test(n));
+    const sizeValues = new Set(productData.variants.map(v => v.options[sizeIdx]));
+    const needsSize = sizeIdx >= 0 && sizeValues.size > 1;
+    let sizeChosen = !needsSize || {{ has_variant_param }};
+    const sizeGroup = root.querySelector('[data-bcn-size-group]');
+
     function findVariant() {
       return productData.variants.find(v =>
         v.options.every((opt, i) => opt === selectedOptions[i])
@@ -733,7 +765,7 @@
       root.querySelectorAll('[data-bcn-option-value]').forEach(btn => {
         const pos = parseInt(btn.dataset.bcnOptionPosition, 10) - 1;
         const val = btn.dataset.bcnOptionValue;
-        btn.classList.toggle('is-selected', selectedOptions[pos] === val);
+        btn.classList.toggle('is-selected', selectedOptions[pos] === val && (pos !== sizeIdx || sizeChosen));
       });
       if (!v) {
         atcButtons.forEach(b => {
@@ -746,6 +778,15 @@
       variantInput.value = v.id;
       const priceStr = formatMoney(v.price);
       priceLabels.forEach(el => { el.textContent = priceStr; });
+      if (!sizeChosen) {
+        atcButtons.forEach(b => {
+          b.disabled = false;
+          const lbl = b.querySelector('[data-bcn-atc-label]');
+          if (lbl) lbl.textContent = SELECT_SIZE_LABEL;
+        });
+        return; // nothing is written to the address bar until a size is chosen
+      }
+      if (sizeGroup) sizeGroup.classList.remove('is-prompt');
       atcButtons.forEach(b => {
         b.disabled = !v.available;
         const lbl = b.querySelector('[data-bcn-atc-label]');
@@ -762,6 +803,7 @@
       btn.addEventListener('click', () => {
         const pos = parseInt(btn.dataset.bcnOptionPosition, 10) - 1;
         selectedOptions[pos] = btn.dataset.bcnOptionValue;
+        if (pos === sizeIdx) sizeChosen = true;
         updateUI();
       });
     });
@@ -917,6 +959,16 @@
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
         if (btn.disabled) return;
+        if (!sizeChosen) {
+          // no size yet: take the visitor to the sizes instead of adding one for them
+          if (sizeGroup) {
+            sizeGroup.classList.add('is-prompt');
+            sizeGroup.scrollIntoView({ block: 'center' });
+            const firstSize = sizeGroup.querySelector('[data-bcn-option-value]');
+            if (firstSize) firstSize.focus({ preventScroll: true });
+          }
+          return;
+        }
         const formData = new FormData(form);
         try {
           const res = await fetch('{{ routes.cart_add_url }}.js', {
@@ -997,7 +1049,7 @@
       "type": "color",
       "id": "bg_color",
       "label": "Background",
-      "default": "#f4f4f4"
+      "info": "Leave empty to match the site background (Theme settings > Colors > Scheme 1), so every page shares one colour."
     },
     {
       "type": "color",
@@ -1039,7 +1091,7 @@
       "type": "color",
       "id": "overlay_bg",
       "label": "Gallery overlay background",
-      "default": "#f4f4f4"
+      "info": "Leave empty to match the site background (Theme settings > Colors > Scheme 1), so every page shares one colour."
     },
     {
       "type": "header",
@@ -1100,6 +1152,12 @@
       "id": "atc_label",
       "label": "Add to Cart label",
       "default": "ADD TO CART"
+    },
+    {
+      "type": "text",
+      "id": "select_size_label",
+      "label": "Button text until a size is chosen",
+      "default": "SELECT A SIZE"
     },
     {
       "type": "text",
