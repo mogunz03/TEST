@@ -1,0 +1,39 @@
+{% doc %}
+  Resolves the address a navigation link should open (used by the footer menu).
+
+  1. The menu item called "Feed" / "Gallery" opens the actual Gallery page. It is looked up by
+     handle ("gallery", then "feed"), so it works whatever address was typed in the menu.
+  2. A link written with a full address on another dauze domain (for example the wrong
+     https://dauze.store/feed instead of dauze.shop) is turned into a path on the domain the
+     visitor is already on, so it can never send them to a different site.
+  3. Every other link is returned unchanged.
+
+  @param {object} link - a menu link (needs .title and .url)
+{% enddoc %}
+{%- liquid
+  assign href = link.url
+  assign title_lower = link.title | downcase
+
+  if title_lower == 'feed' or title_lower == 'gallery'
+    assign gallery_page = pages['gallery']
+    if gallery_page.empty?
+      assign gallery_page = pages['feed']
+    endif
+    unless gallery_page.empty?
+      assign href = gallery_page.url
+    endunless
+  endif
+
+  if href contains '://dauze.' or href contains '.dauze.'
+    assign after_scheme = href | split: '://' | last
+    assign host = after_scheme | split: '/' | first
+    if host != request.host
+      assign href = after_scheme | remove_first: host
+      if href == blank
+        assign href = '/'
+      endif
+    endif
+  endif
+
+  echo href
+-%}

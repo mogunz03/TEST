@@ -273,7 +273,7 @@
           {%- assign link_title = link.title -%}
           {%- assign link_title_lower = link.title | downcase -%}
           {%- if link_title_lower == 'feed' -%}{%- assign link_title = 'Gallery' -%}{%- endif -%}
-          <li><a href="{{ link.url }}">{{ link_title }}</a></li>
+          <li><a href="{% render 'dauze-link', link: link %}">{{ link_title }}</a></li>
         {%- endfor -%}
       {%- endif -%}
       {%- comment -%} the links come from Theme settings > Social media (or the fallbacks at the top of this file) {%- endcomment -%}
