@@ -3,40 +3,50 @@
 
   What it shows, first match wins:
     1. the product description (when the block asks for it)
-    2. the product metafield named by the block (e.g. custom.size_chart), whatever its type:
+    2. the product's own metafield named by the block (e.g. custom.size_chart), whatever its type.
+       This is the per-product override, for the odd item that needs its own chart:
          Rich text / text  -> the text
-         File (image)      -> the image (a size chart saved as a picture)
+         File (image)      -> the image
          File (PDF)        -> a download link
          Page              -> the full content of that page
-    3. the block's own static content (the same on every product)
+    3. the shared size charts (Tops, Pants...), when the block has "Use the size charts" ticked
+    4. the block's own static content (the same on every product)
 
   Returns nothing when there is nothing to show, so the caller can hide an empty accordion.
 
-  @param {object} block   - the accordion block
-  @param {object} product - the current product
+  @param {object} block          - the accordion block
+  @param {object} product        - the current product
+  @param {object} section_blocks - section.blocks, where the shared size chart blocks live
 {% enddoc %}
 {%- liquid
   if block.settings.use_product_description
     echo product.description
-  elsif block.settings.metafield_namespace != blank and block.settings.metafield_key != blank
-    assign mf = product.metafields[block.settings.metafield_namespace][block.settings.metafield_key]
-    if mf != blank
-      case mf.type
-        when 'page_reference'
-          echo mf.value.content
-        when 'file_reference'
-          if mf.value.src
-            echo mf.value | image_url: width: 1400 | image_tag: loading: 'lazy', alt: block.settings.title
-          elsif mf.value.url
-            echo '<p><a href="' | append: mf.value.url | append: '" target="_blank" rel="noopener">' | append: block.settings.title | append: ' (PDF)</a></p>'
-          endif
-        else
-          echo mf | metafield_tag
-      endcase
-    else
-      echo block.settings.content
-    endif
   else
-    echo block.settings.content
+    assign shown = false
+    if block.settings.metafield_namespace != blank and block.settings.metafield_key != blank
+      assign mf = product.metafields[block.settings.metafield_namespace][block.settings.metafield_key]
+      if mf != blank
+        assign shown = true
+        case mf.type
+          when 'page_reference'
+            echo mf.value.content
+          when 'file_reference'
+            if mf.value.src
+              echo mf.value | image_url: width: 1400 | image_tag: loading: 'lazy', alt: block.settings.title
+            elsif mf.value.url
+              echo '<p><a href="' | append: mf.value.url | append: '" target="_blank" rel="noopener">' | append: block.settings.title | append: ' (PDF)</a></p>'
+            endif
+          else
+            echo mf | metafield_tag
+        endcase
+      endif
+    endif
+    if shown == false
+      if block.settings.use_size_charts
+        render 'becane-size-chart', blocks: section_blocks, product: product
+      else
+        echo block.settings.content
+      endif
+    endif
   endif
 -%}

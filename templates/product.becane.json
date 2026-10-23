@@ -9,15 +9,36 @@
           "settings": {
             "title": "SIZE CHART",
             "acc_id": "size-guide",
+            "use_size_charts": true,
             "use_product_description": false,
             "metafield_namespace": "custom",
             "metafield_key": "size_chart",
             "content": ""
           }
+        },
+        "chart_tops": {
+          "type": "size_chart",
+          "settings": {
+            "title": "TOPS",
+            "match": "tops, shirt, tee, sweater, hoodie, jacket, coat, bomber, vest, blazer, cardigan, parka, trench",
+            "table": "Size | Chest | Waist | Hips\nXS | 84-89 | 70-75 | 88-93\nS | 90-95 | 76-81 | 94-99\nM | 96-101 | 82-87 | 100-105\nL | 102-107 | 88-93 | 106-111\nXL | 108-113 | 94-99 | 112-117",
+            "notes": "<p><strong>Chest</strong> around the fullest part, arms relaxed. <strong>Waist</strong> around the narrowest part. <strong>Hips</strong> around the widest part.</p><p>Body measurements. Fit varies by style, cut and fabric: if you are between two sizes, choose the larger for a looser fit.</p>"
+          }
+        },
+        "chart_pants": {
+          "type": "size_chart",
+          "settings": {
+            "title": "PANTS",
+            "match": "pants, trouser, jean, denim, short, skirt, legging, jogger",
+            "table": "Size | Waist | Hips | Inseam\nXS | 70-75 | 88-93 | 78\nS | 76-81 | 94-99 | 79\nM | 82-87 | 100-105 | 80\nL | 88-93 | 106-111 | 81\nXL | 94-99 | 112-117 | 82",
+            "notes": "<p><strong>Waist</strong> around the narrowest part. <strong>Hips</strong> around the widest part. <strong>Inseam</strong> from the crotch to the ankle.</p><p>Body measurements. Fit varies by style, cut and fabric: if you are between two sizes, choose the larger for a looser fit.</p>"
+          }
         }
       },
       "block_order": [
-        "size_chart"
+        "size_chart",
+        "chart_tops",
+        "chart_pants"
       ]
     },
     "matches_carousel": {
@@ -39,9 +60,7 @@
               "dauze-oversix",
               "dauze-dual-toned-hooded-quilted-winter-jacket"
             ],
-            "button_text": "View",
             "show_second_image_on_hover": true,
-            "scroll_speed": 85,
             "pause_on_hover": true,
             "card_width": 180,
             "image_height": 240,
@@ -52,15 +71,12 @@
             "card_background": "#f1f1f1",
             "product_title_color": "#000000",
             "product_price_color": "#000000",
-            "button_color": "#ef5000",
-            "button_text_color": "#ffffff",
-            "button_hover_color": "#333333",
             "title_size": 12,
             "subtitle_size": 10,
             "product_title_size": 10,
             "product_price_size": 10,
             "card_border_radius": 16,
-            "button_border_radius": 12
+            "speed": 60
           },
           "blocks": {}
         }

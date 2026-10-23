@@ -220,6 +220,29 @@
   .bcn-acc__inner-{{ section.id }} img { max-width: 100%; height: auto; display: block; border-radius: var(--dz-radius-md, 16px); }
   .bcn-acc__inner-{{ section.id }} a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
+  /* SIZE CHART: tabs by category, cm / in switch, plain table (no animation) */
+  .bcn-sc__bar { display: none; align-items: center; justify-content: space-between; gap: 16px; margin: 4px 0 12px; }
+  .bcn-sc.is-js .bcn-sc__bar { display: flex; }
+  .bcn-sc__tabs { display: flex; gap: 16px; }
+  .bcn-sc__tab, .bcn-sc__unit {
+    background: none; border: 0; border-radius: 0; padding: 4px 0; margin: 0; cursor: pointer;
+    font: inherit; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--bcn-muted); border-bottom: 1px solid transparent;
+  }
+  .bcn-sc__units { display: flex; gap: 12px; margin-left: auto; }
+  .bcn-sc__tab[aria-selected="true"], .bcn-sc__unit[aria-pressed="true"] { color: var(--bcn-fg); border-bottom-color: var(--bcn-fg); }
+  .bcn-sc__tab:hover, .bcn-sc__unit:hover { color: var(--bcn-fg); }
+  .bcn-sc.is-js .bcn-sc__panel[data-sc-active="false"] { display: none; }
+  .bcn-sc:not(.is-js) .bcn-sc__panel + .bcn-sc__panel { margin-top: 24px; }
+  .bcn-sc__scroll { overflow-x: auto; }
+  .bcn-sc__table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .bcn-sc__table th, .bcn-sc__table td { padding: 8px 8px 8px 0; text-align: left; border-bottom: 1px solid var(--bcn-hairline); font-weight: 400; white-space: nowrap; }
+  .bcn-sc__table thead th { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; color: var(--bcn-muted); }
+  .bcn-sc__table tbody th { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; }
+  .bcn-sc__unit-note { margin: 8px 0 0; font-size: 10px; letter-spacing: 0.06em; color: var(--bcn-muted); }
+  .bcn-sc__notes { margin-top: 12px; font-size: 11px; line-height: 1.7; color: var(--bcn-muted); }
+  .bcn-sc__notes p { margin: 0 0 8px; }
+
   /* BACK: a normal row at the top of the page content, lined up with the grid's left edge.
      It scrolls away with the page, so it can never sit on top of the (sticky) title or the gallery. */
   .bcn-backrow-{{ section.id }} {
@@ -467,7 +490,7 @@
   for b in section.blocks
     if b.type == 'accordion' and b.settings.acc_id == 'size-guide'
       capture sg_html
-        render 'becane-acc-content', block: b, product: product
+        render 'becane-acc-content', block: b, product: product, section_blocks: section.blocks
       endcapture
       assign sg_text = sg_html | strip
       if sg_text != blank
@@ -599,7 +622,7 @@
       <div class="bcn-accordions-{{ section.id }}">
         {%- for block in section.blocks -%}
           {%- if block.type == 'accordion' -%}
-            {%- capture acc_html -%}{%- render 'becane-acc-content', block: block, product: product -%}{%- endcapture -%}
+            {%- capture acc_html -%}{%- render 'becane-acc-content', block: block, product: product, section_blocks: section.blocks -%}{%- endcapture -%}
             {%- assign acc_text = acc_html | strip -%}
             {%- if acc_text != blank -%}
             <div class="bcn-acc-{{ section.id }}" data-bcn-acc data-bcn-acc-id="{{ block.settings.acc_id }}" {{ block.shopify_attributes }}>
@@ -872,6 +895,34 @@
       });
     }
 
+    // Size chart: category tabs + cm / in switch. Without JS every chart is simply listed in cm.
+    root.querySelectorAll('[data-bcn-sc]').forEach(sc => {
+      sc.classList.add('is-js');
+      const panels = sc.querySelectorAll('[data-sc-panel]');
+      const tabs = sc.querySelectorAll('[data-sc-tab]');
+      const show = (i) => {
+        panels.forEach(p => p.setAttribute('data-sc-active', p.getAttribute('data-sc-panel') === String(i) ? 'true' : 'false'));
+        tabs.forEach(t => t.setAttribute('aria-selected', t.getAttribute('data-sc-tab') === String(i) ? 'true' : 'false'));
+      };
+      tabs.forEach(t => t.addEventListener('click', () => show(t.getAttribute('data-sc-tab'))));
+
+      const toInches = (txt) => txt.replace(/\d+(?:\.\d+)?/g, (n) => {
+        const v = parseFloat(n) / 2.54;
+        return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '');
+      });
+      sc.querySelectorAll('[data-sc-unit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const unit = btn.getAttribute('data-sc-unit');
+          sc.querySelectorAll('[data-sc-unit]').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+          sc.querySelectorAll('td[data-cm]').forEach(td => {
+            const cm = td.getAttribute('data-cm');
+            td.textContent = unit === 'in' ? toInches(cm) : cm;
+          });
+          sc.querySelectorAll('[data-sc-note]').forEach(n => { n.textContent = unit === 'in' ? 'Measurements in inches' : 'Measurements in centimetres'; });
+        });
+      });
+    });
+
     root.querySelectorAll('[data-bcn-acc]').forEach(acc => {
       const head = acc.querySelector('[data-bcn-acc-head]');
       if (head) head.addEventListener('click', () => acc.classList.toggle('is-open'));
@@ -921,60 +972,286 @@
 {
   "name": "Becane product",
   "settings": [
-    { "type": "header", "content": "Layout" },
-    { "type": "range", "id": "max_width", "label": "Max content width", "min": 1000, "max": 2400, "step": 100, "unit": "px", "default": 1800 },
-    { "type": "range", "id": "padding_y", "label": "Vertical padding", "min": 0, "max": 120, "step": 8, "unit": "px", "default": 80 },
-    { "type": "range", "id": "padding_x", "label": "Horizontal padding", "min": 0, "max": 120, "step": 8, "unit": "px", "default": 48 },
-    { "type": "range", "id": "column_gap", "label": "Column gap", "min": 20, "max": 200, "step": 10, "unit": "px", "default": 80 },
-
-    { "type": "header", "content": "Colors" },
-    { "type": "color", "id": "bg_color", "label": "Background", "default": "#f4f4f4" },
-    { "type": "color", "id": "text_color", "label": "Primary text", "default": "#000000" },
-    { "type": "color", "id": "muted_color", "label": "Muted text", "default": "#8a8a8a" },
-    { "type": "color", "id": "hairline_color", "label": "Hairline / dividers", "default": "#d8d8d8" },
-    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#ef5000" },
-    { "type": "color", "id": "atc_bg", "label": "Add to Cart background", "default": "#000000" },
-    { "type": "color", "id": "atc_fg", "label": "Add to Cart text", "default": "#ffffff" },
-    { "type": "color", "id": "overlay_bg", "label": "Gallery overlay background", "default": "#f4f4f4" },
-
-    { "type": "header", "content": "Typography" },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max content width",
+      "min": 1000,
+      "max": 2400,
+      "step": 100,
+      "unit": "px",
+      "default": 1800
+    },
+    {
+      "type": "range",
+      "id": "padding_y",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "padding_x",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 120,
+      "step": 8,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "Column gap",
+      "min": 20,
+      "max": 200,
+      "step": 10,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background",
+      "default": "#f4f4f4"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Primary text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Muted text",
+      "default": "#8a8a8a"
+    },
+    {
+      "type": "color",
+      "id": "hairline_color",
+      "label": "Hairline / dividers",
+      "default": "#d8d8d8"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#ef5000"
+    },
+    {
+      "type": "color",
+      "id": "atc_bg",
+      "label": "Add to Cart background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "atc_fg",
+      "label": "Add to Cart text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "overlay_bg",
+      "label": "Gallery overlay background",
+      "default": "#f4f4f4"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
     {
       "type": "radio",
       "id": "font_preset",
       "label": "Font preset",
       "options": [
-        { "value": "helvetica", "label": "Match site typography (recommended)" },
-        { "value": "custom", "label": "Custom fonts" }
+        {
+          "value": "helvetica",
+          "label": "Match site typography (recommended)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom fonts"
+        }
       ],
       "default": "helvetica"
     },
-    { "type": "font_picker", "id": "heading_font", "label": "Heading font (custom only)", "default": "montserrat_n5" },
-    { "type": "font_picker", "id": "body_font", "label": "Body font (custom only)", "default": "montserrat_n4" },
-    { "type": "checkbox", "id": "italic_title", "label": "Italic product title", "default": true },
-
-    { "type": "header", "content": "Labels" },
-    { "type": "checkbox", "id": "show_collection_label", "label": "Show collection/type label above title", "default": true },
-    { "type": "text", "id": "gallery_label", "label": "Gallery counter label", "default": "IMG" },
-    { "type": "text", "id": "atc_label", "label": "Add to Cart label", "default": "ADD TO CART" },
-    { "type": "text", "id": "atc_success_label", "label": "Add to Cart success label", "default": "ADDED" },
-    { "type": "text", "id": "soldout_label", "label": "Sold out label", "default": "SOLD OUT" },
-    { "type": "text", "id": "close_label", "label": "Overlay close label", "default": "CLOSE" },
-    { "type": "checkbox", "id": "show_size_guide_link", "label": "Show 'Size guide' link next to size variant", "default": true },
-    { "type": "text", "id": "size_guide_label", "label": "Size guide link text", "default": "SIZE GUIDE", "info": "The link only appears on products that have a size chart (see the 'Size chart' accordion block)." },
-    { "type": "checkbox", "id": "show_back_button", "label": "Show back button", "default": true },
-    { "type": "text", "id": "back_label", "label": "Back button text", "default": "BACK" }
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font (custom only)",
+      "default": "montserrat_n5"
+    },
+    {
+      "type": "font_picker",
+      "id": "body_font",
+      "label": "Body font (custom only)",
+      "default": "montserrat_n4"
+    },
+    {
+      "type": "checkbox",
+      "id": "italic_title",
+      "label": "Italic product title",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Labels"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_collection_label",
+      "label": "Show collection/type label above title",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "gallery_label",
+      "label": "Gallery counter label",
+      "default": "IMG"
+    },
+    {
+      "type": "text",
+      "id": "atc_label",
+      "label": "Add to Cart label",
+      "default": "ADD TO CART"
+    },
+    {
+      "type": "text",
+      "id": "atc_success_label",
+      "label": "Add to Cart success label",
+      "default": "ADDED"
+    },
+    {
+      "type": "text",
+      "id": "soldout_label",
+      "label": "Sold out label",
+      "default": "SOLD OUT"
+    },
+    {
+      "type": "text",
+      "id": "close_label",
+      "label": "Overlay close label",
+      "default": "CLOSE"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_size_guide_link",
+      "label": "Show 'Size guide' link next to size variant",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "size_guide_label",
+      "label": "Size guide link text",
+      "default": "SIZE GUIDE",
+      "info": "The link only appears on products that have a size chart (see the 'Size chart' accordion block)."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_back_button",
+      "label": "Show back button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "back_label",
+      "label": "Back button text",
+      "default": "BACK"
+    }
   ],
   "blocks": [
     {
       "type": "accordion",
       "name": "Accordion",
       "settings": [
-        { "type": "text", "id": "title", "label": "Title", "default": "DETAILS" },
-        { "type": "text", "id": "acc_id", "label": "Internal ID (optional)", "info": "Set to 'size-guide' so the variant 'Size guide' link opens this section." },
-        { "type": "checkbox", "id": "use_product_description", "label": "Use product description as content", "default": false },
-        { "type": "text", "id": "metafield_namespace", "label": "Metafield namespace (optional)", "info": "e.g. 'custom'" },
-        { "type": "text", "id": "metafield_key", "label": "Metafield key (optional)", "info": "e.g. 'materials' or 'size_chart'. Overrides static content if present. Accordions with nothing to show are hidden automatically." },
-        { "type": "richtext", "id": "content", "label": "Static content", "default": "<p>Add details here.</p>" }
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "DETAILS"
+        },
+        {
+          "type": "checkbox",
+          "id": "use_size_charts",
+          "label": "Use the size charts",
+          "default": false,
+          "info": "Fills this dropdown with the 'Size chart' blocks below (Tops, Pants...). A product's own metafield, if it has one, still takes priority."
+        },
+        {
+          "type": "text",
+          "id": "acc_id",
+          "label": "Internal ID (optional)",
+          "info": "Set to 'size-guide' so the variant 'Size guide' link opens this section."
+        },
+        {
+          "type": "checkbox",
+          "id": "use_product_description",
+          "label": "Use product description as content",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "metafield_namespace",
+          "label": "Metafield namespace (optional)",
+          "info": "e.g. 'custom'"
+        },
+        {
+          "type": "text",
+          "id": "metafield_key",
+          "label": "Metafield key (optional)",
+          "info": "e.g. 'materials' or 'size_chart'. Overrides static content if present. Accordions with nothing to show are hidden automatically."
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Static content",
+          "default": "<p>Add details here.</p>"
+        }
+      ]
+    },
+    {
+      "type": "size_chart",
+      "name": "Size chart",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Name",
+          "default": "TOPS",
+          "info": "Shown on the tab, e.g. TOPS or PANTS."
+        },
+        {
+          "type": "text",
+          "id": "match",
+          "label": "Products this chart is for",
+          "default": "tops, shirt, tee, sweater, hoodie, jacket, coat, bomber, vest",
+          "info": "Keywords separated by commas. They are matched against each product's Type, then its Tags, then its Title; the first chart that matches opens first. Setting the product Type to 'Tops' or 'Pants' in Shopify is the most reliable."
+        },
+        {
+          "type": "textarea",
+          "id": "table",
+          "label": "Table (centimetres)",
+          "info": "One row per line, columns separated by |. The first line is the header and the first column is the size. Ranges are fine, e.g. 90-95. Inches are calculated for you."
+        },
+        {
+          "type": "richtext",
+          "id": "notes",
+          "label": "Notes under the table",
+          "info": "How to measure, fit advice..."
+        }
       ]
     }
   ],
@@ -983,9 +1260,30 @@
       "name": "Becane product",
       "category": "Product",
       "blocks": [
-        { "type": "accordion", "settings": { "title": "MATERIALS", "metafield_namespace": "custom", "metafield_key": "materials" } },
-        { "type": "accordion", "settings": { "title": "SIZE GUIDE", "acc_id": "size-guide", "metafield_namespace": "custom", "metafield_key": "size_guide" } },
-        { "type": "accordion", "settings": { "title": "SHIPPING", "content": "<p>Free shipping on orders over 200 EUR. Delivery 3\u20135 business days.</p>" } }
+        {
+          "type": "accordion",
+          "settings": {
+            "title": "MATERIALS",
+            "metafield_namespace": "custom",
+            "metafield_key": "materials"
+          }
+        },
+        {
+          "type": "accordion",
+          "settings": {
+            "title": "SIZE GUIDE",
+            "acc_id": "size-guide",
+            "metafield_namespace": "custom",
+            "metafield_key": "size_guide"
+          }
+        },
+        {
+          "type": "accordion",
+          "settings": {
+            "title": "SHIPPING",
+            "content": "<p>Free shipping on orders over 200 EUR. Delivery 3–5 business days.</p>"
+          }
+        }
       ]
     }
   ]

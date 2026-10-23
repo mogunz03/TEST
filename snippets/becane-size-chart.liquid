@@ -1,0 +1,126 @@
+{% doc %}
+  Shared size charts for the product page (sections/product-becane.liquid).
+
+  One chart per garment category (Tops, Pants...), kept as "Size chart" blocks in the section so
+  they are edited once in the theme editor and apply to every product. The chart that fits the
+  current product opens first; the others stay one tap away. Values are typed in centimetres and
+  a CM / IN switch converts them.
+
+  Which chart opens first: each chart has a list of keywords. They are looked for in this order,
+  first hit wins: the product's Type, then its Tags, then its Title. With no hit the first chart opens.
+
+  @param {object} blocks  - section.blocks (chart blocks are picked out of it)
+  @param {object} product - the current product
+{% enddoc %}
+{%- liquid
+  assign chart_count = 0
+  for b in blocks
+    if b.type == 'size_chart' and b.settings.table != blank
+      assign chart_count = chart_count | plus: 1
+    endif
+  endfor
+-%}
+{%- if chart_count > 0 -%}
+  {%- liquid
+    assign type_s = product.type | downcase
+    assign tags_s = product.tags | join: ' ' | downcase
+    assign title_s = product.title | downcase
+    assign hays = type_s | append: '||' | append: tags_s | append: '||' | append: title_s | split: '||'
+
+    assign active = 0
+    assign found = false
+    for hay in hays
+      if found == false
+        assign pos = 0
+        for b in blocks
+          if b.type == 'size_chart' and b.settings.table != blank
+            if found == false
+              assign keywords = b.settings.match | downcase | split: ','
+              for kw in keywords
+                assign k = kw | strip
+                if k != blank and found == false
+                  if hay contains k
+                    assign active = pos
+                    assign found = true
+                  endif
+                endif
+              endfor
+            endif
+            assign pos = pos | plus: 1
+          endif
+        endfor
+      endif
+    endfor
+  -%}
+  <div class="bcn-sc" data-bcn-sc>
+    <div class="bcn-sc__bar">
+      {%- if chart_count > 1 -%}
+        <div class="bcn-sc__tabs" role="tablist" data-sc-tabs>
+          {%- assign pos = 0 -%}
+          {%- for b in blocks -%}
+            {%- if b.type == 'size_chart' and b.settings.table != blank -%}
+              <button type="button" role="tab" class="bcn-sc__tab" data-sc-tab="{{ pos }}" aria-selected="{% if pos == active %}true{% else %}false{% endif %}">{{ b.settings.title }}</button>
+              {%- assign pos = pos | plus: 1 -%}
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+      <div class="bcn-sc__units" data-sc-units>
+        <button type="button" class="bcn-sc__unit" data-sc-unit="cm" aria-pressed="true">CM</button>
+        <button type="button" class="bcn-sc__unit" data-sc-unit="in" aria-pressed="false">IN</button>
+      </div>
+    </div>
+
+    {%- assign pos = 0 -%}
+    {%- for b in blocks -%}
+      {%- if b.type == 'size_chart' and b.settings.table != blank -%}
+        <div class="bcn-sc__panel" role="tabpanel" data-sc-panel="{{ pos }}" data-sc-active="{% if pos == active %}true{% else %}false{% endif %}" {{ b.shopify_attributes }}>
+          {%- assign rows = b.settings.table | newline_to_br | split: '<br />' -%}
+          {%- assign header_row = '' -%}
+          {%- for row in rows -%}
+            {%- assign r = row | strip -%}
+            {%- if r != blank and header_row == '' -%}{%- assign header_row = r -%}{%- endif -%}
+          {%- endfor -%}
+          {%- assign header_cells = header_row | split: '|' -%}
+          <div class="bcn-sc__scroll">
+            <table class="bcn-sc__table">
+              <caption class="visually-hidden">{{ b.settings.title | escape }}</caption>
+              <thead>
+                <tr>
+                  {%- for c in header_cells -%}<th scope="col">{{ c | strip | escape }}</th>{%- endfor -%}
+                </tr>
+              </thead>
+              <tbody>
+                {%- assign header_done = false -%}
+                {%- for row in rows -%}
+                  {%- assign r = row | strip -%}
+                  {%- if r != blank -%}
+                    {%- if header_done == false -%}
+                      {%- assign header_done = true -%}
+                    {%- else -%}
+                      {%- assign cells = r | split: '|' -%}
+                      <tr>
+                        {%- for c in cells -%}
+                          {%- if forloop.first -%}
+                            <th scope="row">{{ c | strip | escape }}</th>
+                          {%- else -%}
+                            <td data-cm="{{ c | strip | escape }}">{{ c | strip | escape }}</td>
+                          {%- endif -%}
+                        {%- endfor -%}
+                      </tr>
+                    {%- endif -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              </tbody>
+            </table>
+          </div>
+          <p class="bcn-sc__unit-note" data-sc-note>Measurements in centimetres</p>
+          {%- if b.settings.notes != blank -%}
+            <div class="bcn-sc__notes">{{ b.settings.notes }}</div>
+          {%- endif -%}
+        </div>
+        {%- assign pos = pos | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+{%- endif -%}

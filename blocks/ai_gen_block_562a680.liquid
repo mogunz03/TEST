@@ -83,6 +83,23 @@
 
 {% enddoc %}
 {% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+{%- liquid
+  comment
+    Seamless loop + speed in pixels per second.
+    The track holds the product list twice and slides left by exactly ONE list
+    (n cards + n gaps), so the second copy lands where the first started: no jump.
+    (The old version slid by 50% of a box that was hard-coded to 200% of the page width,
+    which only lined up by accident, and its "speed" was a duration in seconds, so a
+    bigger number meant slower.) Duration = distance / speed.
+  endcomment
+  assign gap = 20
+  assign n = block.settings.product_list.size
+  assign speed = block.settings.speed | at_least: 5
+  assign set_w = block.settings.card_width | plus: gap | times: n
+  assign set_w_m = block.settings.card_width | times: 0.8 | plus: gap | times: n
+  assign dur = set_w | times: 1.0 | divided_by: speed | round: 1
+  assign dur_m = set_w_m | times: 1.0 | divided_by: speed | round: 1
+-%}
 
 {% style %}
   .ai-marquee-carousel-{{ ai_gen_id }} {
@@ -111,10 +128,11 @@
   }
 
   .ai-marquee-carousel__track-{{ ai_gen_id }} {
+    --ai-set-w: {{ set_w }}px;
     display: flex;
-    width: calc(200% + 40px);
-    animation: ai-marquee-scroll-{{ ai_gen_id }} {{ block.settings.scroll_speed }}s linear infinite;
-    gap: 20px;
+    width: max-content;
+    animation: ai-marquee-scroll-{{ ai_gen_id }} {{ dur }}s linear infinite;
+    gap: {{ gap }}px;
   }
 
   {% if block.settings.pause_on_hover %}
@@ -128,12 +146,10 @@
     background-color: {{ block.settings.card_background }};
     border-radius: {{ block.settings.card_border_radius }}px;
     overflow: hidden;
-    transition: transform 0.3s ease;
     box-shadow: none;
-  }
-
-  .ai-marquee-carousel__item-{{ ai_gen_id }}:hover {
-    transform: translateY(-5px);
+    display: block;
+    color: inherit;
+    text-decoration: none;
   }
 
   .ai-marquee-carousel__image-{{ ai_gen_id }} {
@@ -147,7 +163,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transition: opacity 0.3s ease-in-out; /* fade only */
   }
 
   .ai-marquee-carousel__primary-image-{{ ai_gen_id }} {
@@ -208,22 +224,7 @@
     font-size: {{ block.settings.product_price_size }}px;
     color: {{ block.settings.product_price_color }};
     font-weight: 700;
-    margin: 0 0 10px;
-  }
-
-  .ai-marquee-carousel__product-link-{{ ai_gen_id }} {
-    display: inline-block;
-    padding: 8px 16px;
-    background-color: {{ block.settings.button_color }};
-    color: {{ block.settings.button_text_color }};
-    text-decoration: none;
-    border-radius: {{ block.settings.button_border_radius }}px;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-  }
-
-  .ai-marquee-carousel__product-link-{{ ai_gen_id }}:hover {
-    background-color: {{ block.settings.button_hover_color }};
+    margin: 0;
   }
 
   .ai-marquee-carousel__empty-state-{{ ai_gen_id }} {
@@ -247,7 +248,7 @@
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-50%);
+      transform: translateX(calc(-1 * var(--ai-set-w)));
     }
   }
 
@@ -261,8 +262,15 @@
     }
 
     .ai-marquee-carousel__track-{{ ai_gen_id }} {
-      animation-duration: {{ block.settings.scroll_speed | times: 1.5 }}s;
+      --ai-set-w: {{ set_w_m }}px;
+      animation-duration: {{ dur_m }}s;
     }
+  }
+
+  /* visitors who asked for reduced motion get a still strip they can scroll sideways */
+  @media (prefers-reduced-motion: reduce) {
+    .ai-marquee-carousel__track-{{ ai_gen_id }} { animation: none; }
+    .ai-marquee-carousel-{{ ai_gen_id }} { overflow-x: auto; }
   }
 {% endstyle %}
 
@@ -281,7 +289,7 @@
   {% if block.settings.product_list != blank %}
     <div class="ai-marquee-carousel__track-{{ ai_gen_id }}">
       {% for product in block.settings.product_list %}
-        <div class="ai-marquee-carousel__item-{{ ai_gen_id }}">
+        <a class="ai-marquee-carousel__item-{{ ai_gen_id }}" href="{{ product.url }}">
           <div class="ai-marquee-carousel__image-{{ ai_gen_id }}">
             {% if product.featured_image %}
               <img
@@ -311,15 +319,12 @@
           <div class="ai-marquee-carousel__content-{{ ai_gen_id }}">
             <h3 class="ai-marquee-carousel__product-title-{{ ai_gen_id }}">{{ product.title }}</h3>
             <div class="ai-marquee-carousel__product-price-{{ ai_gen_id }}">{{ product.price | money }}</div>
-            <a href="{{ product.url }}" class="ai-marquee-carousel__product-link-{{ ai_gen_id }}">
-              {{ block.settings.button_text }}
-            </a>
           </div>
-        </div>
+        </a>
       {% endfor %}
 
       {% for product in block.settings.product_list %}
-        <div class="ai-marquee-carousel__item-{{ ai_gen_id }}">
+        <a class="ai-marquee-carousel__item-{{ ai_gen_id }}" href="{{ product.url }}" aria-hidden="true" tabindex="-1">
           <div class="ai-marquee-carousel__image-{{ ai_gen_id }}">
             {% if product.featured_image %}
               <img
@@ -349,11 +354,8 @@
           <div class="ai-marquee-carousel__content-{{ ai_gen_id }}">
             <h3 class="ai-marquee-carousel__product-title-{{ ai_gen_id }}">{{ product.title }}</h3>
             <div class="ai-marquee-carousel__product-price-{{ ai_gen_id }}">{{ product.price | money }}</div>
-            <a href="{{ product.url }}" class="ai-marquee-carousel__product-link-{{ ai_gen_id }}">
-              {{ block.settings.button_text }}
-            </a>
           </div>
-        </div>
+        </a>
       {% endfor %}
     </div>
   {% else %}
@@ -391,12 +393,6 @@
       "limit": 12
     },
     {
-      "type": "text",
-      "id": "button_text",
-      "label": "Button text",
-      "default": "View product"
-    },
-    {
       "type": "header",
       "content": "Image settings"
     },
@@ -412,13 +408,14 @@
     },
     {
       "type": "range",
-      "id": "scroll_speed",
+      "id": "speed",
       "min": 10,
-      "max": 100,
+      "max": 300,
       "step": 5,
-      "unit": "s",
-      "label": "Scroll speed",
-      "default": 30
+      "unit": "px",
+      "label": "Speed (pixels per second)",
+      "info": "Higher is faster. 40 is calm, 100 is quick.",
+      "default": 60
     },
     {
       "type": "checkbox",
@@ -501,24 +498,6 @@
       "default": "#000000"
     },
     {
-      "type": "color",
-      "id": "button_color",
-      "label": "Button color",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
-      "id": "button_text_color",
-      "label": "Button text color",
-      "default": "#ffffff"
-    },
-    {
-      "type": "color",
-      "id": "button_hover_color",
-      "label": "Button hover color",
-      "default": "#333333"
-    },
-    {
       "type": "header",
       "content": "Typography"
     },
@@ -575,16 +554,6 @@
       "unit": "px",
       "label": "Card border radius",
       "default": 16
-    },
-    {
-      "type": "range",
-      "id": "button_border_radius",
-      "min": 0,
-      "max": 20,
-      "step": 2,
-      "unit": "px",
-      "label": "Button border radius",
-      "default": 12
     }
   ],
   "presets": [
