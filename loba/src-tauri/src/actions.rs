@@ -610,6 +610,12 @@ impl ShortcutAction for TranscribeAction {
                     // fixed delay. The helper returns immediately when feedback
                     // is disabled; mute still follows the same readiness point.
                     if rm_clone.is_recording_readiness_current(generation) {
+                        crate::loba::pause_media(&app_clone);
+                        // Stop may have landed while pausing; don't leave
+                        // the user's media paused with nothing to resume it.
+                        if !rm_clone.is_recording_readiness_current(generation) {
+                            crate::loba::resume_media();
+                        }
                         play_feedback_sound_blocking(&app_clone, SoundType::Start);
                     }
                     if rm_clone.is_recording_readiness_current(generation) {
@@ -690,6 +696,7 @@ impl ShortcutAction for TranscribeAction {
 
         // Unmute before playing audio feedback so the stop sound is audible
         rm.remove_mute();
+        crate::loba::resume_media();
 
         // Play audio feedback for recording stop
         play_feedback_sound(app, SoundType::Stop);

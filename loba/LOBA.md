@@ -139,11 +139,21 @@ modifier-only chord, since a quick ⌥⌘ shortcut would lock recording on.
 Holding ⌘⌥ longer while doing something else (⌥⌘-drag in Finder) will
 record; pick a keyed shortcut if that's your habit.
 
-**Quiet while dictating** (Settings → General, off by default) mutes the
-Mac's output while the mic is open, so music or a video doesn't bleed into
-the recording, then restores it. A Mac that was already muted stays muted.
-This is Handy's own mute, unchanged; L.O.B.A only puts the switch where
-you'd look for it.
+**While you dictate** (Settings → General): _Leave_, _Mute_ or _Pause_.
+Mute is Handy's own mute, unchanged: the Mac's output goes silent while the
+mic is open, then comes back (a Mac that was already muted stays muted).
+Pause presses the keyboard's play/pause key when recording starts and again
+when it stops, so music and videos stop and resume where they were. Because
+that key starts Music when nothing is playing, it is only pressed when
+Core Audio reports another app producing sound right now and that app is a
+media player or browser (macOS 14.2+ lists audio clients per process). If a
+call app is producing sound (Zoom, Teams, FaceTime, WeChat, Discord, Slack,
+Feishu…) nothing is pressed. On stop it only presses again if nothing has
+started playing in the meantime, so media you resumed by hand stays on.
+
+**Sounds** are soft G♯ tones (start G♯4, stop G♯3 or G♯5 depending on the
+theme, landing G♯), about 10 dB quieter than Handy's, with a volume slider
+in Settings → General.
 
 ## Home
 

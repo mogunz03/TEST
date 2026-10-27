@@ -14,6 +14,8 @@ export interface LobaConfig {
   edit_level: "light" | "polished";
   /** Used instead of timeout_ms when edit_level is polished. */
   polished_timeout_ms: number;
+  /** Press play/pause around a dictation when media is playing. */
+  pause_media: boolean;
   keep_alive: string;
 }
 

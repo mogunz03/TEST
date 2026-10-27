@@ -5,6 +5,8 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { useSettings } from "@/hooks/useSettings";
 import { Group, PageTitle, Row, Segmented, Switch } from "../controls";
 import { ShortcutField } from "../ShortcutDialog";
+import { useLoba } from "../useOllama";
+import { commands } from "@/bindings";
 import { Cleanup } from "./Cleanup";
 
 export type SettingsTab = "general" | "cleanup" | "engine";
@@ -67,6 +69,19 @@ const General: React.FC = () => {
   const { t } = useTranslation("loba");
   const { getSetting, updateSetting } = useSettings();
   const activation = getSetting("shortcut_activation") ?? "push_to_talk";
+  const { config, save } = useLoba();
+  // Mute is Handy's setting, pause is L.O.B.A's; the UI keeps them exclusive.
+  const media: "leave" | "mute" | "pause" = config?.pause_media
+    ? "pause"
+    : getSetting("mute_while_recording")
+      ? "mute"
+      : "leave";
+  const setMedia = (next: typeof media) => {
+    updateSetting("mute_while_recording", next === "mute");
+    if (config) save({ pause_media: next === "pause" });
+  };
+  const soundsOn = getSetting("audio_feedback") ?? true;
+  const volume = getSetting("audio_feedback_volume") ?? 1;
 
   return (
     <>
@@ -106,11 +121,44 @@ const General: React.FC = () => {
             onChange={(v) => updateSetting("audio_feedback", v)}
           />
         </Row>
-        <Row label={t("settings.quiet.label")} note={t("settings.quiet.note")}>
-          <Switch
-            label={t("settings.quiet.label")}
-            checked={getSetting("mute_while_recording") ?? false}
-            onChange={(v) => updateSetting("mute_while_recording", v)}
+        {soundsOn && (
+          <Row
+            label={t("settings.volume.label")}
+            note={t("settings.volume.note")}
+          >
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={0.05}
+                max={1}
+                step={0.05}
+                value={volume}
+                onChange={(e) =>
+                  updateSetting("audio_feedback_volume", Number(e.target.value))
+                }
+                onMouseUp={() => commands.playTestSound("start")}
+                onKeyUp={() => commands.playTestSound("start")}
+                className="w-28 accent-[var(--loba-ink)] cursor-pointer"
+                aria-label={t("settings.volume.label")}
+              />
+              <span className="w-10 text-end text-[13px] tabular-nums">
+                {Math.round(volume * 100)}%
+              </span>
+            </div>
+          </Row>
+        )}
+        <Row
+          label={t("settings.media.label")}
+          note={t(`settings.media.${media}Note`)}
+        >
+          <Segmented
+            label={t("settings.media.label")}
+            value={media}
+            onChange={setMedia}
+            options={(["leave", "mute", "pause"] as const).map((id) => ({
+              id,
+              label: t(`settings.media.${id}`),
+            }))}
           />
         </Row>
         <Row label={t("settings.login.label")} note={t("settings.login.note")}>

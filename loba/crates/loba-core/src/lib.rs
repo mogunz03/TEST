@@ -11,6 +11,7 @@ pub mod command;
 pub mod config;
 pub mod dictionary;
 pub mod frontmost;
+pub mod media;
 pub mod modifiers;
 pub mod ollama;
 pub mod pipeline;

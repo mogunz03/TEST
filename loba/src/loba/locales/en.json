@@ -88,11 +88,20 @@
     "app": "App",
     "sound": {
       "label": "Sounds",
-      "note": "A tone when recording starts and stops, and a low note when the text lands."
+      "note": "Soft G♯ tones when recording starts and stops, and when the text lands."
     },
-    "quiet": {
-      "label": "Quiet while dictating",
-      "note": "Mutes music and videos while you hold the shortcut, then turns them back on. If your Mac was already muted, it stays muted."
+    "volume": {
+      "label": "Sound volume",
+      "note": "How loud the start, stop and landing tones are. You'll hear the start tone when you let go of the slider."
+    },
+    "media": {
+      "label": "While you dictate",
+      "leave": "Leave",
+      "mute": "Mute",
+      "pause": "Pause",
+      "leaveNote": "Other sound keeps playing and may end up in the recording.",
+      "muteNote": "Your Mac goes silent while the mic is open, then the sound comes back. Videos keep playing silently.",
+      "pauseNote": "Music, podcasts and videos pause while you talk and pick up where they left off. Calls are left alone."
     },
     "login": {
       "label": "Open at login",

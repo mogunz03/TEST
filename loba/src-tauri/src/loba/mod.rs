@@ -288,6 +288,21 @@ pub fn record_history(
     let _ = app.emit("loba:history-changed", history_id);
 }
 
+/// Recording is live: pause media if the user asked for that. Runs on the
+/// recording-readiness thread, before the start chime.
+pub fn pause_media(app: &AppHandle) {
+    if state(app).is_some_and(|s| s.config().pause_media) {
+        loba_core::media::pause();
+    }
+}
+
+/// Recording stopped or was cancelled: resume what `pause_media` paused.
+/// Checks the flag, not the setting, so turning the option off mid-dictation
+/// still resumes.
+pub fn resume_media() {
+    loba_core::media::resume();
+}
+
 /// Shorter than this and a press was a chord passing through (⌥⌘I while
 /// the dictation hotkey is ⌘⌥), not speech: nothing is transcribed or pasted.
 pub const MIN_DICTATION_MS: u32 = 300;

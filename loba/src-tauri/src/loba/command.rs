@@ -74,6 +74,7 @@ impl ShortcutAction for CommandAction {
             Ok(_readiness) => {
                 set_tray_state(app, TrayIconState::Recording);
                 utils::show_recording_overlay(app);
+                super::pause_media(app);
                 play_feedback_sound(app, SoundType::Start);
                 crate::shortcut::register_cancel_shortcut(app);
             }
@@ -100,6 +101,7 @@ impl ShortcutAction for CommandAction {
         }
         crate::shortcut::unregister_cancel_shortcut(app);
         rm.remove_mute();
+        super::resume_media();
         play_feedback_sound(app, SoundType::Stop);
 
         let app = app.clone();

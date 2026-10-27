@@ -41,6 +41,9 @@ pub struct LobaConfig {
     pub edit_level: EditLevel,
     /// Ceiling used instead of `timeout_ms` when `edit_level` is Polished.
     pub polished_timeout_ms: u64,
+    /// Press the play/pause media key when dictation starts (if a player or
+    /// browser is making sound) and again when it ends.
+    pub pause_media: bool,
     /// Keep the model resident this long after each call (Ollama `keep_alive`).
     /// A cold 8B load alone can blow the 4 s budget.
     pub keep_alive: String,
@@ -56,6 +59,7 @@ impl Default for LobaConfig {
             command_timeout_ms: DEFAULT_COMMAND_TIMEOUT_MS,
             edit_level: EditLevel::Light,
             polished_timeout_ms: DEFAULT_POLISHED_TIMEOUT_MS,
+            pause_media: false,
             keep_alive: "30m".to_string(),
         }
     }

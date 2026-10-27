@@ -1168,6 +1168,11 @@ timeout_ms: number; command_timeout_ms: number; edit_level: EditLevel;
  */
 polished_timeout_ms: number; 
 /**
+ * Press the play/pause media key when dictation starts (if a player or
+ * browser is making sound) and again when it ends.
+ */
+pause_media: boolean; 
+/**
  * Keep the model resident this long after each call (Ollama `keep_alive`).
  * A cold 8B load alone can blow the 4 s budget.
  */
