@@ -1,23 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
 <defs>
-  <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#FBF8F2"/><stop offset="1" stop-color="#EAE2D3"/>
-  </linearGradient>
-  <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0">
-    <stop offset="0" stop-color="#4A433C"/><stop offset="0.55" stop-color="#1E1B18"/><stop offset="1" stop-color="#161412"/>
-  </linearGradient>
-  <radialGradient id="clay" cx="0.36" cy="0.32" r="0.75">
-    <stop offset="0" stop-color="#E07F55"/><stop offset="1" stop-color="#A7441D"/>
-  </radialGradient>
-  <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
-    <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#3A2A1C" flood-opacity="0.26"/>
-  </filter>
-  <filter id="press" x="-10%" y="-10%" width="120%" height="120%">
-    <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#2A1A10" flood-opacity="0.22"/>
-  </filter>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A1D22"/><stop offset="1" stop-color="#07080A"/></linearGradient>
+  <linearGradient id="ink" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8B929C"/><stop offset="0.6" stop-color="#E9ECF0"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
+  <radialGradient id="dot" cx="0.38" cy="0.32" r="0.8"><stop offset="0" stop-color="#E4EAF2"/><stop offset="1" stop-color="#8E9BAD"/></radialGradient>
+  <filter id="lift" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000" flood-opacity="0.45"/></filter>
 </defs>
-<g filter="url(#lift)"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#paper)"/></g>
-<rect x="101" y="101" width="822" height="822" rx="184" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="2"/>
-<path d="M206,548 C231.0,548 231.0,484 256,484 C281.0,484 281.0,744 306,744 C331.0,744 331.0,412 356,412 C381.0,412 381.0,774 406,774 C431.0,774 431.0,456 456,456 C481.0,456 481.0,582 506,582 C531.0,582 531.0,548 556,548 C581.0,548 581.0,548 606,548 L746,548" fill="none" stroke="url(#ink)" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" filter="url(#press)"/>
-<circle cx="806" cy="548" r="30" fill="url(#clay)" filter="url(#press)"/>
+<g filter="url(#lift)"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/></g>
+<rect x="101.5" y="101.5" width="821" height="821" rx="183.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="3"/>
+<rect x="272" y="362.0" width="56" height="300" rx="28" fill="#E9ECF0" opacity="0.55"/><rect x="362" y="302.0" width="56" height="420" rx="28" fill="#E9ECF0" opacity="0.64"/><rect x="452" y="387.0" width="56" height="250" rx="28" fill="#E9ECF0" opacity="0.73"/><rect x="542" y="432.0" width="56" height="160" rx="28" fill="#E9ECF0" opacity="0.82"/><rect x="632" y="472.0" width="56" height="80" rx="28" fill="#E9ECF0" opacity="0.91"/><circle cx="760" cy="512" r="30" fill="url(#dot)"/>
 </svg>

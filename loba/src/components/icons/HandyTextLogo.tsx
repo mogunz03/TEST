@@ -1,9 +1,9 @@
 import React from "react";
 
 /**
- * L.O.B.A wordmark (replaces Handy's logo everywhere it was used). The app
- * icon's stroke, a scribble settling into a line, then the full stop, then
- * the name in the system sans.
+ * L.O.B.A wordmark (replaces Handy's logo everywhere it was used): the app
+ * icon's mark, sound bars shrinking into a full stop (speech becoming
+ * text), then the name in the system sans.
  */
 const HandyTextLogo = ({
   width,
@@ -25,14 +25,52 @@ const HandyTextLogo = ({
       role="img"
       aria-label="L.O.B.A"
     >
-      <path
-        d="M4,32 C7.75,32 7.75,21 11.5,21 C15.25,21 15.25,54 19,54 C22.75,54 22.75,26 26.5,26 C30.25,26 30.25,32 34,32 L50,32"
-        stroke="currentColor"
-        strokeWidth="4.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <rect
+        x="5"
+        y="17.0"
+        width="6"
+        height="30"
+        rx="3"
+        fill="currentColor"
+        fillOpacity={0.6}
       />
-      <circle cx="61" cy="32" r="5.4" fill="var(--loba-steel, #b9c4d2)" />
+      <rect
+        x="14"
+        y="10.0"
+        width="6"
+        height="44"
+        rx="3"
+        fill="currentColor"
+        fillOpacity={0.7}
+      />
+      <rect
+        x="23"
+        y="19.0"
+        width="6"
+        height="26"
+        rx="3"
+        fill="currentColor"
+        fillOpacity={0.8}
+      />
+      <rect
+        x="32"
+        y="24.0"
+        width="6"
+        height="16"
+        rx="3"
+        fill="currentColor"
+        fillOpacity={0.9}
+      />
+      <rect
+        x="41"
+        y="28.0"
+        width="6"
+        height="8"
+        rx="3"
+        fill="currentColor"
+        fillOpacity={1.0}
+      />
+      <circle cx="56" cy="32" r="5" fill="var(--loba-steel, #b9c4d2)" />
       <text
         x="82"
         y="44"
