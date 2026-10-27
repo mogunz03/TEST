@@ -1,0 +1,279 @@
+{
+  "brand": "L.O.B.A",
+  "nav": {
+    "home": "Home",
+    "history": "History",
+    "meetings": "Meetings",
+    "dictionary": "Dictionary",
+    "styles": "Styles",
+    "settings": "Settings"
+  },
+  "sidebar": {
+    "ready": "Cleanup on",
+    "off": "Cleanup off",
+    "checking": "Looking for Ollama",
+    "problem": "Pasting raw text",
+    "offNote": "Pasting what you said",
+    "offline": "Runs on this Mac. Nothing leaves it."
+  },
+  "command": {
+    "failed": "Command didn't run"
+  },
+  "home": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "sub": {
+      "first": "Hold the shortcut, talk, let go. Your words land wherever the cursor is.",
+      "returning_one": "You've talked instead of typed on {{count}} day so far.",
+      "returning_other": "You've talked instead of typed on {{count}} days so far."
+    },
+    "stats": {
+      "words": "Words dictated",
+      "saved": "Time saved",
+      "dictations": "Dictations",
+      "streak": "Streak",
+      "minutes": "{{value}} min",
+      "hours": "{{value}} h",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
+    },
+    "hotkey": {
+      "title": "Dictate",
+      "push_to_talk": "Hold to talk, let go to paste.",
+      "toggle": "Tap to start, tap again to paste.",
+      "hold_or_toggle": "Hold to talk, or tap to keep listening."
+    },
+    "command": {
+      "title": "Command mode",
+      "body": "Select text, hold, say what to change. Nothing selected and it writes at the cursor.",
+      "examplesLead": "Things to say in command mode:",
+      "examples": [
+        "make this shorter",
+        "translate to French",
+        "改成正式一点",
+        "turn this into a list"
+      ]
+    },
+    "status": {
+      "ready": "Cleaning with {{model}}",
+      "off": "Cleanup is off. Text pastes as you said it.",
+      "checking": "Looking for Ollama…",
+      "down": "Ollama isn't running, so text pastes raw.",
+      "missing-model": "{{model}} isn't installed, so text pastes raw.",
+      "adjust": "Adjust"
+    },
+    "last": {
+      "cleaned": "Last: {{app}}, {{seconds}} s",
+      "timed_out": "Last: {{app}}, ran out of time, pasted raw",
+      "fallback": "Last: {{app}}, pasted raw",
+      "skipped": "Last: {{app}}, pasted as said"
+    },
+    "unknownApp": "unknown app",
+    "recent": {
+      "title": "Recent",
+      "all": "All history",
+      "empty": "Nothing yet. Hold this and say something:"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "cleanup": "Cleanup",
+      "engine": "Engine"
+    },
+    "shortcuts": "Keyboard shortcuts",
+    "app": "App",
+    "sound": {
+      "label": "Sounds",
+      "note": "Soft G♯ tones when recording starts and stops, and when the text lands."
+    },
+    "volume": {
+      "label": "Sound volume",
+      "note": "How loud the start, stop and landing tones are. You'll hear the start tone when you let go of the slider."
+    },
+    "media": {
+      "label": "While you dictate",
+      "leave": "Leave",
+      "mute": "Mute",
+      "pause": "Pause",
+      "leaveNote": "Other sound keeps playing and may end up in the recording.",
+      "muteNote": "Your Mac goes silent while the mic is open, then the sound comes back. Videos keep playing silently.",
+      "pauseNote": "Music, podcasts and videos pause while you talk and pick up where they left off. Calls are left alone."
+    },
+    "login": {
+      "label": "Open at login",
+      "note": "Starts in the menu bar, ready for the shortcut."
+    },
+    "about": {
+      "label": "About",
+      "version": "Version",
+      "handy": {
+        "label": "Built on Handy",
+        "note": "Recording, transcription and pasting come from Handy by CJ Pais, used under the MIT License. Copyright (c) 2025 CJ Pais.",
+        "source": "Handy on GitHub"
+      }
+    }
+  },
+  "cleanup": {
+    "lede": "A model running in Ollama on this Mac tidies each dictation before it's pasted. It never translates and never adds things you didn't say.",
+    "enabled": {
+      "label": "Clean up dictations",
+      "note": "Off pastes exactly what the speech model heard."
+    },
+    "model": {
+      "label": "Model",
+      "note": "Any model you've pulled into Ollama.",
+      "down": "Can't reach Ollama. Start it with “ollama serve”.",
+      "missing": "Not installed. Run “ollama pull {{model}}”."
+    },
+    "level": {
+      "label": "Edit level",
+      "light": "Light",
+      "polished": "Polished",
+      "lightNote": "Keeps your wording. Drops the ums and restarts, fixes punctuation, turns spoken lists into lists.",
+      "polishedNote": "Rewrites what you said into clear, well-ordered sentences, like Typeless. Same meaning, same language, nothing added. Takes a few seconds longer."
+    },
+    "budget": {
+      "label": "Time limit",
+      "note": "If the model is slower than this, the raw transcript goes in instead.",
+      "value": "{{seconds}} s",
+      "polishedNote": "Polished has its own limit. Long dictations need more time; past the limit, the raw transcript goes in instead."
+    },
+    "server": {
+      "group": "Connection",
+      "label": "Ollama",
+      "note": "Only this Mac. Remote addresses are refused."
+    }
+  },
+  "dictionary": {
+    "title": "Dictionary",
+    "lede": "Names, jargon, the words it keeps getting wrong. Terms are handed to Whisper before it listens. “Heard as” fixes whatever still slips through.",
+    "addPlaceholder": "Add a word, name or acronym",
+    "add": "Add",
+    "empty": "Nothing here yet. Start with the word you correct most.",
+    "heardAs": "heard as",
+    "heardPlaceholder": "those, doze",
+    "remove": "Remove {{term}}"
+  },
+  "styles": {
+    "title": "Styles",
+    "lede": "L.O.B.A checks which app you're in. Chats stay loose, email gets tidied up, and code or terminals get exactly what you said.",
+    "detect": "Check an app",
+    "detecting": "Switch to it now…",
+    "detected": "{{app}} uses {{style}} (matched {{by}})",
+    "unknownApp": "unknown app",
+    "fallback": "by default",
+    "voices": "Voices",
+    "default": "default",
+    "rewrites": "Rewrites",
+    "literal": "As said",
+    "literalNote": "No model. Dictionary fixes only, so commands and code arrive untouched.",
+    "tonePlaceholder": "How should text sound here?",
+    "apps": "Apps",
+    "appsNote": "Matched by app name or bundle ID.",
+    "appPlaceholder": "App name, e.g. Notion",
+    "titles": "Web apps",
+    "titlesNote": "For apps that live in a browser tab. If the window title contains this word, the style applies. That's how Gmail in Safari gets email tone.",
+    "titlePlaceholder": "Title contains, e.g. Linear",
+    "map": "Add",
+    "removeMapping": "Remove {{key}}"
+  },
+  "history": {
+    "title": "History",
+    "lede": "Your last 50 dictations. Click one to copy it.",
+    "empty": "Nothing yet. Hold the shortcut and say something.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copiedRaw": "Raw text copied",
+    "copyRaw": "Copy the raw transcript",
+    "showRaw": "Show what you said",
+    "hideRaw": "Hide",
+    "outcome": {
+      "cleaned": "Cleaned",
+      "timed_out": "Ran out of time, pasted raw",
+      "fallback": "Pasted raw ({{detail}})",
+      "skipped": "Not rewritten ({{detail}})"
+    }
+  },
+  "shortcuts": {
+    "transcribe": {
+      "name": "Dictate",
+      "note": "Talk, let go, and the text is pasted where you're typing."
+    },
+    "loba_command": {
+      "name": "Command mode",
+      "note": "Select text, say what to change, let go. The selection is rewritten."
+    },
+    "change": "Change",
+    "changeNamed": "Change the {{name}} shortcut",
+    "mode": {
+      "label": "Dictate by",
+      "push_to_talk": "Holding",
+      "toggle": "Tapping",
+      "hold_or_toggle": "Either",
+      "push_to_talkNote": "Hold to talk, let go to paste. Presses under 0.3 s are ignored, so other ⌥⌘ shortcuts still work.",
+      "toggleNote": "Tap once to start and again to paste. Avoid this with a modifier-only shortcut like ⌘⌥.",
+      "hold_or_toggleNote": "Hold to talk, or tap to keep listening. Avoid this with a modifier-only shortcut like ⌘⌥."
+    },
+    "dialog": {
+      "title": "New {{name}} shortcut",
+      "body": "Press the keys you want and let go. Modifiers on their own work too, like ⌘⇧.",
+      "waiting": "Waiting for keys",
+      "holding": "Let go to keep this",
+      "captured": "Got it. Save, or press something else.",
+      "problem": {
+        "plain": "A single key would fire while you type. Add a modifier.",
+        "taken": "{{other}} already uses this.",
+        "failed": "Couldn't set that shortcut. Try another."
+      },
+      "reset": "Reset to",
+      "cancel": "Cancel",
+      "save": "Save"
+    }
+  },
+  "meetings": {
+    "title": "Meetings",
+    "lede": "Record a call and get a recap. L.O.B.A writes down what you said and what the others said, then sums it up. Everything stays on this Mac.",
+    "start": "Start meeting",
+    "stop": "Stop",
+    "startFailed": "Couldn't start the meeting",
+    "recording": "Recording",
+    "pill": "Meeting",
+    "micOnly": "Mic only",
+    "hearingBoth": "Hearing you and the others",
+    "hearingYou": "Hearing only you",
+    "noSystemAudio": "Only your microphone is being recorded, so the other people on the call won't be in the transcript. To hear them, allow L.O.B.A under Screen & System Audio Recording, then start a new meeting.",
+    "openSettings": "Open settings",
+    "listening": "Listening. Text shows up here every few seconds while people talk.",
+    "empty": "No meetings yet. Start one when a call begins, and stop it when the call ends.",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "writing": "Writing the recap…",
+    "noRecap": "No recap",
+    "speaker": {
+      "you": "You",
+      "others": "Others"
+    },
+    "saving": "Saving the meeting…",
+    "docTitle": "Meeting, {{when}}",
+    "copyRecap": "Copy recap",
+    "copyAll": "Copy everything",
+    "copiedRecap": "Recap copied",
+    "copiedAll": "Recap and transcript copied",
+    "recapFailed": "No recap: {{reason}}. Check that Ollama is running, then write it again.",
+    "noRecapYet": "No recap yet.",
+    "writeRecap": "Write recap",
+    "redoRecap": "Write again",
+    "delete": "Delete",
+    "confirmDelete": "Click again to delete",
+    "transcript": "Transcript",
+    "nothingHeard": "Nothing was heard.",
+    "back": "Meetings"
+  }
+}

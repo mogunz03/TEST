@@ -1,0 +1,78 @@
+name: L.O.B.A — macOS (Apple Silicon)
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["loba/**", ".github/workflows/loba-macos.yml"]
+  pull_request:
+    paths: ["loba/**", ".github/workflows/loba-macos.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: loba-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline-tests:
+    name: loba-core tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: loba/crates/loba-core
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "loba/crates/loba-core -> target"
+      - run: cargo fmt --check
+      - run: cargo test
+
+  frontend:
+    name: frontend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: loba
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit
+      - run: bun run lint
+      - run: bunx prettier --check src
+
+  build:
+    name: L.O.B.A.app (aarch64)
+    needs: [pipeline-tests, frontend]
+    # Same runner generation upstream Handy uses for arm64: the Apple
+    # Intelligence bridge needs the macOS 26 SDK.
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: loba
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "loba/src-tauri -> target"
+          key: loba-aarch64-apple-darwin
+          cache-bin: false
+      - run: bun install --frozen-lockfile
+      - name: Build (ad-hoc signed, no updater artifacts)
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+        run: bun run tauri build --target aarch64-apple-darwin --bundles app,dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: L.O.B.A-macos-arm64-${{ github.sha }}
+          path: |
+            loba/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 30
