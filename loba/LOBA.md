@@ -229,6 +229,34 @@ Homebrew's `rust`), `bun`, `brew install cmake`. Full Xcode is optional:
 without it the Apple Intelligence bridge builds as a stub, which L.O.B.A
 doesn't use.
 
+## Meetings
+
+**Meetings** in the sidebar → **Start meeting**. A small pill floats over every
+app with a timer and a Stop button (drag it anywhere). While it runs:
+
+- **Two tracks, two speakers.** The microphone is "You". The Mac's own sound
+  output, which during a call is the other people, is "Others", captured
+  with ScreenCaptureKit (audio only, 16 kHz mono; L.O.B.A's own sounds are
+  excluded). The first time, macOS asks for **Screen & System Audio
+  Recording**. Without it the meeting still records, mic only, and says so.
+- **Transcribed as it goes.** Each track is cut at a pause once it holds 8 s
+  of audio (at 25 s if nobody pauses), checked for actual speech (Whisper
+  invents text on silence, so near-silent chunks are dropped), transcribed
+  with the same model as dictation, run through the dictionary, and added
+  with its timestamp. Text appears on the Meetings page as you go.
+- **Recap at the end.** Stop saves the transcript, then the cleanup model
+  writes a recap: Summary, Decisions, Action items (who, what, by when),
+  Open questions, in the language the meeting was held in, from the
+  transcript only. Long meetings are noted part by part first, then
+  recapped, with a 16k-token window so nothing falls off the end. If Ollama
+  is down, the transcript is kept and **Write recap** tries again.
+- **Stored locally** as one JSON file per meeting in `loba/meetings/`.
+  Copy the recap, or recap plus transcript, as Markdown.
+
+Phase 1 tells "You" from "Others". Telling individual people apart within
+"Others" (speaker diarization) is the planned next step. Recording other
+people may need their consent where you are.
+
 ## Release (for other people's Macs)
 
 A build from your own Mac only opens on someone else's after they override

@@ -777,6 +777,15 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_history,
             loba::commands::loba_copy,
             loba::commands::loba_get_stats,
+            loba::commands::loba_meeting_start,
+            loba::commands::loba_meeting_stop,
+            loba::commands::loba_meeting_status,
+            loba::commands::loba_meetings,
+            loba::commands::loba_meeting,
+            loba::commands::loba_meeting_delete,
+            loba::commands::loba_meeting_recap,
+            loba::commands::loba_meeting_markdown,
+            loba::commands::loba_open_screen_recording_settings,
         ])
         .events(collect_events![
             managers::history::HistoryUpdatePayload,

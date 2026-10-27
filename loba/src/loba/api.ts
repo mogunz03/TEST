@@ -72,6 +72,44 @@ export interface StatsView {
   minutes_saved: number;
 }
 
+export type Speaker = "you" | "others";
+
+export interface Segment {
+  start_ms: number;
+  speaker: Speaker;
+  text: string;
+}
+
+export interface Meeting {
+  id: string;
+  /** Unix seconds. */
+  started_at: number;
+  duration_ms: number;
+  segments: Segment[];
+  /** Markdown. */
+  recap: string | null;
+  recap_error: string | null;
+  /** False when only the microphone was recorded. */
+  system_audio: boolean;
+}
+
+export interface MeetingSummary {
+  id: string;
+  started_at: number;
+  duration_ms: number;
+  segments: number;
+  has_recap: boolean;
+  preview: string;
+}
+
+export interface MeetingStatus {
+  phase: "idle" | "recording" | "summarizing";
+  id: string | null;
+  elapsed_ms: number;
+  segments: number;
+  system_audio: boolean;
+}
+
 export const loba = {
   getConfig: () => invoke<LobaConfig>("loba_get_config"),
   setConfig: (config: LobaConfig) =>
@@ -90,4 +128,16 @@ export const loba = {
   history: (limit = 50) => invoke<HistoryRow[]>("loba_history", { limit }),
   copy: (text: string) => invoke<void>("loba_copy", { text }),
   stats: () => invoke<StatsView>("loba_get_stats"),
+  meetingStart: () => invoke<MeetingStatus>("loba_meeting_start"),
+  /** Resolves with the id; the recap arrives later (loba:meetings-changed). */
+  meetingStop: () => invoke<string>("loba_meeting_stop"),
+  meetingStatus: () => invoke<MeetingStatus>("loba_meeting_status"),
+  meetings: () => invoke<MeetingSummary[]>("loba_meetings"),
+  meeting: (id: string) => invoke<Meeting>("loba_meeting", { id }),
+  meetingDelete: (id: string) => invoke<void>("loba_meeting_delete", { id }),
+  meetingRecap: (id: string) => invoke<void>("loba_meeting_recap", { id }),
+  meetingMarkdown: (id: string, title: string) =>
+    invoke<string>("loba_meeting_markdown", { id, title }),
+  openScreenRecordingSettings: () =>
+    invoke<void>("loba_open_screen_recording_settings"),
 };

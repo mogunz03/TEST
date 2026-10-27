@@ -62,6 +62,10 @@ struct ChatRequest<'a> {
 struct ChatOptions {
     temperature: f32,
     num_predict: i32,
+    /// Context window. Ollama's default (a few thousand tokens) is plenty
+    /// for a dictation and far too small for a meeting transcript.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    num_ctx: Option<i32>,
 }
 
 #[derive(Deserialize)]
@@ -114,6 +118,20 @@ impl OllamaClient {
         num_predict: i32,
         budget: Duration,
     ) -> Result<String, OllamaError> {
+        self.chat_with_context(model, messages, keep_alive, num_predict, None, budget)
+            .await
+    }
+
+    /// `chat` with an explicit context window, for long inputs.
+    pub async fn chat_with_context(
+        &self,
+        model: &str,
+        messages: &[Message],
+        keep_alive: &str,
+        num_predict: i32,
+        num_ctx: Option<i32>,
+        budget: Duration,
+    ) -> Result<String, OllamaError> {
         let body = ChatRequest {
             model,
             messages,
@@ -123,6 +141,7 @@ impl OllamaClient {
             options: ChatOptions {
                 temperature: 0.2,
                 num_predict,
+                num_ctx,
             },
         };
         let url = format!("{}/api/chat", self.base_url);

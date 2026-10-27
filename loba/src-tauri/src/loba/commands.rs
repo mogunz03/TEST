@@ -175,3 +175,69 @@ pub fn loba_copy(app: tauri::AppHandle, text: String) -> Result<(), String> {
     use tauri_plugin_clipboard_manager::ClipboardExt;
     app.clipboard().write_text(text).map_err(|e| e.to_string())
 }
+
+// --- meetings ----------------------------------------------------------------
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_start(app: tauri::AppHandle) -> Result<super::meeting::MeetingStatus, String> {
+    super::meeting::start(&app)
+}
+
+/// Stops recording and returns the meeting id; the recap follows as
+/// `loba:meetings-changed`.
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_stop(app: tauri::AppHandle) -> Result<String, String> {
+    super::meeting::stop(&app)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_status() -> super::meeting::MeetingStatus {
+    super::meeting::status()
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meetings(app: tauri::AppHandle) -> Vec<loba_core::meeting::MeetingSummary> {
+    super::meeting::list(&app)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting(
+    app: tauri::AppHandle,
+    id: String,
+) -> Result<loba_core::meeting::Meeting, String> {
+    super::meeting::get(&app, &id)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_delete(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    super::meeting::delete(&app, &id)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_recap(app: tauri::AppHandle, id: String) -> Result<(), String> {
+    super::meeting::redo_recap(&app, &id)
+}
+
+/// The meeting as Markdown (recap, then transcript), for copying out.
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_markdown(
+    app: tauri::AppHandle,
+    id: String,
+    title: String,
+) -> Result<String, String> {
+    Ok(super::meeting::get(&app, &id)?.markdown(&title))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_open_screen_recording_settings() {
+    super::meeting::open_privacy_settings();
+}

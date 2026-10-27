@@ -8,6 +8,7 @@ import {
   House,
   MessagesSquare,
   Settings2,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import HandyTextLogo from "@/components/icons/HandyTextLogo";
@@ -15,14 +16,22 @@ import { Home } from "./pages/Home";
 import { DictionaryPage } from "./pages/DictionaryPage";
 import { StylesPage } from "./pages/StylesPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { MeetingsPage } from "./pages/MeetingsPage";
 import { SettingsPage, type SettingsTab } from "./pages/SettingsPage";
 import { useLoba } from "./useOllama";
 
-type Page = "home" | "history" | "dictionary" | "styles" | "settings";
+type Page =
+  | "home"
+  | "history"
+  | "meetings"
+  | "dictionary"
+  | "styles"
+  | "settings";
 
 const NAV: { id: Page; icon: LucideIcon }[] = [
   { id: "home", icon: House },
   { id: "history", icon: History },
+  { id: "meetings", icon: Users },
   { id: "dictionary", icon: BookText },
   { id: "styles", icon: MessagesSquare },
 ];
@@ -106,6 +115,7 @@ export const LobaShell: React.FC<Props> = ({ engine, banners }) => {
                 />
               )}
               {page === "history" && <HistoryPage />}
+              {page === "meetings" && <MeetingsPage />}
               {page === "dictionary" && <DictionaryPage />}
               {page === "styles" && <StylesPage />}
             </div>

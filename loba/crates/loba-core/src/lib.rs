@@ -12,12 +12,14 @@ pub mod config;
 pub mod dictionary;
 pub mod frontmost;
 pub mod media;
+pub mod meeting;
 pub mod modifiers;
 pub mod ollama;
 pub mod pipeline;
 pub mod prompt;
 pub mod stats;
 pub mod styles;
+pub mod system_audio;
 
 pub use cleanup::{clean, Cleaned, CleanupJob, Outcome};
 pub use config::LobaConfig;

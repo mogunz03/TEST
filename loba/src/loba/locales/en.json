@@ -3,6 +3,7 @@
   "nav": {
     "home": "Home",
     "history": "History",
+    "meetings": "Meetings",
     "dictionary": "Dictionary",
     "styles": "Styles",
     "settings": "Settings"
@@ -235,5 +236,44 @@
       "cancel": "Cancel",
       "save": "Save"
     }
+  },
+  "meetings": {
+    "title": "Meetings",
+    "lede": "Record a call and get a recap. L.O.B.A writes down what you said and what the others said, then sums it up. Everything stays on this Mac.",
+    "start": "Start meeting",
+    "stop": "Stop",
+    "startFailed": "Couldn't start the meeting",
+    "recording": "Recording",
+    "pill": "Meeting",
+    "micOnly": "Mic only",
+    "hearingBoth": "Hearing you and the others",
+    "hearingYou": "Hearing only you",
+    "noSystemAudio": "Only your microphone is being recorded, so the other people on the call won't be in the transcript. To hear them, allow L.O.B.A under Screen & System Audio Recording, then start a new meeting.",
+    "openSettings": "Open settings",
+    "listening": "Listening. Text shows up here every few seconds while people talk.",
+    "empty": "No meetings yet. Start one when a call begins, and stop it when the call ends.",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "writing": "Writing the recap…",
+    "noRecap": "No recap",
+    "speaker": {
+      "you": "You",
+      "others": "Others"
+    },
+    "saving": "Saving the meeting…",
+    "docTitle": "Meeting, {{when}}",
+    "copyRecap": "Copy recap",
+    "copyAll": "Copy everything",
+    "copiedRecap": "Recap copied",
+    "copiedAll": "Recap and transcript copied",
+    "recapFailed": "No recap: {{reason}}. Check that Ollama is running, then write it again.",
+    "noRecapYet": "No recap yet.",
+    "writeRecap": "Write recap",
+    "redoRecap": "Write again",
+    "delete": "Delete",
+    "confirmDelete": "Click again to delete",
+    "transcript": "Transcript",
+    "nothingHeard": "Nothing was heard.",
+    "back": "Meetings"
   }
 }

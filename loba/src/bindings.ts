@@ -1009,6 +1009,70 @@ async lobaCopy(text: string) : Promise<Result<null, string>> {
  */
 async lobaGetStats() : Promise<StatsView> {
     return await TAURI_INVOKE("loba_get_stats");
+},
+async lobaMeetingStart() : Promise<Result<MeetingStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_meeting_start") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stops recording and returns the meeting id; the recap follows as
+ * `loba:meetings-changed`.
+ */
+async lobaMeetingStop() : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_meeting_stop") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaMeetingStatus() : Promise<MeetingStatus> {
+    return await TAURI_INVOKE("loba_meeting_status");
+},
+async lobaMeetings() : Promise<MeetingSummary[]> {
+    return await TAURI_INVOKE("loba_meetings");
+},
+async lobaMeeting(id: string) : Promise<Result<Meeting, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_meeting", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaMeetingDelete(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_meeting_delete", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaMeetingRecap(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_meeting_recap", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The meeting as Markdown (recap, then transcript), for copying out.
+ */
+async lobaMeetingMarkdown(id: string, title: string) : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("loba_meeting_markdown", { id, title }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async lobaOpenScreenRecordingSettings() : Promise<void> {
+    await TAURI_INVOKE("loba_open_screen_recording_settings");
 }
 }
 
@@ -1183,6 +1247,30 @@ keep_alive: string }
  */
 export type LobaHistoryRow = { id: number; timestamp: number; raw: string; cleaned: string | null; app: string | null; style: string | null; outcome: string | null; detail: string | null; elapsed_ms: number | null }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+export type Meeting = { id: string; 
+/**
+ * Unix seconds.
+ */
+started_at: number; duration_ms: number; segments: Segment[]; 
+/**
+ * Markdown, once written.
+ */
+recap: string | null; recap_error: string | null; 
+/**
+ * False when only the microphone could be recorded (no permission for
+ * system audio), so the recap knows "Others" weren't heard.
+ */
+system_audio: boolean }
+export type MeetingStatus = { phase: Phase; id: string | null; elapsed_ms: number; segments: number; 
+/**
+ * False when macOS refused system audio: only "You" is being heard.
+ */
+system_audio: boolean }
+export type MeetingSummary = { id: string; started_at: number; duration_ms: number; segments: number; has_recap: boolean; 
+/**
+ * First line of the recap's summary, or the first thing said.
+ */
+preview: string }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**
@@ -1222,6 +1310,7 @@ export type OverlayStyle = "none" | "minimal" | "live"
 export type PaginatedHistory = { entries: HistoryEntry[]; has_more: boolean }
 export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_shift_v" | "external_script"
 export type PermissionAccess = "allowed" | "denied" | "unknown"
+export type Phase = "idle" | "recording" | "summarizing"
 export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean }
 export type Probe = { app: AppContext; style: Resolved }
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
@@ -1263,6 +1352,11 @@ uncovered_bindings: string[];
  * warning banner appears and explains why recording refused.
  */
 recorder_blocked: boolean }
+export type Segment = { 
+/**
+ * Offset from the start of the meeting.
+ */
+start_ms: number; speaker: Speaker; text: string }
 /**
  * How the transcribe shortcut's key events drive a recording.
  */
@@ -1283,6 +1377,15 @@ export type ShortcutActivation =
 "hold_or_toggle"
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
+export type Speaker = 
+/**
+ * The microphone: the person running L.O.B.A.
+ */
+"you" | 
+/**
+ * The Mac's audio output: everyone else on the call.
+ */
+"others"
 export type StatsView = { dictations: number; words: number; days: number; 
 /**
  * Consecutive days up to today (or yesterday, so a streak doesn't read

@@ -5,6 +5,7 @@
 
 pub mod command;
 pub mod commands;
+pub mod meeting;
 mod watched;
 
 use loba_core::cleanup::Outcome;
