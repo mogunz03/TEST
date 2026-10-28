@@ -44,6 +44,10 @@ pub struct LobaConfig {
     /// Press the play/pause media key when dictation starts (if a player or
     /// browser is making sound) and again when it ends.
     pub pause_media: bool,
+    /// Languages the user speaks (Whisper codes, e.g. "en", "fr", "zh").
+    /// Empty: trust Whisper's guess. One: always that language. Several: a
+    /// guess outside the list is overruled (see `languages::steer`).
+    pub languages: Vec<String>,
     /// Keep the model resident this long after each call (Ollama `keep_alive`).
     /// A cold 8B load alone can blow the 4 s budget.
     pub keep_alive: String,
@@ -60,6 +64,7 @@ impl Default for LobaConfig {
             edit_level: EditLevel::Light,
             polished_timeout_ms: DEFAULT_POLISHED_TIMEOUT_MS,
             pause_media: false,
+            languages: Vec::new(),
             keep_alive: "30m".to_string(),
         }
     }
@@ -84,6 +89,7 @@ impl LobaConfig {
         self.timeout_ms = self.timeout_ms.clamp(500, 30_000);
         self.command_timeout_ms = self.command_timeout_ms.clamp(1_000, 120_000);
         self.polished_timeout_ms = self.polished_timeout_ms.clamp(1_000, 30_000);
+        self.languages = crate::languages::normalize(&self.languages);
         if self.keep_alive.trim().is_empty() {
             self.keep_alive = d.keep_alive;
         }

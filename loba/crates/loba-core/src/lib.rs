@@ -11,6 +11,7 @@ pub mod command;
 pub mod config;
 pub mod dictionary;
 pub mod frontmost;
+pub mod languages;
 pub mod media;
 pub mod meeting;
 pub mod modifiers;

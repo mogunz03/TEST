@@ -34,15 +34,34 @@ git diff <vendor-commit> -- loba/src-tauri/src/shortcut loba/src-tauri/src/audio
 
 ## Speech models
 
-- **Whisper large-v3-turbo** (GGUF, Metal) is the recommended default: auto
-  language detect, handles Mandarin/English/French in one session.
-- **SenseVoice Small (ONNX)** is selectable in Settings → Engine → Models, for Mandarin-heavy
-  dictation. It covers zh / yue / en / ja / ko only. **No French.**
-- Code-switching inside one utterance: Whisper detects one language per 30 s
-  window. Embedded words from another language usually come through in their
-  own script; long clause-level switches can come out transliterated or
-  translated, and no cleanup pass can recover words the ASR lost. Leave the
-  language on _Auto_. Forcing one hurts mixed speech more than it helps.
+- **Whisper Turbo** (large-v3-turbo, GGUF, Metal) is the recommended model,
+  and the only bundled one that hears English, French and Chinese alike.
+  Onboarding offers it first.
+- **SenseVoice Small** is faster but covers zh / yue / en / ja / ko only. **No
+  French.** **Parakeet V3** covers European languages only. **No Chinese.**
+- Whisper guesses one language per recording. Mixed sentences usually keep
+  each part in its own script; long switches mid-sentence can still come out
+  in one language, and cleanup can't bring back words the speech model lost.
+
+## Languages you speak
+
+Settings → General → Languages. Stored as `languages` in `config.json`.
+
+- **None picked:** Whisper's guess stands.
+- **One:** every dictation is transcribed in that language. No guessing.
+- **Several:** if Whisper guesses a language that isn't on the list, the
+  recording is transcribed again in the closest one that is: Chinese
+  characters stay Chinese, Portuguese or Italian becomes French, Dutch
+  becomes English (`loba_core::languages::steer`). That costs one extra
+  pass, only on the dictations it fixes.
+- If the current speech model can't hear a picked language, the section
+  says so and offers Whisper Turbo (download, then switch, one click).
+
+**Fixing one that came out wrong.** History → hover a dictation → _Wrong
+language?_ → pick the language. L.O.B.A transcribes the saved recording again
+in that language, cleans it up for the app it was made in, saves it over the
+old text and copies it, ready to paste over what landed. Recordings are kept
+for the last 50 dictations (Handy's default retention).
 
 ## Cleanup (Ollama)
 

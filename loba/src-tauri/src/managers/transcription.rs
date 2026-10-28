@@ -1174,6 +1174,12 @@ impl TranscriptionManager {
     }
 
     pub fn transcribe(&self, audio: Vec<f32>) -> Result<String> {
+        self.transcribe_as(audio, None)
+    }
+
+    /// L.O.B.A: `force` transcribes in that language whatever the setting
+    /// says (History's "hear it again as"). Ignored by models that can't do it.
+    pub fn transcribe_as(&self, audio: Vec<f32>, force: Option<String>) -> Result<String> {
         #[cfg(debug_assertions)]
         if std::env::var("HANDY_FORCE_TRANSCRIPTION_FAILURE").is_ok() {
             return Err(anyhow::anyhow!(
@@ -1225,8 +1231,24 @@ impl TranscriptionManager {
         // will actually use. The coercion is capability-aware (a must-pick model
         // never receives "auto") and computed fresh here — it is never written
         // back to settings, so the intent survives switching models and back.
-        let validated_language =
-            effective_language_for_model(&settings, self.model_manager.as_ref(), &active_model);
+        // L.O.B.A: a language forced by the caller, or the user's only
+        // spoken language, stands in for the persisted intent.
+        let spoken = crate::loba::spoken_languages();
+        let intent = force.or_else(|| {
+            (settings.selected_language == "auto")
+                .then(|| loba_core::languages::only(&spoken))
+                .flatten()
+        });
+        let validated_language = match intent {
+            Some(lang) => {
+                let mut wanted = settings.clone();
+                wanted.selected_language = lang;
+                effective_language_for_model(&wanted, self.model_manager.as_ref(), &active_model)
+            }
+            None => {
+                effective_language_for_model(&settings, self.model_manager.as_ref(), &active_model)
+            }
+        };
         if validated_language != settings.selected_language {
             debug!(
                 "Language intent '{}' resolved to '{}' for model '{}'",
@@ -1344,17 +1366,39 @@ impl TranscriptionManager {
                             run_options.family.is_some()
                         );
 
-                        session
-                            .run(&audio, &run_options)
-                            .map(|t| {
-                                // Whisper's audio-based LID (auto mode only;
-                                // `None` when a language hint was passed).
-                                model_detected_language = t.language;
-                                t.text
-                            })
-                            .map_err(|e| {
-                                anyhow::anyhow!("transcribe-cpp transcription failed: {}", e)
-                            })
+                        let first = session.run(&audio, &run_options).map_err(|e| {
+                            anyhow::anyhow!("transcribe-cpp transcription failed: {}", e)
+                        })?;
+                        // Whisper's audio-based LID (auto mode only;
+                        // `None` when a language hint was passed).
+                        model_detected_language = first.language.clone();
+
+                        // L.O.B.A: a guess outside the user's languages is
+                        // overruled and the audio transcribed again.
+                        let steer = match (&run_options.language, &first.language) {
+                            (None, Some(heard)) if run_options.target_language.is_none() => {
+                                loba_core::languages::steer(heard, &first.text, &spoken)
+                                    .filter(|l| model_languages.iter().any(|m| m == l))
+                            }
+                            _ => None,
+                        };
+                        let Some(lang) = steer else {
+                            return Ok(first.text);
+                        };
+                        info!(
+                            "Heard {:?}, which isn't one of {:?}; transcribing again as '{}'",
+                            first.language, spoken, lang
+                        );
+                        let again = RunOptions {
+                            language: Some(lang.clone()),
+                            ..run_options.clone()
+                        };
+                        let second = session.run(&audio, &again).map_err(|e| {
+                            anyhow::anyhow!("transcribe-cpp transcription failed: {}", e)
+                        })?;
+                        applied_language_hint = Some(lang);
+                        model_detected_language = None;
+                        Ok(second.text)
                     }
                     LoadedEngine::Parakeet(parakeet_engine) => {
                         let params = ParakeetParams {

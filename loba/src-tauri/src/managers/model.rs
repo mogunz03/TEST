@@ -644,7 +644,7 @@ impl ModelManager {
                 accuracy_score: 0.80,
                 speed_score: 0.40,
                 supports_translation: false, // Turbo doesn't support translation
-                is_recommended: false,
+                is_recommended: true,
                 supported_languages: whisper_languages.clone(),
                 supports_language_selection: true,
                 is_custom: false,
@@ -935,7 +935,7 @@ impl ModelManager {
             ModelInfo {
                 id: "sense-voice-int8".to_string(),
                 name: "SenseVoice Small (ONNX)".to_string(),
-                description: "Mandarin-first, very fast. Chinese, Cantonese, English, Japanese, Korean; auto language detect. No French — use Whisper for FR."
+                description: "Mandarin-first, very fast. Chinese, Cantonese, English, Japanese, Korean; auto language detect. No French: use Whisper Turbo for that."
                     .to_string(),
                 filename: "sense-voice-int8".to_string(),
                 source: ModelSource::Url {
@@ -954,7 +954,7 @@ impl ModelManager {
                 accuracy_score: 0.65,
                 speed_score: 0.95,
                 supports_translation: false,
-                is_recommended: true,
+                is_recommended: false,
                 supported_languages: sense_voice_languages,
                 supports_language_selection: true,
                 is_custom: false,

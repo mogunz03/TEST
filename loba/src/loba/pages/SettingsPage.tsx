@@ -8,6 +8,7 @@ import { ShortcutField } from "../ShortcutDialog";
 import { useLoba } from "../useOllama";
 import { commands } from "@/bindings";
 import { Cleanup } from "./Cleanup";
+import { LanguagesGroup } from "../LanguagesGroup";
 
 export type SettingsTab = "general" | "cleanup" | "engine";
 const TABS: SettingsTab[] = ["general", "cleanup", "engine"];
@@ -112,6 +113,8 @@ const General: React.FC = () => {
           />
         </Row>
       </Group>
+
+      <LanguagesGroup />
 
       <Group label={t("settings.app")}>
         <Row label={t("settings.sound.label")} note={t("settings.sound.note")}>

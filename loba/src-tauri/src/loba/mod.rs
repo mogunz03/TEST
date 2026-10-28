@@ -33,11 +33,15 @@ pub struct LobaState {
 
 impl LobaState {
     pub fn config(&self) -> LobaConfig {
-        self.config.get()
+        let c = self.config.get();
+        publish_languages(&c);
+        c
     }
 
     pub fn set_config(&self, next: LobaConfig) -> Result<LobaConfig, String> {
-        self.config.set(next)
+        let c = self.config.set(next)?;
+        publish_languages(&c);
+        Ok(c)
     }
 
     pub fn dictionary(&self) -> Dictionary {
@@ -70,6 +74,12 @@ impl LobaState {
         if let Err(e) = self.stats.set(s) {
             log::warn!("Could not save stats: {e}");
         }
+    }
+
+    /// A history redo runs for the app the dictation was first made in, so
+    /// it gets that app's style rather than L.O.B.A's own.
+    pub fn set_target(&self, ctx: AppContext) {
+        *self.target.lock().unwrap_or_else(|p| p.into_inner()) = Some(ctx);
     }
 
     fn take_target(&self) -> Option<AppContext> {
@@ -127,6 +137,7 @@ pub fn init(app: &AppHandle) {
         target: Mutex::new(None),
     });
     publish_whisper_prompt(&state.dictionary.get());
+    publish_languages(&cfg);
     prewarm(&state);
     app.manage(state);
 }
@@ -143,6 +154,19 @@ fn publish_whisper_prompt(d: &Dictionary) {
     if let Ok(mut p) = WHISPER_PROMPT.write() {
         *p = d.whisper_prompt();
     }
+}
+
+static SPOKEN: Lazy<RwLock<Vec<String>>> = Lazy::new(|| RwLock::new(Vec::new()));
+
+fn publish_languages(c: &LobaConfig) {
+    if let Ok(mut l) = SPOKEN.write() {
+        *l = c.languages.clone();
+    }
+}
+
+/// The languages the user said they speak (empty: any).
+pub fn spoken_languages() -> Vec<String> {
+    SPOKEN.read().map(|l| l.clone()).unwrap_or_default()
 }
 
 /// Initial prompt for whisper-family models: Handy's custom words (if any)

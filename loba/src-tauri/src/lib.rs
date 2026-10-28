@@ -776,6 +776,7 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_probe_frontmost,
             loba::commands::loba_history,
             loba::commands::loba_copy,
+            loba::commands::loba_redo_dictation,
             loba::commands::loba_get_stats,
             loba::commands::loba_meeting_start,
             loba::commands::loba_meeting_stop,

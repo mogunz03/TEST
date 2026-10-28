@@ -176,6 +176,75 @@ pub fn loba_copy(app: tauri::AppHandle, text: String) -> Result<(), String> {
     app.clipboard().write_text(text).map_err(|e| e.to_string())
 }
 
+/// Transcribe a past dictation again in `language`, clean it up for the app
+/// it was made in, save it over the old text and put it on the clipboard.
+/// For when Whisper picked the wrong language and the words came out wrong.
+#[tauri::command]
+#[specta::specta]
+pub async fn loba_redo_dictation(
+    app: tauri::AppHandle,
+    state: State<'_, Arc<LobaState>>,
+    history: State<'_, Arc<crate::managers::history::HistoryManager>>,
+    transcription: State<'_, Arc<crate::managers::transcription::TranscriptionManager>>,
+    id: i64,
+    language: String,
+) -> Result<String, String> {
+    use tauri_plugin_clipboard_manager::ClipboardExt;
+
+    let entry = history
+        .get_entry_by_id(id)
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or("That dictation is gone from history")?;
+    let samples =
+        crate::audio_toolkit::read_wav_samples(history.get_audio_file_path(&entry.file_name))
+            .map_err(|_| "The recording for this dictation was not kept".to_string())?;
+    if samples.is_empty() {
+        return Err("The recording for this dictation is empty".into());
+    }
+
+    transcription.initiate_model_load();
+    let tm = Arc::clone(&transcription);
+    let raw =
+        tauri::async_runtime::spawn_blocking(move || tm.transcribe_as(samples, Some(language)))
+            .await
+            .map_err(|e| e.to_string())?
+            .map_err(|e| e.to_string())?;
+    if raw.trim().is_empty() {
+        return Err("No speech found in the recording".into());
+    }
+
+    let row_app = history
+        .loba_recent(500)
+        .ok()
+        .and_then(|rows| rows.into_iter().find(|r| r.id == id))
+        .and_then(|r| r.app);
+    state.set_target(AppContext {
+        name: row_app,
+        ..Default::default()
+    });
+
+    let processed =
+        crate::actions::process_transcription_output(&app, &raw, entry.post_process_requested)
+            .await;
+    let text = processed.final_text.clone();
+    history
+        .update_transcription(
+            id,
+            raw,
+            processed.post_processed_text,
+            processed.post_process_prompt,
+        )
+        .map_err(|e| e.to_string())?;
+    if let Some(loba) = &processed.loba {
+        super::record_history(&app, &history, id, loba);
+    }
+    app.clipboard()
+        .write_text(text.clone())
+        .map_err(|e| e.to_string())?;
+    Ok(text)
+}
+
 // --- meetings ----------------------------------------------------------------
 
 #[tauri::command]

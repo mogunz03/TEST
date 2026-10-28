@@ -214,7 +214,7 @@ const StyleSelect: React.FC<{
   </select>
 );
 
-/** "Switch to an app — L.O.B.A will tell you what it sees." */
+/** "Switch to an app, L.O.B.A will tell you what it sees." */
 const Detect: React.FC = () => {
   const { t } = useTranslation("loba");
   const [phase, setPhase] = useState<"idle" | "waiting" | Probe>("idle");

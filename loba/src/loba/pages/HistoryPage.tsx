@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
+import { toast } from "sonner";
 import { Check, Copy } from "lucide-react";
+import { useModelStore } from "@/stores/modelStore";
 import { loba, type HistoryRow } from "../api";
 import { Empty, PageTitle } from "../controls";
+import { FALLBACK, hears, nameOf } from "../languages";
 
 const DOT: Record<string, string> = {
   cleaned: "text-ok",
@@ -17,6 +20,16 @@ const dayKey = (ts: number) => new Date(ts * 1000).toDateString();
 export const HistoryPage: React.FC = () => {
   const { t, i18n } = useTranslation("loba");
   const [rows, setRows] = useState<HistoryRow[] | null>(null);
+  const [spoken, setSpoken] = useState<string[]>([]);
+  const { models, currentModel } = useModelStore();
+  const model = models.find((m) => m.id === currentModel);
+  const redoIn = (spoken.length > 0 ? spoken : FALLBACK).filter((c) =>
+    hears(model, c),
+  );
+
+  useEffect(() => {
+    loba.getConfig().then((c) => setSpoken(c.languages));
+  }, []);
 
   const refresh = useCallback(() => {
     loba.history(50).then(setRows);
@@ -68,7 +81,7 @@ export const HistoryPage: React.FC = () => {
           <h2 className="loba-label mb-2 ps-1">{dayLabel(day.ts)}</h2>
           <div className="loba-card divide-y divide-line">
             {day.rows.map((row) => (
-              <Item key={row.id} row={row} />
+              <Item key={row.id} row={row} redoIn={redoIn} onRedone={refresh} />
             ))}
           </div>
         </section>
@@ -77,9 +90,14 @@ export const HistoryPage: React.FC = () => {
   );
 };
 
-const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
+const Item: React.FC<{
+  row: HistoryRow;
+  redoIn: string[];
+  onRedone: () => void;
+}> = ({ row, redoIn, onRedone }) => {
   const { t, i18n } = useTranslation("loba");
   const [showRaw, setShowRaw] = useState(false);
+  const [redo, setRedo] = useState<"closed" | "open" | "busy">("closed");
   const [copied, setCopied] = useState<"final" | "raw" | null>(null);
 
   const final = row.cleaned ?? row.raw;
@@ -98,6 +116,21 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
     await loba.copy(which === "raw" ? row.raw : final);
     setCopied(which);
     setTimeout(() => setCopied(null), 1200);
+  };
+
+  const redoAs = async (code: string) => {
+    setRedo("busy");
+    try {
+      await loba.redoDictation(row.id, code);
+      toast.success(t("history.redo.done", { lang: nameOf(code) }), {
+        description: t("history.redo.copied"),
+      });
+      onRedone();
+    } catch (e) {
+      toast.error(t("history.redo.failed"), { description: String(e) });
+    } finally {
+      setRedo("closed");
+    }
   };
 
   return (
@@ -139,6 +172,45 @@ const Item: React.FC<{ row: HistoryRow }> = ({ row }) => {
             >
               {showRaw ? t("history.hideRaw") : t("history.showRaw")}
             </button>
+          )}
+          {redo === "busy" ? (
+            <span className="inline-flex items-center gap-2 text-ink">
+              <span className="loba-dot text-steel" data-live="true" />
+              {t("history.redo.busy")}
+            </span>
+          ) : redo === "open" ? (
+            <span className="inline-flex items-center gap-1">
+              <span className="me-1.5">{t("history.redo.as")}</span>
+              {redoIn.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => redoAs(code)}
+                  className="h-[22px] px-2 rounded-full border border-line-strong text-ink hover:bg-raised cursor-pointer"
+                >
+                  {nameOf(code)}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setRedo("closed")}
+                className="ms-1.5 text-faint hover:text-ink cursor-pointer"
+              >
+                {t("history.redo.cancel")}
+              </button>
+            </span>
+          ) : (
+            redoIn.length > 0 && (
+              // Quiet until the row is hovered or focused: most dictations
+              // come out right, and the list shouldn't read as a list of doubts.
+              <button
+                type="button"
+                onClick={() => setRedo("open")}
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:text-ink cursor-pointer"
+              >
+                {t("history.redo.open")}
+              </button>
+            )
           )}
           <span
             className={`inline-flex items-center gap-1 transition-opacity ${

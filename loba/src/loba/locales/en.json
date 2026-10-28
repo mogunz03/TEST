@@ -199,6 +199,15 @@
       "timed_out": "Ran out of time, pasted raw",
       "fallback": "Pasted raw ({{detail}})",
       "skipped": "Not rewritten ({{detail}})"
+    },
+    "redo": {
+      "open": "Wrong language?",
+      "as": "Hear it again as",
+      "cancel": "Cancel",
+      "busy": "Listening again…",
+      "done": "Redone in {{lang}}",
+      "copied": "It's on your clipboard. Paste it over the old text.",
+      "failed": "Couldn't redo this one"
     }
   },
   "shortcuts": {
@@ -275,5 +284,22 @@
     "transcript": "Transcript",
     "nothingHeard": "Nothing was heard.",
     "back": "Meetings"
+  },
+  "languages": {
+    "group": "Languages",
+    "label": "Languages you speak",
+    "noneNote": "Pick the ones you dictate in. With no list, L.O.B.A goes with the speech model's guess, and a short or accented clip can come out in the wrong language.",
+    "oneNote": "Every dictation is transcribed as {{lang}}. Nothing to guess.",
+    "manyNote": "Each dictation is written in whichever of these you're speaking. If the speech model guesses a language you didn't pick, it listens again in the closest one you did.",
+    "fit": {
+      "cant": "{{model}} can't hear {{langs}}.",
+      "download": "{{model}} hears all of them. It's a {{size}} GB download and runs on this Mac.",
+      "ready": "{{model}} hears all of them and is already on this Mac.",
+      "switch": "Use {{model}}",
+      "switching": "Switching…",
+      "downloading": "Downloading {{pct}}%",
+      "switched": "Now using {{model}}",
+      "failed": "The download didn't start. Try again under Settings, Engine, Models."
+    }
   }
 }

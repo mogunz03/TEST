@@ -16,6 +16,8 @@ export interface LobaConfig {
   polished_timeout_ms: number;
   /** Press play/pause around a dictation when media is playing. */
   pause_media: boolean;
+  /** Languages the user speaks. Empty: trust the speech model's guess. */
+  languages: string[];
   keep_alive: string;
 }
 
@@ -127,6 +129,10 @@ export const loba = {
     invoke<Probe>("loba_probe_frontmost", { delayMs }),
   history: (limit = 50) => invoke<HistoryRow[]>("loba_history", { limit }),
   copy: (text: string) => invoke<void>("loba_copy", { text }),
+  /** Transcribe a past dictation again in `language`; returns the new text,
+   *  already on the clipboard. */
+  redoDictation: (id: number, language: string) =>
+    invoke<string>("loba_redo_dictation", { id, language }),
   stats: () => invoke<StatsView>("loba_get_stats"),
   meetingStart: () => invoke<MeetingStatus>("loba_meeting_start"),
   /** Resolves with the id; the recap arrives later (loba:meetings-changed). */
