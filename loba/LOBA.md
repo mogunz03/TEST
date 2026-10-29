@@ -321,3 +321,15 @@ site.
 No telemetry, no accounts. The updater has no endpoints and update checks are
 off by default. The only network use is the model download you start yourself
 in onboarding or Settings → Engine → Models.
+
+## Download page (asmbly.store)
+
+`site/loba-download.html` is a self-contained block for the product page: a
+$1 to $25 slider, "Pay $N and download" through Stripe Checkout, and "Skip
+this time", which downloads straight away. Set `dmgUrl` and
+`checkoutEndpoint` in its `LOBA_DOWNLOAD` config.
+
+`site/loba-checkout.ts` is the server side: one function that creates the
+Checkout session for the chosen amount (whole dollars, $1 to $500). It needs
+`STRIPE_SECRET_KEY`, `LOBA_SUCCESS_URL` and `LOBA_CANCEL_URL`, and runs as a
+Next.js route, a Netlify function, or behind any `fetch` handler.

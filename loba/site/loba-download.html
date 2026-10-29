@@ -1,0 +1,376 @@
+<!--
+  L.O.B.A download block for asmbly.store.
+
+  Drop this whole file's <section>, <style> and <script> into the product
+  page. Set the two values in LOBA_DOWNLOAD below. Pay-what-you-want goes
+  through Stripe Checkout (see loba-checkout.ts); "Skip this time" downloads
+  straight away, no checkout, no email.
+
+  Colours are CSS variables on .loba-dl, so the marketplace theme can
+  override them without touching the rest.
+-->
+<section class="loba-dl" aria-labelledby="loba-dl-title">
+  <div class="loba-dl__head">
+    <svg class="loba-dl__mark" viewBox="0 0 28 16" aria-hidden="true">
+      <rect x="0" y="2" width="2.4" height="12" rx="1.2" />
+      <rect x="5" y="4" width="2.4" height="8" rx="1.2" />
+      <rect x="10" y="5.5" width="2.4" height="5" rx="1.2" />
+      <rect x="15" y="6.5" width="2.4" height="3" rx="1.2" />
+      <circle cx="22.6" cy="8" r="1.7" class="loba-dl__dot" />
+    </svg>
+    <h2 id="loba-dl-title">L.O.B.A for Mac</h2>
+  </div>
+  <p class="loba-dl__lede">
+    Hold a key, talk, let go. Clean text lands wherever you're typing, in
+    English, French or Chinese. It runs on your Mac and nothing leaves it.
+  </p>
+
+  <div class="loba-dl__give">
+    <div class="loba-dl__amount-row">
+      <label for="loba-dl-range" class="loba-dl__label">
+        Free to use. If it saves you time, pay what feels right.
+      </label>
+      <output id="loba-dl-out" for="loba-dl-range" class="loba-dl__amount">
+        $5
+      </output>
+    </div>
+    <input
+      id="loba-dl-range"
+      type="range"
+      min="1"
+      max="25"
+      step="1"
+      value="5"
+      aria-describedby="loba-dl-note"
+    />
+    <div class="loba-dl__ticks" aria-hidden="true">
+      <span>$1</span><span>$25</span>
+    </div>
+    <p id="loba-dl-note" class="loba-dl__note">A coffee</p>
+  </div>
+
+  <div class="loba-dl__actions">
+    <button type="button" id="loba-dl-pay" class="loba-dl__pay">
+      Pay $5 and download
+    </button>
+    <a id="loba-dl-skip" class="loba-dl__skip" href="#">Skip this time</a>
+  </div>
+  <p class="loba-dl__error" id="loba-dl-error" role="alert" hidden></p>
+
+  <p class="loba-dl__fine">
+    For Apple Silicon Macs. Cleanup uses
+    <a href="https://ollama.com/download" rel="noopener">Ollama</a>, free and
+    also local. Payments are handled by Stripe.
+  </p>
+</section>
+
+<style>
+  .loba-dl {
+    --dl-bg: #0d0f12;
+    --dl-card: #14171b;
+    --dl-line: #22262c;
+    --dl-ink: #e9ecf0;
+    --dl-soft: #8b929c;
+    --dl-faint: #5b626c;
+    --dl-steel: #b9c4d2;
+    --dl-warn: #c9a46a;
+    box-sizing: border-box;
+    max-width: 520px;
+    padding: 28px;
+    border: 1px solid var(--dl-line);
+    border-radius: 18px;
+    background: var(--dl-bg);
+    color: var(--dl-ink);
+    font:
+      15px/1.5 -apple-system,
+      BlinkMacSystemFont,
+      "SF Pro Text",
+      "Inter",
+      system-ui,
+      sans-serif;
+  }
+  .loba-dl *,
+  .loba-dl *::before {
+    box-sizing: border-box;
+  }
+  .loba-dl__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .loba-dl__mark {
+    width: 28px;
+    height: 16px;
+    fill: var(--dl-ink);
+  }
+  .loba-dl__dot {
+    fill: var(--dl-steel);
+  }
+  .loba-dl h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  .loba-dl__lede {
+    margin: 10px 0 0;
+    color: var(--dl-soft);
+    max-width: 42ch;
+  }
+
+  .loba-dl__give {
+    margin-top: 24px;
+    padding: 18px 18px 14px;
+    border: 1px solid var(--dl-line);
+    border-radius: 13px;
+    background: var(--dl-card);
+  }
+  .loba-dl__amount-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .loba-dl__label {
+    font-size: 13.5px;
+    color: var(--dl-soft);
+    max-width: 30ch;
+  }
+  /* The number is the loudest thing in the card: it is the decision. */
+  .loba-dl__amount {
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    min-width: 3ch;
+    text-align: end;
+  }
+
+  .loba-dl input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 28px;
+    margin: 14px 0 0;
+    background: transparent;
+    cursor: pointer;
+    --fill: 16.7%;
+  }
+  .loba-dl input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+      to right,
+      var(--dl-ink) var(--fill),
+      var(--dl-line) var(--fill)
+    );
+  }
+  .loba-dl input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--dl-line);
+  }
+  .loba-dl input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--dl-ink);
+  }
+  /* The thumb grows a little under the finger, then settles. */
+  .loba-dl input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -7px;
+    border-radius: 50%;
+    background: var(--dl-ink);
+    box-shadow: 0 0 0 5px var(--dl-card);
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .loba-dl input[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.18);
+  }
+  .loba-dl input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--dl-ink);
+    box-shadow: 0 0 0 5px var(--dl-card);
+  }
+  /* Focus rings the thumb, not the whole track. */
+  .loba-dl input[type="range"]:focus-visible {
+    outline: none;
+  }
+  .loba-dl input[type="range"]:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      0 0 0 5px var(--dl-card),
+      0 0 0 7px var(--dl-steel);
+  }
+  .loba-dl input[type="range"]:focus-visible::-moz-range-thumb {
+    box-shadow:
+      0 0 0 5px var(--dl-card),
+      0 0 0 7px var(--dl-steel);
+  }
+  .loba-dl__ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--dl-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .loba-dl__note {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--dl-ink);
+    min-height: 1.5em;
+  }
+
+  .loba-dl__actions {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .loba-dl__pay {
+    height: 44px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--dl-ink);
+    color: #07080a;
+    font: 600 15px/1 inherit;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition:
+      transform 120ms ease,
+      opacity 120ms ease;
+  }
+  .loba-dl__pay:active {
+    transform: translateY(1px);
+  }
+  .loba-dl__pay[aria-busy="true"] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .loba-dl__pay:focus-visible,
+  .loba-dl__skip:focus-visible {
+    outline: 2px solid var(--dl-steel);
+    outline-offset: 3px;
+  }
+  /* Skipping is a real choice, so it reads as one: plain, not greyed out. */
+  .loba-dl__skip {
+    color: var(--dl-soft);
+    font-size: 14px;
+    text-decoration: underline;
+    text-decoration-color: var(--dl-line);
+    text-underline-offset: 4px;
+    transition:
+      color 150ms ease,
+      text-decoration-color 150ms ease;
+  }
+  .loba-dl__skip:hover {
+    color: var(--dl-ink);
+    text-decoration-color: var(--dl-soft);
+  }
+  .loba-dl__error {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--dl-warn);
+  }
+  .loba-dl__fine {
+    margin: 22px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--dl-line);
+    font-size: 12.5px;
+    color: var(--dl-faint);
+  }
+  .loba-dl__fine a {
+    color: var(--dl-soft);
+  }
+  @media (max-width: 480px) {
+    .loba-dl {
+      padding: 22px 18px;
+      border-radius: 14px;
+    }
+    .loba-dl__pay {
+      width: 100%;
+    }
+    .loba-dl__actions {
+      justify-content: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .loba-dl * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<script>
+  window.LOBA_DOWNLOAD = window.LOBA_DOWNLOAD || {
+    // Where the DMG lives (GitHub Release asset, S3, the marketplace's own
+    // file storage). Must be a direct file link.
+    dmgUrl: "https://example.com/L.O.B.A_1.0.0_aarch64.dmg",
+    // The server function from loba-checkout.ts.
+    checkoutEndpoint: "/api/loba-checkout",
+  };
+
+  (() => {
+    const cfg = window.LOBA_DOWNLOAD;
+    const range = document.getElementById("loba-dl-range");
+    const out = document.getElementById("loba-dl-out");
+    const note = document.getElementById("loba-dl-note");
+    const pay = document.getElementById("loba-dl-pay");
+    const skip = document.getElementById("loba-dl-skip");
+    const error = document.getElementById("loba-dl-error");
+
+    // Each band says what the money is in everyday terms.
+    const meaning = (n) =>
+      n <= 2
+        ? "Every bit helps"
+        : n <= 6
+          ? "A coffee"
+          : n <= 14
+            ? "Lunch"
+            : "Keeps the lights on for a while";
+
+    const render = () => {
+      const n = Number(range.value);
+      const pct = ((n - range.min) / (range.max - range.min)) * 100;
+      range.style.setProperty("--fill", pct + "%");
+      out.textContent = "$" + n;
+      note.textContent = meaning(n);
+      pay.textContent = "Pay $" + n + " and download";
+      range.setAttribute("aria-valuetext", "$" + n + ", " + meaning(n));
+    };
+
+    range.addEventListener("input", render);
+    render();
+
+    skip.href = cfg.dmgUrl;
+    skip.setAttribute("download", "");
+
+    pay.addEventListener("click", async () => {
+      error.hidden = true;
+      pay.setAttribute("aria-busy", "true");
+      try {
+        const res = await fetch(cfg.checkoutEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: Number(range.value) }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || "No checkout");
+        window.location.href = data.url;
+      } catch {
+        pay.removeAttribute("aria-busy");
+        error.textContent =
+          "Checkout didn't open. Try again in a moment, or use Skip this time to download for free.";
+        error.hidden = false;
+      }
+    });
+  })();
+</script>
