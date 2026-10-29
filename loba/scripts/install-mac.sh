@@ -18,8 +18,17 @@ dmg=$(ls -t "$HOME"/Downloads/L.O.B.A_*.dmg 2>/dev/null | head -1 || true)
 [[ -n "$dmg" ]] || fail "No L.O.B.A_*.dmg in ~/Downloads. Run ./scripts/build-mac.sh first."
 say "Installing $(basename "$dmg") ($(date -r "$dmg" '+%d %b %H:%M'))"
 
+# Quit the running copy. If it is still there after a few seconds, stop it:
+# otherwise `open` below would just bring back the old version.
 osascript -e 'quit app "L.O.B.A"' >/dev/null 2>&1 || true
-sleep 1
+for _ in 1 2 3 4 5; do
+  pgrep -f "$DEST/Contents/MacOS/" >/dev/null || break
+  sleep 1
+done
+if pgrep -f "$DEST/Contents/MacOS/" >/dev/null; then
+  pkill -f "$DEST/Contents/MacOS/" || true
+  sleep 1
+fi
 
 # An older DMG left mounted has the same volume name; detach them all so the
 # copy below can only come from this one.
@@ -44,4 +53,5 @@ fi
 
 signer=$(codesign -dvv "$DEST" 2>&1 | sed -n 's/^Authority=//p' | head -1)
 say "Signed by: ${signer:-ad-hoc}"
+say "Installed $(basename "$dmg"), built $(date -r "$dmg" '+%d %b %H:%M')."
 open "$DEST"
