@@ -111,6 +111,11 @@
     "about": {
       "label": "About",
       "version": "Version",
+      "support": {
+        "label": "Support L.O.B.A",
+        "note": "It's free and stays free. If it saves you time, you can chip in whatever feels right.",
+        "action": "Chip in"
+      },
       "handy": {
         "label": "Built on Handy",
         "note": "Recording, transcription and pasting come from Handy by CJ Pais, used under the MIT License. Copyright (c) 2025 CJ Pais.",

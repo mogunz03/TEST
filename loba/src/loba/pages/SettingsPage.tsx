@@ -178,6 +178,10 @@ const General: React.FC = () => {
   );
 };
 
+/** Where "Support L.O.B.A" goes: the download page with the pay-what-you-want
+ *  slider. Point it at the product page itself once that has its own URL. */
+const SUPPORT_URL = "https://asmbly.store";
+
 /** Version and the credit Handy's MIT license asks for. The license text
  *  itself ships in the app bundle (Resources/LICENSE-Handy.txt). */
 const About: React.FC = () => {
@@ -195,6 +199,18 @@ const About: React.FC = () => {
         <span className="text-[13px] text-soft tabular-nums select-text">
           {version}
         </span>
+      </Row>
+      <Row
+        label={t("settings.about.support.label")}
+        note={t("settings.about.support.note")}
+      >
+        <button
+          type="button"
+          className="loba-btn loba-btn-ghost"
+          onClick={() => openUrl(SUPPORT_URL).catch(() => {})}
+        >
+          {t("settings.about.support.action")}
+        </button>
       </Row>
       <Row
         label={t("settings.about.handy.label")}
