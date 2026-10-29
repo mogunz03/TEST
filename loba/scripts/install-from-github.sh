@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Install the app GitHub built, without building on this Mac (no 6 GB needed).
 #
-#   1. On GitHub: Actions → the latest "L.O.B.A — macOS" run → Artifacts →
+#   1. On GitHub: Actions, the latest L.O.B.A macOS run, Artifacts:
 #      L.O.B.A-macos-arm64-… (downloads a zip into ~/Downloads).
 #   2. ./scripts/install-from-github.sh
 #
