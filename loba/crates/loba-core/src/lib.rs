@@ -21,6 +21,7 @@ pub mod prompt;
 pub mod stats;
 pub mod styles;
 pub mod system_audio;
+pub mod voices;
 
 pub use cleanup::{clean, Cleaned, CleanupJob, Outcome};
 pub use config::LobaConfig;

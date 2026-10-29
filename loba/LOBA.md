@@ -322,6 +322,26 @@ No telemetry, no accounts. The updater has no endpoints and update checks are
 off by default. The only network use is the model download you start yourself
 in onboarding or Settings → Engine → Models.
 
+## Who said what (meetings)
+
+- **You** is the microphone. With the Mac's speakers on, the mic also hears
+  the call; those stretches are dropped. The check compares loudness over
+  time: an echo rises and falls with the call a few milliseconds later, and
+  you talking (alone or over the call) doesn't (`loba_core::voices::is_echo`).
+- **Speaker A, B, C** are the call, told apart by voice. Meetings → _Tell
+  the voices on the call apart_ → Download fetches a 26 MB speaker model
+  (WeSpeaker ResNet34, from the sherpa-onnx releases on GitHub, hash
+  checked) into `loba/models/`. Nothing downloads unless you click.
+- The call is split at pauses; each piece of at least a second gets a voice
+  fingerprint, and pieces are grouped by similarity (average linkage,
+  threshold 0.36). Grouping reruns as the meeting goes and once more at the
+  end. Tested on a four-speaker recording: four speakers, every sentence
+  placed.
+- Without the model, the whole call stays "Others", as before.
+- Click a name in a meeting (the chips under the recap, or in the
+  transcript) to rename that voice. The transcript, the copy-out and the
+  existing recap all change; no need to write the recap again.
+
 ## Download page (asmbly.store)
 
 `site/loba-download.html` is a self-contained block for the product page: a

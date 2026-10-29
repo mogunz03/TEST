@@ -249,6 +249,30 @@ pub async fn loba_redo_dictation(
 
 #[tauri::command]
 #[specta::specta]
+pub fn loba_voice_model_status(app: tauri::AppHandle) -> super::voices::VoiceModelStatus {
+    super::voices::status(&app)
+}
+
+/// Fetch the voice model (26 MB). Only ever runs when the user asks.
+#[tauri::command]
+#[specta::specta]
+pub async fn loba_voice_model_download(app: tauri::AppHandle) -> Result<(), String> {
+    super::voices::download(&app).await
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_rename_voice(
+    app: tauri::AppHandle,
+    id: String,
+    voice: u32,
+    name: String,
+) -> Result<loba_core::meeting::Meeting, String> {
+    super::meeting::rename_voice(&app, &id, voice, &name)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn loba_meeting_start(app: tauri::AppHandle) -> Result<super::meeting::MeetingStatus, String> {
     super::meeting::start(&app)
 }

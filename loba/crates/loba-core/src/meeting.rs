@@ -1,8 +1,10 @@
 //! Meetings: what was said, by whom, and a recap of it.
 //!
-//! Two audio sources give the speakers for free: the microphone is "You",
-//! the Mac's own output (the call) is "Others". Each is cut into chunks at
-//! quiet moments, transcribed as it goes, and kept as timestamped segments.
+//! Two audio sources give the first split for free: the microphone is
+//! "You", the Mac's own output (the call) is everyone else. With the voice
+//! model installed, the call is split further into Speaker A, B, C (see
+//! `voices`), and each can be renamed. Audio is cut into chunks at quiet
+//! moments, transcribed as it goes, and kept as timestamped segments.
 //! When the meeting ends, the local model writes the recap.
 
 use crate::cleanup::strip_think;
@@ -10,6 +12,7 @@ use crate::config::write_json;
 use crate::ollama::{Message, OllamaClient};
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -38,6 +41,9 @@ pub struct Segment {
     pub start_ms: u64,
     pub speaker: Speaker,
     pub text: String,
+    /// Which voice on the call, when voices were told apart.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub voice: Option<u32>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Type)]
@@ -54,6 +60,9 @@ pub struct Meeting {
     /// False when only the microphone could be recorded (no permission for
     /// system audio), so the recap knows "Others" weren't heard.
     pub system_audio: bool,
+    /// Names given to voices ("Mia" for voice 0). Unnamed ones read
+    /// "Speaker A", "Speaker B"…
+    pub names: BTreeMap<u32, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
@@ -89,18 +98,55 @@ impl Meeting {
         }
     }
 
+    /// What to call whoever said this segment.
+    pub fn who(&self, s: &Segment) -> String {
+        match (s.speaker, s.voice) {
+            (Speaker::Others, Some(v)) => self.voice_name(v),
+            (speaker, _) => speaker.label().to_string(),
+        }
+    }
+
+    pub fn voice_name(&self, voice: u32) -> String {
+        self.names
+            .get(&voice)
+            .cloned()
+            .unwrap_or_else(|| crate::voices::default_name(voice))
+    }
+
+    /// Give a voice a name, everywhere: the transcript reads it from
+    /// `names`, and the recap, already written, has the old name swapped
+    /// out so it doesn't need writing again. An empty name goes back to
+    /// "Speaker A".
+    pub fn rename_voice(&mut self, voice: u32, name: &str) {
+        let old = self.voice_name(voice);
+        let name = name.trim();
+        if name.is_empty() {
+            self.names.remove(&voice);
+        } else {
+            self.names.insert(voice, name.chars().take(40).collect());
+        }
+        let new = self.voice_name(voice);
+        if let Some(r) = &mut self.recap {
+            *r = replace_name(r, &old, &new);
+        }
+    }
+
+    /// Store a freshly written recap. Voices named while it was being
+    /// written still appear as "Speaker A" in it, so swap those in.
+    pub fn set_recap(&mut self, recap: String) {
+        let mut r = recap;
+        for (&voice, name) in &self.names {
+            r = replace_name(&r, &crate::voices::default_name(voice), name);
+        }
+        self.recap = Some(r);
+        self.recap_error = None;
+    }
+
     /// "[03:12] You: words", one line per segment.
     pub fn transcript(&self) -> String {
         self.segments
             .iter()
-            .map(|s| {
-                format!(
-                    "[{}] {}: {}",
-                    clock(s.start_ms),
-                    s.speaker.label(),
-                    s.text.trim()
-                )
-            })
+            .map(|s| format!("[{}] {}: {}", clock(s.start_ms), self.who(s), s.text.trim()))
             .collect::<Vec<_>>()
             .join("\n")
     }
@@ -117,12 +163,33 @@ impl Meeting {
             out.push_str(&format!(
                 "**{}** {} {}\n\n",
                 clock(s.start_ms),
-                s.speaker.label(),
+                self.who(s),
                 s.text.trim()
             ));
         }
         out
     }
+}
+
+/// Swap a speaker's name for another, only where it stands as a whole name
+/// ("Speaker A" changes, "Speaker AB" and "Mia's" partly do not).
+fn replace_name(text: &str, old: &str, new: &str) -> String {
+    if old.is_empty() || old == new {
+        return text.to_string();
+    }
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(at) = rest.find(old) {
+        let before = rest[..at].chars().next_back();
+        let after = rest[at + old.len()..].chars().next();
+        let whole =
+            !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric);
+        out.push_str(&rest[..at]);
+        out.push_str(if whole { new } else { old });
+        rest = &rest[at + old.len()..];
+    }
+    out.push_str(rest);
+    out
 }
 
 pub fn clock(ms: u64) -> String {
@@ -246,8 +313,9 @@ pub fn cut_point(buf: &[f32]) -> Option<usize> {
 pub const RECAP_RULES: &str = "\
 You write the recap of a meeting from its transcript, or from notes taken on each part of it. \
 Transcript lines look like \"[time] Speaker: words\". \"You\" is the person who recorded the meeting. \
-\"Others\" is everyone else on the call, possibly several people; when it is clear who someone is \
-(a name, a role), use that instead.
+The others on the call appear by name, as \"Speaker A\", \"Speaker B\" and so on, or all together as \"Others\". \
+Use the speaker labels exactly as written, even when the conversation suggests a name: \
+the person who recorded the meeting renames speakers themselves.
 
 Write the recap in the language most of the meeting was held in, as Markdown with these sections. \
 Leave out any section that would be empty.
@@ -387,7 +455,60 @@ mod tests {
             start_ms: ms,
             speaker,
             text: text.into(),
+            voice: None,
         }
+    }
+
+    #[test]
+    fn voices_read_as_letters_until_named() {
+        let mut m = sample();
+        m.segments[0].voice = Some(0);
+        m.segments[2].voice = Some(1);
+        m.recap = Some("- **Speaker A**: send the deck. Speaker AB is someone else.".into());
+        assert!(m.transcript().contains("Speaker A: Can we ship on Friday?"));
+        assert!(m.transcript().contains("Speaker B: Great."));
+
+        m.rename_voice(0, "  Mia ");
+        assert!(m.transcript().contains("Mia: Can we ship on Friday?"));
+        assert_eq!(
+            m.recap.as_deref(),
+            Some("- **Mia**: send the deck. Speaker AB is someone else.")
+        );
+        // renaming again swaps the name just given, and blank goes back
+        m.rename_voice(0, "Mia Chen");
+        assert!(m.recap.as_deref().unwrap().contains("**Mia Chen**"));
+        m.rename_voice(0, "");
+        assert!(m.recap.as_deref().unwrap().contains("**Speaker A**"));
+        assert!(m.names.is_empty());
+    }
+
+    #[test]
+    fn a_recap_written_before_a_rename_gets_the_name() {
+        let mut m = sample();
+        m.names.insert(1, "Mia".into());
+        m.recap_error = Some("old".into());
+        m.set_recap("- **Speaker B**: fix the bugs. Speaker A: nothing.".into());
+        assert_eq!(
+            m.recap.as_deref(),
+            Some("- **Mia**: fix the bugs. Speaker A: nothing.")
+        );
+        assert_eq!(m.recap_error, None);
+    }
+
+    #[test]
+    fn others_without_a_voice_stay_others() {
+        let m = sample();
+        assert!(m.transcript().contains("Others: Can we ship on Friday?"));
+    }
+
+    #[test]
+    fn meetings_saved_before_voices_still_load() {
+        let old = r#"{"id":"x","started_at":1,"duration_ms":2,"segments":[{"start_ms":0,"speaker":"others","text":"hi"}],"recap":null,"recap_error":null,"system_audio":true}"#;
+        let m: Meeting = serde_json::from_str(old).unwrap();
+        assert_eq!(m.segments[0].voice, None);
+        assert!(m.names.is_empty());
+        let round: Meeting = serde_json::from_str(&serde_json::to_string(&m).unwrap()).unwrap();
+        assert_eq!(round, m);
     }
 
     fn sample() -> Meeting {

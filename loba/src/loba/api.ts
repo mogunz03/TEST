@@ -80,6 +80,8 @@ export interface Segment {
   start_ms: number;
   speaker: Speaker;
   text: string;
+  /** Which voice on the call, when voices were told apart. */
+  voice?: number | null;
 }
 
 export interface Meeting {
@@ -93,6 +95,14 @@ export interface Meeting {
   recap_error: string | null;
   /** False when only the microphone was recorded. */
   system_audio: boolean;
+  /** Names given to voices, keyed by voice number. */
+  names: Record<string, string>;
+}
+
+export interface VoiceModelStatus {
+  installed: boolean;
+  downloading: boolean;
+  size_bytes: number;
 }
 
 export interface MeetingSummary {
@@ -144,6 +154,11 @@ export const loba = {
   meetingRecap: (id: string) => invoke<void>("loba_meeting_recap", { id }),
   meetingMarkdown: (id: string, title: string) =>
     invoke<string>("loba_meeting_markdown", { id, title }),
+  voiceModelStatus: () => invoke<VoiceModelStatus>("loba_voice_model_status"),
+  /** Progress: loba:voice-model-progress; done: loba:voice-model. */
+  voiceModelDownload: () => invoke<void>("loba_voice_model_download"),
+  renameVoice: (id: string, voice: number, name: string) =>
+    invoke<Meeting>("loba_meeting_rename_voice", { id, voice, name }),
   openScreenRecordingSettings: () =>
     invoke<void>("loba_open_screen_recording_settings"),
 };

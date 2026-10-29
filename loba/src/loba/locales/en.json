@@ -272,7 +272,8 @@
     "noRecap": "No recap",
     "speaker": {
       "you": "You",
-      "others": "Others"
+      "others": "Others",
+      "voice": "Speaker {{letter}}"
     },
     "saving": "Saving the meeting…",
     "docTitle": "Meeting, {{when}}",
@@ -288,7 +289,19 @@
     "confirmDelete": "Click again to delete",
     "transcript": "Transcript",
     "nothingHeard": "Nothing was heard.",
-    "back": "Meetings"
+    "back": "Meetings",
+    "onTheCall": "On the call",
+    "rename": "Rename this speaker",
+    "renameHint": "Click a name to change it everywhere, recap included.",
+    "renameFailed": "Couldn't rename",
+    "voices": {
+      "title": "Tell the voices on the call apart",
+      "note": "Without this, everyone on the call is one \"Others\". A {{mb}} MB voice model sorts them into Speaker A, B, C, which you can then name. It downloads once from GitHub and runs on this Mac.",
+      "download": "Download",
+      "downloading": "Downloading {{pct}}%",
+      "ready": "Voice model installed. It's used from the next meeting on.",
+      "failed": "The voice model didn't download"
+    }
   },
   "languages": {
     "group": "Languages",

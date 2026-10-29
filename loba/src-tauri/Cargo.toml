@@ -80,6 +80,9 @@ sha2 = "0.10"
 # transcribe-rs is now ONNX-only (Parakeet, Moonshine, SenseVoice, GigaAM,
 # Canary, Cohere). Per-platform backend features are added in the target tables.
 transcribe-rs = { version = "0.3.8", features = ["onnx"] }
+# L.O.B.A's voice model (meetings) runs on the same ONNX runtime as the
+# speech models; pinned to the version transcribe-rs uses.
+ort = { version = "=2.0.0-rc.12", default-features = false, features = ["std"] }
 transcribe-cpp = { version = "0.2.4", default-features = false }
 handy-keys = "0.3.4"
 ferrous-opencc = "0.2.3"

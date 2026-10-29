@@ -3,7 +3,13 @@ import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, RotateCw, Trash2 } from "lucide-react";
-import { loba, type Meeting, type MeetingSummary, type Segment } from "../api";
+import {
+  loba,
+  type Meeting,
+  type MeetingSummary,
+  type Segment,
+  type VoiceModelStatus,
+} from "../api";
 import { Empty, PageTitle } from "../controls";
 import { Markdown } from "../Markdown";
 import { clock, useMeetingStatus } from "../meetingStatus";
@@ -123,11 +129,13 @@ export const MeetingsPage: React.FC = () => {
                 {t("meetings.listening")}
               </p>
             ) : (
-              live.map((s, i) => <SegmentRow key={i} s={s} />)
+              live.map((s, i) => <SegmentRow key={i} s={s} names={{}} />)
             )}
           </div>
         </section>
       )}
+
+      <VoiceModelCard />
 
       {list.length === 0 && !recording && <Empty>{t("meetings.empty")}</Empty>}
       {list.length > 0 && (
@@ -191,18 +199,158 @@ const When: React.FC<{ ts: number }> = ({ ts }) => {
   );
 };
 
-const SegmentRow: React.FC<{ s: Segment }> = ({ s }) => {
+const letter = (v: number) =>
+  v < 26 ? String.fromCharCode(65 + v) : String(v + 1);
+
+/** "You", a name the user gave, "Speaker A", or "Others" for calls recorded
+ *  before voices were told apart. */
+function useSpeakerName() {
   const { t } = useTranslation("loba");
+  return (s: Segment, names: Record<string, string>) =>
+    s.speaker === "you"
+      ? t("meetings.speaker.you")
+      : s.voice != null
+        ? (names[s.voice] ??
+          t("meetings.speaker.voice", { letter: letter(s.voice) }))
+        : t("meetings.speaker.others");
+}
+
+const SegmentRow: React.FC<{
+  s: Segment;
+  names: Record<string, string>;
+  onRename?: (voice: number, name: string) => void;
+}> = ({ s, names, onRename }) => {
+  const name = useSpeakerName()(s, names);
   return (
-    <div className="grid grid-cols-[3.5rem_4.5rem_1fr] gap-x-3 text-[13px] leading-5">
+    <div className="grid grid-cols-[3.5rem_6.5rem_1fr] gap-x-3 text-[13px] leading-5">
       <span className="text-faint tabular-nums">{clock(s.start_ms)}</span>
-      <span
-        className={s.speaker === "you" ? "text-ink font-medium" : "text-soft"}
-      >
-        {t(`meetings.speaker.${s.speaker}`)}
-      </span>
+      {onRename && s.voice != null ? (
+        <VoiceName name={name} onSave={(n) => onRename(s.voice as number, n)} />
+      ) : (
+        <span
+          className={`truncate ${s.speaker === "you" ? "text-ink font-medium" : "text-soft"}`}
+        >
+          {name}
+        </span>
+      )}
       <span className="text-ink select-text">{s.text}</span>
     </div>
+  );
+};
+
+/** A speaker's name that turns into a text field on click. Enter or
+ *  clicking away saves; Escape puts it back. Empty goes back to "Speaker A". */
+const VoiceName: React.FC<{
+  name: string;
+  onSave: (name: string) => void;
+  chip?: boolean;
+}> = ({ name, onSave, chip }) => {
+  const { t } = useTranslation("loba");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+  const base = chip
+    ? "h-[26px] px-2.5 rounded-full border text-[12.5px]"
+    : "text-[13px] -mx-1 px-1 rounded-[5px]";
+
+  if (editing) {
+    const done = (save: boolean) => {
+      setEditing(false);
+      if (save && draft.trim() !== name) onSave(draft);
+    };
+    return (
+      <input
+        autoFocus
+        value={draft}
+        maxLength={40}
+        aria-label={t("meetings.rename")}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => e.currentTarget.select()}
+        onBlur={() => done(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") done(true);
+          if (e.key === "Escape") done(false);
+        }}
+        className={`${base} min-w-0 bg-void border border-line-strong text-ink outline-none focus:border-steel ${chip ? "w-36" : "w-full"}`}
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      title={t("meetings.rename")}
+      onClick={() => {
+        setDraft(name);
+        setEditing(true);
+      }}
+      className={`${base} truncate text-start text-soft hover:text-ink cursor-text transition-colors ${
+        chip
+          ? "border-line hover:border-line-strong"
+          : "hover:bg-raised decoration-line-strong underline-offset-4 hover:underline decoration-dotted"
+      }`}
+    >
+      {name}
+    </button>
+  );
+};
+
+/** Offer the voice model until it's installed. Nothing downloads unasked. */
+const VoiceModelCard: React.FC = () => {
+  const { t } = useTranslation("loba");
+  const [status, setStatus] = useState<VoiceModelStatus | null>(null);
+  const [pct, setPct] = useState<number | null>(null);
+
+  useEffect(() => {
+    loba.voiceModelStatus().then(setStatus);
+    const a = listen<VoiceModelStatus>("loba:voice-model", (e) => {
+      setStatus(e.payload);
+      setPct(null);
+    });
+    const b = listen<{ downloaded: number; total: number }>(
+      "loba:voice-model-progress",
+      (e) => setPct(Math.round((e.payload.downloaded / e.payload.total) * 100)),
+    );
+    return () => {
+      a.then((f) => f());
+      b.then((f) => f());
+    };
+  }, []);
+
+  if (!status || status.installed) return null;
+  const busy = status.downloading || pct !== null;
+  const download = async () => {
+    setPct(0);
+    try {
+      await loba.voiceModelDownload();
+      toast.success(t("meetings.voices.ready"));
+    } catch (e) {
+      setPct(null);
+      toast.error(t("meetings.voices.failed"), { description: String(e) });
+    }
+  };
+
+  return (
+    <section className="loba-card px-5 py-4 mb-7 flex items-start gap-6">
+      <div className="flex-1 min-w-0">
+        <div className="text-[13.5px] font-medium text-ink">
+          {t("meetings.voices.title")}
+        </div>
+        <p className="mt-1 text-[12.5px] leading-[18px] text-soft max-w-[420px]">
+          {t("meetings.voices.note", {
+            mb: Math.round(status.size_bytes / 1_000_000),
+          })}
+        </p>
+      </div>
+      <button
+        type="button"
+        className="loba-btn loba-btn-primary shrink-0 tabular-nums"
+        onClick={download}
+        disabled={busy}
+      >
+        {busy
+          ? t("meetings.voices.downloading", { pct: pct ?? 0 })
+          : t("meetings.voices.download")}
+      </button>
+    </section>
   );
 };
 
@@ -214,6 +362,7 @@ const Detail: React.FC<{
   const { t, i18n } = useTranslation("loba");
   const [m, setM] = useState<Meeting | null>(null);
   const [confirm, setConfirm] = useState(false);
+  const speakerName = useSpeakerName();
 
   const load = useCallback(() => {
     loba
@@ -245,6 +394,23 @@ const Detail: React.FC<{
       timeStyle: "short",
     }),
   });
+
+  const rename = async (voice: number, name: string) => {
+    try {
+      setM(await loba.renameVoice(m.id, voice, name));
+    } catch (e) {
+      toast.error(t("meetings.renameFailed"), { description: String(e) });
+    }
+  };
+
+  // Each voice once, in the order they first spoke.
+  const voices = [
+    ...new Set(
+      m.segments.flatMap((s) =>
+        s.speaker === "others" && s.voice != null ? [s.voice] : [],
+      ),
+    ),
+  ];
 
   const copy = async (what: "recap" | "all") => {
     const text =
@@ -344,13 +510,35 @@ const Detail: React.FC<{
         )}
       </section>
 
+      {voices.length > 0 && (
+        <div className="mt-8 flex flex-wrap items-center gap-1.5">
+          <span className="loba-label ps-1 me-2">
+            {t("meetings.onTheCall")}
+          </span>
+          {voices.map((v) => (
+            <VoiceName
+              key={v}
+              chip
+              name={speakerName(
+                { start_ms: 0, speaker: "others", text: "", voice: v },
+                m.names,
+              )}
+              onSave={(n) => rename(v, n)}
+            />
+          ))}
+          <span className="ms-2 text-[11.5px] text-faint">
+            {t("meetings.renameHint")}
+          </span>
+        </div>
+      )}
+
       <h2 className="loba-label mt-8 mb-2 ps-1">{t("meetings.transcript")}</h2>
       {m.segments.length === 0 ? (
         <Empty>{t("meetings.nothingHeard")}</Empty>
       ) : (
         <div className="loba-card px-5 py-4 flex flex-col gap-2.5">
           {m.segments.map((s, i) => (
-            <SegmentRow key={i} s={s} />
+            <SegmentRow key={i} s={s} names={m.names} onRename={rename} />
           ))}
         </div>
       )}

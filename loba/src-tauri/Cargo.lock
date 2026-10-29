@@ -2528,6 +2528,7 @@ dependencies = [
  "objc2-foundation",
  "objc2-service-management",
  "once_cell",
+ "ort",
  "rdev",
  "regex",
  "reqwest 0.12.28",
