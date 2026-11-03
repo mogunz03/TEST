@@ -187,6 +187,49 @@ fn match_at(chars: &[char], start: usize, pat: &[char]) -> Option<usize> {
     Some(i)
 }
 
+/// Letters and digits only, lowercased: "L.O.B.A." and "loba" compare equal.
+fn bare(s: &str) -> String {
+    s.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
+}
+
+/// True when a transcript is nothing but words from the Whisper hint.
+///
+/// Whisper is handed the dictionary terms before it listens. When a clip has
+/// little clear speech, it tends to write the hint back ("L.O.B.A.") instead
+/// of what was said. A transcript made only of hint terms is that echo, not
+/// dictation, and is dropped. Real speech that uses a term among other words
+/// is untouched.
+pub fn is_prompt_echo(text: &str, prompt: &str) -> bool {
+    let text = bare(text);
+    if text.is_empty() {
+        return false;
+    }
+    let terms: Vec<String> = prompt
+        .split(',')
+        .map(bare)
+        .filter(|t| !t.is_empty())
+        .collect();
+    // Can `text` be cut, end to end, into hint terms? (Terms may repeat.)
+    let chars: Vec<char> = text.chars().collect();
+    let mut reach = vec![false; chars.len() + 1];
+    reach[0] = true;
+    for i in 0..chars.len() {
+        if !reach[i] {
+            continue;
+        }
+        let rest: String = chars[i..].iter().collect();
+        for t in &terms {
+            if rest.starts_with(t.as_str()) {
+                reach[i + t.chars().count()] = true;
+            }
+        }
+    }
+    reach[chars.len()]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -284,5 +327,26 @@ mod tests {
         )
         .unwrap();
         assert_eq!(d.entries[1].sounds_like.len(), 0);
+    }
+
+    #[test]
+    fn the_hint_written_back_is_an_echo() {
+        let prompt = "Kubernetes, 通义千问, L.O.B.A";
+        assert!(is_prompt_echo("L.O.B.A.", prompt));
+        assert!(is_prompt_echo(" l.o.b.a ", prompt));
+        assert!(is_prompt_echo("L.O.B.A, Kubernetes.", prompt));
+        assert!(is_prompt_echo("通义千问。", prompt));
+        assert!(is_prompt_echo("L.O.B.A. L.O.B.A.", prompt));
+    }
+
+    #[test]
+    fn real_speech_using_a_term_is_kept() {
+        let prompt = "Kubernetes, 通义千问, L.O.B.A";
+        assert!(!is_prompt_echo("Open L.O.B.A.", prompt));
+        assert!(!is_prompt_echo("Deploy it on Kubernetes tomorrow.", prompt));
+        assert!(!is_prompt_echo("用通义千问写", prompt));
+        assert!(!is_prompt_echo("Lobang", prompt));
+        assert!(!is_prompt_echo("", prompt));
+        assert!(!is_prompt_echo("L.O.B.A", ""));
     }
 }

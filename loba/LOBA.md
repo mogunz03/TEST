@@ -170,6 +170,20 @@ call app is producing sound (Zoom, Teams, FaceTime, WeChat, Discord, Slack,
 Feishu…) nothing is pressed. On stop it only presses again if nothing has
 started playing in the meantime, so media you resumed by hand stays on.
 
+Both act 0.12 s after the key goes down rather than after the mic warms up
+and the start tone ends, which together took long enough to notice. The
+0.12 s lets a quick shortcut that shares the dictation modifiers (⌘⇧4 for a
+screenshot) go by without touching the sound. When Mute silences something
+that was playing, the sudden quiet is the start cue and the start tone,
+which the mute would swallow, is skipped; with nothing playing the tone
+plays as before.
+
+**Hint echo.** Whisper is handed the dictionary terms before it listens.
+With little clear speech in a clip it can write that hint back ("L.O.B.A.")
+instead of what was said. A transcript made only of dictionary terms is
+dropped, so nothing is pasted; a sentence that uses a term among other words
+is kept (`loba_core::dictionary::is_prompt_echo`).
+
 **Sounds** are soft G♯ tones (start G♯4, stop G♯3 or G♯5 depending on the
 theme, landing G♯), about 10 dB quieter than Handy's, with a volume slider
 in Settings → General.

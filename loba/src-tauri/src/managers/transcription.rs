@@ -1566,7 +1566,22 @@ impl TranscriptionManager {
             elapsed_secs, audio_secs, speedup, translation_note
         );
 
-        let final_result = filtered_result;
+        let mut final_result = filtered_result;
+
+        // L.O.B.A: with little clear speech, Whisper can write its hint (the
+        // dictionary terms) back instead of what was said. That is not
+        // dictation; drop it so nothing is pasted.
+        if model_is_whisper {
+            if let Some(prompt) = crate::loba::whisper_initial_prompt(&settings.custom_words) {
+                if loba_core::dictionary::is_prompt_echo(&final_result, &prompt) {
+                    info!(
+                        "Transcription was only the dictionary hint written back ({}); dropped",
+                        crate::utils::redact_text(&final_result)
+                    );
+                    final_result.clear();
+                }
+            }
+        }
 
         if final_result.is_empty() {
             info!("Transcription result is empty");

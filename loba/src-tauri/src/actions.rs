@@ -19,8 +19,17 @@ use log::{debug, error, warn};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::future::Future;
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+
+/// How long a press has to last before L.O.B.A mutes or pauses: short
+/// enough to feel immediate, long enough that a quick shortcut chord sharing
+/// the dictation modifiers doesn't blip the sound.
+const EARLY_SILENCE: Duration = Duration::from_millis(120);
+const EARLY_PENDING: u8 = 0;
+const EARLY_MUTED: u8 = 1;
+const EARLY_SKIPPED: u8 = 2;
 use tauri::Manager;
 use tauri::{AppHandle, Emitter};
 
@@ -574,6 +583,35 @@ impl ShortcutAction for TranscribeAction {
                     recording_start_time.elapsed()
                 );
                 let generation = readiness.generation();
+
+                // L.O.B.A: silence the Mac (Mute) or pause the player (Pause)
+                // straight away, instead of after the mic warms up and the
+                // start tone ends, which together felt slow. The short wait
+                // lets a quick ⌘⇧ chord meant for another app go by without
+                // a blip. When Mute silences something that was playing, the
+                // sudden quiet is the start cue and the tone (which the mute
+                // would swallow anyway) is skipped.
+                let early = Arc::new(AtomicU8::new(EARLY_PENDING));
+                {
+                    let (app, rm, early) = (app.clone(), Arc::clone(&rm), Arc::clone(&early));
+                    let wants_mute = settings.mute_while_recording;
+                    std::thread::spawn(move || {
+                        std::thread::sleep(EARLY_SILENCE);
+                        let mut outcome = EARLY_SKIPPED;
+                        if rm.is_recording_readiness_current(generation) {
+                            crate::loba::pause_media(&app);
+                            if !rm.is_recording_readiness_current(generation) {
+                                // Stop landed while pausing: don't strand it.
+                                crate::loba::resume_media();
+                            } else if wants_mute && crate::loba::other_sound_playing() {
+                                rm.apply_mute();
+                                outcome = EARLY_MUTED;
+                            }
+                        }
+                        early.store(outcome, Ordering::Release);
+                    });
+                }
+
                 let app_clone = app.clone();
                 let rm_clone = Arc::clone(&rm);
                 std::thread::spawn(move || {
@@ -609,13 +647,17 @@ impl ShortcutAction for TranscribeAction {
                     // first real input callback rather than Stream::play() or a
                     // fixed delay. The helper returns immediately when feedback
                     // is disabled; mute still follows the same readiness point.
-                    if rm_clone.is_recording_readiness_current(generation) {
-                        crate::loba::pause_media(&app_clone);
-                        // Stop may have landed while pausing; don't leave
-                        // the user's media paused with nothing to resume it.
-                        if !rm_clone.is_recording_readiness_current(generation) {
-                            crate::loba::resume_media();
-                        }
+                    // A fast mic can be ready before the early step decides;
+                    // wait for it (at most the early delay) so the tone never
+                    // starts only to be cut off by the mute.
+                    let waited = Instant::now();
+                    while early.load(Ordering::Acquire) == EARLY_PENDING
+                        && waited.elapsed() < EARLY_SILENCE * 2
+                    {
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
+                    let muted_early = early.load(Ordering::Acquire) == EARLY_MUTED;
+                    if rm_clone.is_recording_readiness_current(generation) && !muted_early {
                         play_feedback_sound_blocking(&app_clone, SoundType::Start);
                     }
                     if rm_clone.is_recording_readiness_current(generation) {

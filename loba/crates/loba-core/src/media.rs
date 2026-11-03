@@ -63,6 +63,12 @@ pub fn should_pause(playing: &[String]) -> bool {
     !playing.iter().any(|b| matches(CALL_APPS, b)) && playing.iter().any(|b| matches(MEDIA_APPS, b))
 }
 
+/// Whether any other app is making sound right now. `false` when the
+/// system can't say (macOS before 14.2, other platforms).
+pub fn other_sound_playing() -> bool {
+    imp::playing_bundle_ids().is_some_and(|p| !p.is_empty())
+}
+
 /// Recording started: pause media if some is playing. Returns whether the
 /// key was pressed.
 pub fn pause() -> bool {

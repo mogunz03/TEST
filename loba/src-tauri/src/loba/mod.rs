@@ -322,6 +322,11 @@ pub fn pause_media(app: &AppHandle) {
     }
 }
 
+/// Whether another app is making sound right now (for muting early).
+pub fn other_sound_playing() -> bool {
+    loba_core::media::other_sound_playing()
+}
+
 /// Recording stopped or was cancelled: resume what `pause_media` paused.
 /// Checks the flag, not the setting, so turning the option off mid-dictation
 /// still resumes.
