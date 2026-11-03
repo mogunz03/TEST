@@ -46,6 +46,14 @@ pub struct Segment {
     pub voice: Option<u32>,
 }
 
+/// The recording kept with a meeting: a file next to its JSON.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
+pub struct MeetingMedia {
+    pub kind: crate::config::MeetingCapture,
+    /// File name inside the meetings folder ("20261103-101500.m4a").
+    pub file: String,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Type)]
 #[serde(default)]
 pub struct Meeting {
@@ -63,6 +71,8 @@ pub struct Meeting {
     /// Names given to voices ("Mia" for voice 0). Unnamed ones read
     /// "Speaker A", "Speaker B"…
     pub names: BTreeMap<u32, String>,
+    /// Audio or video recording, when one was made and saved.
+    pub media: Option<MeetingMedia>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
@@ -243,8 +253,33 @@ impl MeetingStore {
         serde_json::from_str(&raw).map_err(|e| e.to_string())
     }
 
+    /// Where a meeting's recording goes (or went): `<id>.m4a` / `<id>.mp4`.
+    pub fn media_path(&self, id: &str, kind: crate::config::MeetingCapture) -> Option<PathBuf> {
+        let ext = match kind {
+            crate::config::MeetingCapture::Audio => "m4a",
+            crate::config::MeetingCapture::Video => "mp4",
+        };
+        valid_id(id).then(|| self.dir.join(format!("{id}.{ext}")))
+    }
+
+    /// The recording of a saved meeting, if it has one and it's still there.
+    pub fn media_file(&self, m: &Meeting) -> Option<PathBuf> {
+        let media = m.media.as_ref()?;
+        let path = self.media_path(&m.id, media.kind)?;
+        path.exists().then_some(path)
+    }
+
+    /// Delete a meeting and its recording.
     pub fn delete(&self, id: &str) -> Result<(), String> {
         let path = self.path(id).ok_or("bad meeting id")?;
+        for kind in [
+            crate::config::MeetingCapture::Audio,
+            crate::config::MeetingCapture::Video,
+        ] {
+            if let Some(media) = self.media_path(id, kind) {
+                let _ = std::fs::remove_file(media);
+            }
+        }
         std::fs::remove_file(path).map_err(|e| e.to_string())
     }
 

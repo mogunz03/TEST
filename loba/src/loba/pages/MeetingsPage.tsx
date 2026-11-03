@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, RotateCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, FolderOpen, RotateCw, Trash2 } from "lucide-react";
 import {
   loba,
   type Meeting,
@@ -10,7 +12,8 @@ import {
   type Segment,
   type VoiceModelStatus,
 } from "../api";
-import { Empty, PageTitle } from "../controls";
+import { Empty, PageTitle, Segmented } from "../controls";
+import { useLoba } from "../useOllama";
 import { Markdown } from "../Markdown";
 import { clock, useMeetingStatus } from "../meetingStatus";
 
@@ -39,6 +42,8 @@ export const MeetingsPage: React.FC = () => {
   }, [refresh]);
 
   const recording = status?.phase === "recording";
+  const { config, save } = useLoba();
+  const capture = config?.meeting_capture ?? "audio";
 
   const start = async () => {
     setBusy(true);
@@ -46,7 +51,10 @@ export const MeetingsPage: React.FC = () => {
     try {
       await loba.meetingStart();
     } catch (e) {
-      toast.error(t("meetings.startFailed"), { description: String(e) });
+      // Closing the window picker is a change of mind, not a failure.
+      if (String(e) !== "cancelled") {
+        toast.error(t("meetings.startFailed"), { description: String(e) });
+      }
     } finally {
       setBusy(false);
     }
@@ -85,16 +93,34 @@ export const MeetingsPage: React.FC = () => {
             {t("meetings.stop")}
           </button>
         ) : (
-          <button
-            type="button"
-            className="loba-btn loba-btn-primary"
-            onClick={start}
-            disabled={busy}
-          >
-            {t("meetings.start")}
-          </button>
+          <div className="flex items-center gap-2">
+            <Segmented
+              label={t("meetings.capture.label")}
+              value={capture}
+              onChange={(c) => save({ meeting_capture: c })}
+              options={(["audio", "video"] as const).map((id) => ({
+                id,
+                label: t(`meetings.capture.${id}`),
+              }))}
+            />
+            <button
+              type="button"
+              className="loba-btn loba-btn-primary"
+              onClick={start}
+              disabled={busy}
+            >
+              {capture === "video" && !busy
+                ? t("meetings.startVideo")
+                : t("meetings.start")}
+            </button>
+          </div>
         )}
       </PageTitle>
+      {!recording && (
+        <p className="-mt-4 mb-7 text-[12px] text-faint text-end">
+          {t(`meetings.capture.${capture}Note`)}
+        </p>
+      )}
 
       {recording && status && (
         <section className="loba-card px-5 py-4 mb-7">
@@ -219,11 +245,25 @@ const SegmentRow: React.FC<{
   s: Segment;
   names: Record<string, string>;
   onRename?: (voice: number, name: string) => void;
-}> = ({ s, names, onRename }) => {
+  /** With a recording, the time jumps the player there. */
+  onSeek?: (ms: number) => void;
+}> = ({ s, names, onRename, onSeek }) => {
+  const { t } = useTranslation("loba");
   const name = useSpeakerName()(s, names);
   return (
     <div className="grid grid-cols-[3.5rem_6.5rem_1fr] gap-x-3 text-[13px] leading-5">
-      <span className="text-faint tabular-nums">{clock(s.start_ms)}</span>
+      {onSeek ? (
+        <button
+          type="button"
+          onClick={() => onSeek(s.start_ms)}
+          title={t("meetings.playFrom")}
+          className="text-start text-faint tabular-nums hover:text-steel cursor-pointer transition-colors"
+        >
+          {clock(s.start_ms)}
+        </button>
+      ) : (
+        <span className="text-faint tabular-nums">{clock(s.start_ms)}</span>
+      )}
       {onRename && s.voice != null ? (
         <VoiceName name={name} onSave={(n) => onRename(s.voice as number, n)} />
       ) : (
@@ -363,6 +403,22 @@ const Detail: React.FC<{
   const [m, setM] = useState<Meeting | null>(null);
   const [confirm, setConfirm] = useState(false);
   const speakerName = useSpeakerName();
+  const [mediaPath, setMediaPath] = useState<string | null>(null);
+  const player = useRef<HTMLMediaElement | null>(null);
+
+  useEffect(() => {
+    loba
+      .meetingMedia(id)
+      .then(setMediaPath)
+      .catch(() => setMediaPath(null));
+  }, [id]);
+
+  const seek = (ms: number) => {
+    const p = player.current;
+    if (!p) return;
+    p.currentTime = ms / 1000;
+    p.play().catch(() => {});
+  };
 
   const load = useCallback(() => {
     loba
@@ -462,6 +518,44 @@ const Detail: React.FC<{
         </div>
       </header>
 
+      {mediaPath && m.media && (
+        <section className="mb-6">
+          {m.media.kind === "video" ? (
+            <video
+              ref={(el) => {
+                player.current = el;
+              }}
+              src={convertFileSrc(mediaPath)}
+              controls
+              preload="metadata"
+              className="w-full max-h-[380px] rounded-[12px] border border-line bg-black"
+            />
+          ) : (
+            <audio
+              ref={(el) => {
+                player.current = el;
+              }}
+              src={convertFileSrc(mediaPath)}
+              controls
+              preload="metadata"
+              className="w-full [color-scheme:dark]"
+            />
+          )}
+          <div className="mt-2 flex items-center gap-3 text-[11.5px] text-faint">
+            <span>{t("meetings.playHint")}</span>
+            <span className="flex-1" />
+            <button
+              type="button"
+              className="loba-btn loba-btn-quiet h-[24px] -me-2"
+              onClick={() => revealItemInDir(mediaPath).catch(() => {})}
+            >
+              <FolderOpen size={12} />
+              {t("meetings.showFile")}
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="loba-card px-6 py-5">
         {summarizing ? (
           <p className="text-[13px] text-soft flex items-center gap-2.5">
@@ -538,7 +632,13 @@ const Detail: React.FC<{
       ) : (
         <div className="loba-card px-5 py-4 flex flex-col gap-2.5">
           {m.segments.map((s, i) => (
-            <SegmentRow key={i} s={s} names={m.names} onRename={rename} />
+            <SegmentRow
+              key={i}
+              s={s}
+              names={m.names}
+              onRename={rename}
+              onSeek={mediaPath ? seek : undefined}
+            />
           ))}
         </div>
       )}

@@ -18,6 +18,8 @@ pub mod modifiers;
 pub mod ollama;
 pub mod pipeline;
 pub mod prompt;
+pub mod recording;
+pub mod screen_recording;
 pub mod stats;
 pub mod styles;
 pub mod system_audio;

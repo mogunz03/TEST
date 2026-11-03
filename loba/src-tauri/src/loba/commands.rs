@@ -273,8 +273,25 @@ pub fn loba_meeting_rename_voice(
 
 #[tauri::command]
 #[specta::specta]
-pub fn loba_meeting_start(app: tauri::AppHandle) -> Result<super::meeting::MeetingStatus, String> {
-    super::meeting::start(&app)
+pub async fn loba_meeting_start(
+    app: tauri::AppHandle,
+) -> Result<super::meeting::MeetingStatus, String> {
+    let video = super::state(&app)
+        .is_some_and(|s| s.config().meeting_capture == loba_core::config::MeetingCapture::Video);
+    // Video: the user picks the window first; closing the picker cancels.
+    let picked = if video {
+        Some(super::meeting::pick_window(&app).await?)
+    } else {
+        None
+    };
+    super::meeting::start(&app, picked)
+}
+
+/// Full path of a meeting's audio or video, or nothing if there is none.
+#[tauri::command]
+#[specta::specta]
+pub fn loba_meeting_media(app: tauri::AppHandle, id: String) -> Option<String> {
+    super::meeting::media_file(&app, &id)
 }
 
 /// Stops recording and returns the meeting id; the recap follows as

@@ -26,6 +26,17 @@ pub enum EditLevel {
     Polished,
 }
 
+/// What a meeting keeps besides the transcript.
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum MeetingCapture {
+    /// You and the call mixed into one compressed file (AAC, .m4a).
+    #[default]
+    Audio,
+    /// A window you pick, filmed with its sound and your mic (HEVC, .mp4).
+    Video,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
 #[serde(default)]
 pub struct LobaConfig {
@@ -48,6 +59,8 @@ pub struct LobaConfig {
     /// Empty: trust Whisper's guess. One: always that language. Several: a
     /// guess outside the list is overruled (see `languages::steer`).
     pub languages: Vec<String>,
+    /// Meetings: audio only, or audio and video of a picked window.
+    pub meeting_capture: MeetingCapture,
     /// Keep the model resident this long after each call (Ollama `keep_alive`).
     /// A cold 8B load alone can blow the 4 s budget.
     pub keep_alive: String,
@@ -65,6 +78,7 @@ impl Default for LobaConfig {
             polished_timeout_ms: DEFAULT_POLISHED_TIMEOUT_MS,
             pause_media: false,
             languages: Vec::new(),
+            meeting_capture: MeetingCapture::Audio,
             keep_alive: "30m".to_string(),
         }
     }

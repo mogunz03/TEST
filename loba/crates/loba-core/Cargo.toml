@@ -32,3 +32,9 @@ objc2-core-media = "0.3"
 block2 = "0.6"
 dispatch2 = "0.3"
 core-foundation = "0.10"
+# Meeting recordings: AAC audio (ExtAudioFile) and HEVC video of a picked
+# window (ScreenCaptureKit's recorder and picker, macOS 15).
+objc2-audio-toolbox = { version = "0.3", default-features = false, features = ["std", "AudioFile", "ExtendedAudioFile", "objc2-core-audio-types", "objc2-core-foundation", "bitflags"] }
+objc2-core-audio-types = { version = "0.3", default-features = false, features = ["std", "CoreAudioBaseTypes"] }
+objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFString", "CFURL", "CFCGTypes"] }
+objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "AVMediaFormat", "AVVideoSettings"] }

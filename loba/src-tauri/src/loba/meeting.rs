@@ -14,10 +14,14 @@ use super::state;
 use super::voices::VoiceModel;
 use crate::audio_toolkit::{list_input_devices, AudioRecorder, VadPolicy};
 use crate::managers::transcription::TranscriptionManager;
+use loba_core::config::MeetingCapture;
+use loba_core::meeting::MeetingMedia;
 use loba_core::meeting::{
     self, cut_point, has_speech, Meeting, MeetingStore, MeetingSummary, Segment, Speaker,
     SAMPLE_RATE,
 };
+use loba_core::recording::{AudioFile, Mixer};
+use loba_core::screen_recording::{self, Picked, VideoRecording};
 use loba_core::system_audio::{SystemAudio, NOT_ALLOWED};
 use loba_core::voices::{self, Utterance, HOP, LAG_FRAMES, LEAD_FRAMES, SAME_SPEAKER};
 use once_cell::sync::Lazy;
@@ -94,16 +98,24 @@ struct Track {
     at: AtomicU64,
     started: AtomicBool,
     loudness: Mutex<Loudness>,
+    /// Meeting time of this track's first sample, and how many since.
+    origin: AtomicU64,
+    pushed: AtomicU64,
+    /// The audio recording's mix, in audio mode.
+    mix: Option<Arc<Mutex<Mixer>>>,
 }
 
 impl Track {
-    fn new(speaker: Speaker) -> Self {
+    fn new(speaker: Speaker, mix: Option<Arc<Mutex<Mixer>>>) -> Self {
         Self {
             speaker,
             buf: Mutex::new(Vec::new()),
             at: AtomicU64::new(0),
             started: AtomicBool::new(false),
             loudness: Mutex::new(Loudness::default()),
+            origin: AtomicU64::new(0),
+            pushed: AtomicU64::new(0),
+            mix,
         }
     }
 
@@ -113,10 +125,16 @@ impl Track {
             // the wall clock so "You" and "Others" line up.
             let offset = meeting_start.elapsed().as_millis() as u64 * SAMPLE_RATE as u64 / 1000;
             self.at.store(offset, Ordering::SeqCst);
+            self.origin.store(offset, Ordering::SeqCst);
             self.loudness.lock().unwrap().first = offset as usize / HOP;
         }
         self.buf.lock().unwrap().extend_from_slice(frames);
         self.loudness.lock().unwrap().push(frames);
+        if let Some(mix) = &self.mix {
+            let at = self.origin.load(Ordering::SeqCst)
+                + self.pushed.fetch_add(frames.len() as u64, Ordering::SeqCst);
+            mix.lock().unwrap().add(at, frames);
+        }
     }
 
     /// Take a chunk if one is ready (or everything, when flushing).
@@ -215,6 +233,11 @@ struct Session {
     tracks: [Arc<Track>; 2],
     voices: Option<VoiceModel>,
     book: Mutex<VoiceBook>,
+    /// Audio mode: the mix and the .m4a it goes into.
+    mixer: Option<Arc<Mutex<Mixer>>>,
+    audio_file: Mutex<Option<AudioFile>>,
+    /// Video mode: the window being filmed.
+    video: Mutex<Option<VideoRecording>>,
     stop: AtomicBool,
     mic: Mutex<Option<AudioRecorder>>,
     system: Mutex<Option<SystemAudio>>,
@@ -274,20 +297,88 @@ fn open_mic(app: &AppHandle, track: Arc<Track>, start: Instant) -> Result<AudioR
     Ok(rec)
 }
 
-pub fn start(app: &AppHandle) -> Result<MeetingStatus, String> {
+/// Show macOS's window picker and wait for the choice. `Err(CANCELLED)`
+/// when the user closes it without picking.
+pub async fn pick_window(app: &AppHandle) -> Result<Picked, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        screen_recording::pick(Box::new(move |r| {
+            let _ = tx.send(r);
+        }))
+    })
+    .map_err(|e| e.to_string())?;
+    tauri::async_runtime::spawn_blocking(move || {
+        rx.recv_timeout(Duration::from_secs(300))
+            .unwrap_or_else(|_| Err(screen_recording::CANCELLED.into()))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Start a meeting. With `picked`, the chosen window is filmed (video
+/// mode); without, the audio is recorded.
+pub fn start(app: &AppHandle, picked: Option<Picked>) -> Result<MeetingStatus, String> {
     let mut slot = SESSION.lock().unwrap();
     if slot.is_some() {
         return Ok(drop_and(slot, status));
     }
     let now = chrono::Local::now();
     let started = Instant::now();
+    let id = now.format("%Y%m%d-%H%M%S").to_string();
+    let st = store(app).ok_or("L.O.B.A isn't initialised")?;
+    let media_path = |kind| {
+        let path = st.media_path(&id, kind)?;
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        Some(path)
+    };
+
+    // The recording first: if the video can't start, nothing else does.
+    let (video, audio_file, mixer, media) = match picked {
+        Some(picked) => {
+            let path = media_path(MeetingCapture::Video).ok_or("bad meeting id")?;
+            let rec = VideoRecording::start(picked, &path)
+                .map_err(|e| format!("Couldn't start the video: {e}"))?;
+            (Some(rec), None, None, Some(MeetingCapture::Video))
+        }
+        None => match media_path(MeetingCapture::Audio).map(|p| AudioFile::create(&p)) {
+            Some(Ok(file)) => (
+                None,
+                Some(file),
+                Some(Arc::new(Mutex::new(Mixer::default()))),
+                Some(MeetingCapture::Audio),
+            ),
+            Some(Err(e)) => {
+                log::warn!("Meeting audio won't be saved: {e}");
+                (None, None, None, None)
+            }
+            None => (None, None, None, None),
+        },
+    };
+
     let tracks = [
-        Arc::new(Track::new(Speaker::You)),
-        Arc::new(Track::new(Speaker::Others)),
+        Arc::new(Track::new(Speaker::You, mixer.clone())),
+        Arc::new(Track::new(Speaker::Others, mixer.clone())),
     ];
 
-    let mic = open_mic(app, Arc::clone(&tracks[0]), started)
-        .map_err(|e| format!("Couldn't open the microphone: {e}"))?;
+    let mic = match open_mic(app, Arc::clone(&tracks[0]), started) {
+        Ok(m) => m,
+        Err(e) => {
+            if let Some(v) = video {
+                let _ = v.stop();
+            }
+            if let Some(f) = audio_file {
+                f.close();
+            }
+            for kind in [MeetingCapture::Audio, MeetingCapture::Video] {
+                if let Some(p) = st.media_path(&id, kind) {
+                    let _ = std::fs::remove_file(p);
+                }
+            }
+            return Err(format!("Couldn't open the microphone: {e}"));
+        }
+    };
 
     let others = Arc::clone(&tracks[1]);
     let system = match SystemAudio::start(Arc::new(move |f: &[f32]| others.push(f, started))) {
@@ -301,9 +392,16 @@ pub fn start(app: &AppHandle) -> Result<MeetingStatus, String> {
     };
 
     let meeting = Meeting {
-        id: now.format("%Y%m%d-%H%M%S").to_string(),
+        id: id.clone(),
         started_at: now.timestamp(),
         system_audio: system.is_some(),
+        media: media.map(|kind| MeetingMedia {
+            kind,
+            file: st
+                .media_path(&id, kind)
+                .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
+                .unwrap_or_default(),
+        }),
         ..Default::default()
     };
     log::info!(
@@ -338,6 +436,9 @@ pub fn start(app: &AppHandle) -> Result<MeetingStatus, String> {
         tracks,
         voices,
         book: Mutex::new(VoiceBook::default()),
+        mixer,
+        audio_file: Mutex::new(audio_file),
+        video: Mutex::new(video),
         stop: AtomicBool::new(false),
         mic: Mutex::new(Some(mic)),
         system: Mutex::new(system),
@@ -378,7 +479,11 @@ fn run(app: AppHandle, session: Arc<Session>) {
                 }
             }
         }
+        write_audio(&session, stopping);
         if stopping {
+            if let Some(file) = session.audio_file.lock().unwrap().take() {
+                file.close();
+            }
             return;
         }
         if last_rotate.elapsed() >= RECORDER_ROTATE {
@@ -390,6 +495,29 @@ fn run(app: AppHandle, session: Arc<Session>) {
         }
         if !worked {
             std::thread::sleep(Duration::from_millis(400));
+        }
+    }
+}
+
+/// Audio mode: move what's ready from the mix into the .m4a (everything,
+/// at the end). A write error stops the recording, not the meeting.
+fn write_audio(session: &Session, all: bool) {
+    let Some(mixer) = &session.mixer else { return };
+    let samples = {
+        let mut m = mixer.lock().unwrap();
+        if all {
+            m.take_all()
+        } else {
+            m.take_ready()
+        }
+    };
+    let mut file = session.audio_file.lock().unwrap();
+    if let Some(f) = file.as_mut() {
+        if let Err(e) = f.write(&samples) {
+            log::warn!("Meeting audio stopped saving: {e}");
+            if let Some(f) = file.take() {
+                f.close();
+            }
         }
     }
 }
@@ -618,8 +746,17 @@ pub fn stop(app: &AppHandle) -> Result<String, String> {
         if let Some(w) = session.worker.lock().unwrap().take() {
             let _ = w.join();
         }
+        if let Some(video) = session.video.lock().unwrap().take() {
+            if let Err(e) = video.stop() {
+                log::warn!("Meeting video didn't finish cleanly: {e}");
+            }
+        }
         let mut meeting = session.meeting.lock().unwrap().clone();
         meeting.duration_ms = session.started.elapsed().as_millis() as u64;
+        // Keep the recording only if it actually made it to disk.
+        if store(&app).and_then(|st| st.media_file(&meeting)).is_none() {
+            meeting.media = None;
+        }
         {
             // One last grouping over the whole call, now that every voice
             // has been heard more than once.
@@ -692,6 +829,13 @@ pub fn list(app: &AppHandle) -> Vec<MeetingSummary> {
 
 pub fn get(app: &AppHandle, id: &str) -> Result<Meeting, String> {
     store(app).ok_or("L.O.B.A isn't initialised")?.load(id)
+}
+
+/// Full path of a meeting's recording, for the player.
+pub fn media_file(app: &AppHandle, id: &str) -> Option<String> {
+    let st = store(app)?;
+    let m = st.load(id).ok()?;
+    st.media_file(&m).map(|p| p.display().to_string())
 }
 
 /// Name one of the call's voices, in this meeting.

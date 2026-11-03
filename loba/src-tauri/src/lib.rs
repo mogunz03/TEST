@@ -780,6 +780,7 @@ pub fn run(cli_args: CliArgs) {
             loba::commands::loba_voice_model_status,
             loba::commands::loba_voice_model_download,
             loba::commands::loba_meeting_rename_voice,
+            loba::commands::loba_meeting_media,
             loba::commands::loba_get_stats,
             loba::commands::loba_meeting_start,
             loba::commands::loba_meeting_stop,

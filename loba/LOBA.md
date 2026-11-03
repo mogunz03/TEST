@@ -336,6 +336,27 @@ No telemetry, no accounts. The updater has no endpoints and update checks are
 off by default. The only network use is the model download you start yourself
 in onboarding or Settings → Engine → Models.
 
+## Meeting recordings
+
+Next to **Start meeting**: _Audio_ or _Audio + video_ (remembered as
+`meeting_capture` in `config.json`). The transcript, speakers and recap are
+the same either way.
+
+- **Audio:** your mic and the call, lined up on the meeting clock and mixed
+  into one track (`loba_core::recording::Mixer`), written as AAC by Apple's
+  encoder: `meetings/<id>.m4a`, speech quality, about 15 MB an hour.
+- **Audio + video** (macOS 15+): Start opens macOS's own picker; choose the
+  call window (or an app, or a screen). Closing the picker starts nothing.
+  ScreenCaptureKit's recorder films it at 15 frames a second, at most 1920
+  px on the long side, HEVC on the Mac's video encoder, with the window's
+  sound and your mic: `meetings/<id>.mp4`, a few hundred MB an hour.
+- A meeting with a recording shows a player above the recap; click any time
+  in the transcript to jump there. **Show in Finder** reveals the file.
+  Deleting the meeting deletes the recording.
+- The recap is written offline when the meeting stops (Ollama, on this Mac):
+  summary, decisions, action items with who and when, open questions.
+  **Write again** redoes it.
+
 ## Who said what (meetings)
 
 - **You** is the microphone. With the Mac's speakers on, the mic also hears

@@ -18,6 +18,8 @@ export interface LobaConfig {
   pause_media: boolean;
   /** Languages the user speaks. Empty: trust the speech model's guess. */
   languages: string[];
+  /** Meetings keep audio, or audio and video of a picked window. */
+  meeting_capture: "audio" | "video";
   keep_alive: string;
 }
 
@@ -97,6 +99,8 @@ export interface Meeting {
   system_audio: boolean;
   /** Names given to voices, keyed by voice number. */
   names: Record<string, string>;
+  /** The recording kept with the meeting, if any. */
+  media: { kind: "audio" | "video"; file: string } | null;
 }
 
 export interface VoiceModelStatus {
@@ -144,7 +148,12 @@ export const loba = {
   redoDictation: (id: number, language: string) =>
     invoke<string>("loba_redo_dictation", { id, language }),
   stats: () => invoke<StatsView>("loba_get_stats"),
+  /** In video mode this opens the window picker first; rejects with
+   *  "cancelled" when it's closed without a choice. */
   meetingStart: () => invoke<MeetingStatus>("loba_meeting_start"),
+  /** Full path of the meeting's recording, or null. */
+  meetingMedia: (id: string) =>
+    invoke<string | null>("loba_meeting_media", { id }),
   /** Resolves with the id; the recap arrives later (loba:meetings-changed). */
   meetingStop: () => invoke<string>("loba_meeting_stop"),
   meetingStatus: () => invoke<MeetingStatus>("loba_meeting_status"),

@@ -301,7 +301,18 @@
       "downloading": "Downloading {{pct}}%",
       "ready": "Voice model installed. It's used from the next meeting on.",
       "failed": "The voice model didn't download"
-    }
+    },
+    "startVideo": "Pick window and start",
+    "capture": {
+      "label": "Record",
+      "audio": "Audio",
+      "video": "Audio + video",
+      "audioNote": "Keeps the sound of the meeting, about 15 MB an hour.",
+      "videoNote": "You pick the call window when you start. A few hundred MB an hour. Needs macOS 15."
+    },
+    "playFrom": "Play from here",
+    "playHint": "Click a time in the transcript to jump there.",
+    "showFile": "Show in Finder"
   },
   "languages": {
     "group": "Languages",
