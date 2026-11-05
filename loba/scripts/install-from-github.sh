@@ -21,8 +21,21 @@ work="$(mktemp -d)"
 trap 'hdiutil detach "$work/mnt" -quiet 2>/dev/null || true; rm -rf "$work"' EXIT
 
 # --- find the download --------------------------------------------------------
-got=$(ls -td "$HOME"/Downloads/L.O.B.A-macos-arm64-* 2>/dev/null | head -1 || true)
-[[ -n "$got" ]] || fail "No L.O.B.A-macos-arm64-… download in ~/Downloads. Download it from GitHub first (see the top of this script)."
+# The build must match this copy of the code; an older download left in
+# ~/Downloads would otherwise be installed without a word.
+# ./scripts/install-from-github.sh --any  takes the newest download instead.
+want=$(git rev-parse --short=7 HEAD 2>/dev/null || true)
+if [[ "${1:-}" == "--any" || -z "$want" ]]; then
+  got=$(ls -td "$HOME"/Downloads/L.O.B.A-macos-arm64-* 2>/dev/null | head -1 || true)
+else
+  got=$(ls -td "$HOME"/Downloads/L.O.B.A-macos-arm64-"$want"* 2>/dev/null | head -1 || true)
+fi
+if [[ -z "$got" ]]; then
+  have=$(ls -td "$HOME"/Downloads/L.O.B.A-macos-arm64-* 2>/dev/null | head -1 || true)
+  fail "No download of build $want in ~/Downloads${have:+ (found $(basename "$have"), an older one)}.
+Download L.O.B.A-macos-arm64-$want from GitHub: Actions, the run for $want, Artifacts.
+https://github.com/mogunz03/TEST/actions"
+fi
 say "Using $(basename "$got") ($(date -r "$got" '+%d %b %H:%M'))"
 if [[ -f "$got" && "$got" == *.zip ]]; then
   ditto -x -k "$got" "$work/unzipped" || fail "Couldn't unzip $(basename "$got")."
