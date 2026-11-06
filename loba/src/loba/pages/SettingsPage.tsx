@@ -195,6 +195,12 @@ const About: React.FC = () => {
 
   return (
     <Group label={t("settings.about.label")}>
+      <Row
+        label={t("settings.about.name.label")}
+        note={t("settings.about.name.note")}
+      >
+        {null}
+      </Row>
       <Row label={t("settings.about.version")}>
         <span className="text-[13px] text-soft tabular-nums select-text">
           {version}

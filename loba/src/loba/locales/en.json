@@ -110,6 +110,10 @@
     },
     "about": {
       "label": "About",
+      "name": {
+        "label": "Why L.O.B.A",
+        "note": "Loba means speak in Lingala, the language of the Congo river. It also stands for Listen Once, Bring Across: you say it once, and your words arrive where you're typing, in the language you spoke."
+      },
       "version": "Version",
       "support": {
         "label": "Support L.O.B.A",
