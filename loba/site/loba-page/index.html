@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L.O.B.A · Speak once, your words arrive</title>
+<meta name="description" content="Dictation and meeting notes for the Mac that run entirely on your Mac. English, French, Chinese and more. Free with your email, or $2.">
+<!--
+  L.O.B.A product page for asmbly.store, laid out like the Sift page.
+  Fonts are stand-ins: swap the three --font-* variables for the ones the
+  rest of the site uses. Set the values in LOBA_PAGE at the bottom.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3f0;
+    --card: #fbfaf8;
+    --ink: #161616;
+    --soft: #5c5b58;
+    --faint: #8f8d88;
+    --line: #e1dfda;
+    --dark: #121314;
+    --dark-ink: #e9ecf0;
+    --dark-soft: #8b929c;
+    --font-serif: "Newsreader", Georgia, serif;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.6 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+  /* --- nav (the site's own nav replaces this) ---------------------------- */
+  nav.site {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0; font-size: 13px;
+  }
+  nav.site .mark { font-weight: 600; letter-spacing: .14em; text-decoration: none; }
+  nav.site .links { display: flex; gap: 22px; color: var(--soft); }
+  nav.site .links a { text-decoration: none; }
+  nav.site .links a:hover { color: var(--ink); }
+
+  /* --- hero ----------------------------------------------------------------- */
+  .hero { text-align: center; padding: 64px 0 72px; }
+  .icon {
+    width: 72px; height: 72px; margin: 0 auto 26px; border-radius: 17px;
+    background: radial-gradient(120% 120% at 30% 20%, #23262b, #0d0f12 70%);
+    display: grid; place-items: center;
+    box-shadow: 0 1px 0 rgb(255 255 255 / .08) inset, 0 10px 24px -12px rgb(0 0 0 / .45);
+  }
+  .icon svg { width: 40px; height: 22px; }
+  .hero h1 {
+    font: 400 clamp(52px, 9vw, 76px)/1 var(--font-serif);
+    letter-spacing: -0.02em; margin: 0;
+  }
+  .hero .tag {
+    font: 400 clamp(24px, 4vw, 30px)/1.25 var(--font-serif);
+    margin: 22px 0 0;
+  }
+  .hero .lede { color: var(--soft); max-width: 520px; margin: 18px auto 0; font-size: 15px; }
+  .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 40px; padding: 0 18px; border-radius: 9px;
+    font: 500 14px/1 var(--font-sans); text-decoration: none; cursor: pointer;
+    border: 1px solid var(--ink); transition: transform .12s ease, background .15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.solid { background: var(--ink); color: var(--bg); }
+  .btn.line { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.line:hover { border-color: var(--ink); }
+  .btn:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .hero .fine { color: var(--faint); font-size: 12.5px; margin-top: 16px; }
+
+  /* --- sections ------------------------------------------------------------- */
+  section.s { border-top: 1px solid var(--line); padding: 56px 0 64px; }
+  .eyebrow {
+    font: 500 10.5px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase;
+    color: var(--faint); margin: 0 0 14px;
+  }
+  h2 { font: 400 clamp(26px, 4vw, 32px)/1.2 var(--font-serif); letter-spacing: -0.01em; margin: 0; }
+  section.s > .wrap > p, .body p { color: var(--soft); max-width: 600px; }
+  .caption { color: var(--faint); font-size: 12.5px; margin-top: 12px; }
+
+  /* the problem: what you said, what landed */
+  .demo { margin-top: 26px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; }
+  .demo .row {
+    display: grid; grid-template-columns: 1fr auto; gap: 6px 18px;
+    padding: 16px 18px; border-top: 1px solid var(--line);
+  }
+  .demo .row:first-child { border-top: 0; }
+  .demo .said { font: 13px/1.5 var(--font-mono); color: var(--faint); text-decoration: line-through; text-decoration-color: #c9c6bf; }
+  .demo .got { grid-column: 1; font-size: 15px; white-space: pre-line; }
+  .demo .app {
+    grid-column: 2; grid-row: 1 / span 2; align-self: start;
+    font: 500 10.5px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--soft); border: 1px solid var(--line); border-radius: 999px; padding: 6px 9px;
+  }
+
+  /* numbers */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 26px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .stat .n { font: 400 34px/1 var(--font-serif); }
+  .stat .k { font: 500 10.5px/1.4 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-top: 10px; }
+  .stat p { margin: 10px 0 0; color: var(--soft); font-size: 13.5px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .pair .stat h3 { margin: 0; font: 600 14px/1.3 var(--font-sans); }
+  @media (max-width: 640px) { .stats, .pair { grid-template-columns: 1fr; } }
+
+  /* screenshots */
+  .shots { display: grid; gap: 14px; margin-top: 26px; }
+  .shots figure { margin: 0; }
+  .shots img { border-radius: 12px; border: 1px solid #23262b; box-shadow: 0 18px 40px -24px rgb(0 0 0 / .45); }
+  .shots .small { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .shots .small { grid-template-columns: 1fr; } }
+  figcaption { color: var(--faint); font-size: 12.5px; margin-top: 8px; }
+
+  /* what it does */
+  .steps { margin-top: 26px; }
+  .step { display: grid; grid-template-columns: 120px 1fr; gap: 20px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .step .k { font: 500 10.5px/1.6 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+  .step h3 { margin: 0; font: 600 14.5px/1.4 var(--font-sans); }
+  .step p { margin: 4px 0 0; color: var(--soft); font-size: 14px; }
+  @media (max-width: 640px) { .step { grid-template-columns: 1fr; gap: 4px; } }
+
+  /* dark band: meetings */
+  .band { background: var(--dark); color: var(--dark-ink); padding: 72px 0; }
+  .band .eyebrow { color: var(--dark-soft); }
+  .band p { color: var(--dark-soft); max-width: 600px; }
+  .band img { margin-top: 28px; border-radius: 12px; border: 1px solid #262a31; }
+
+  /* honest list */
+  .honest { margin-top: 22px; }
+  .honest div { padding: 14px 0; border-top: 1px solid var(--line); }
+  .honest h3 { margin: 0; font: 600 14.5px/1.4 var(--font-sans); }
+  .honest p { margin: 4px 0 0; color: var(--soft); font-size: 14px; max-width: 620px; }
+
+  /* spec table */
+  table.spec { width: 100%; border-collapse: collapse; margin-top: 22px; font-size: 14px; }
+  table.spec td { padding: 11px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  table.spec td:first-child {
+    width: 38%; font: 500 10.5px/2 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+  }
+
+  /* get it */
+  .price { font: 400 clamp(44px, 7vw, 56px)/1 var(--font-serif); letter-spacing: -0.02em; margin-top: 18px; }
+  .price small { font: 400 15px/1 var(--font-sans); color: var(--soft); letter-spacing: 0; margin-left: 10px; }
+  .offers { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; margin-top: 26px; }
+  @media (max-width: 680px) { .offers { grid-template-columns: 1fr; } }
+  .offer { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; }
+  .offer h3 { margin: 0; font: 400 24px/1.2 var(--font-serif); }
+  .offer p { color: var(--soft); font-size: 14px; margin: 8px 0 18px; flex: 1; }
+  .offer form { display: flex; gap: 8px; flex-wrap: wrap; }
+  .offer input[type=email] {
+    flex: 1 1 200px; height: 40px; padding: 0 12px; border-radius: 9px;
+    border: 1px solid var(--line); background: #fff; font: 14px var(--font-sans); color: var(--ink);
+  }
+  .offer input[type=email]::placeholder { color: var(--faint); }
+  .offer .btn { flex: 0 0 auto; }
+  .note { font-size: 12.5px; color: var(--faint); margin-top: 10px; min-height: 1.4em; }
+  .note.ok { color: #3f7a57; }
+  .note.err { color: #a35a2a; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 56px; color: var(--faint); font-size: 12.5px; }
+  footer p { margin: 0 0 6px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="site" aria-label="Site">
+    <a class="mark" href="/">ASMBLY</a>
+    <div class="links"><a href="/">Products</a><a href="/sift">Sift</a><a href="/contact">Contact</a></div>
+  </nav>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 28 16"><g fill="#e9ecf0"><rect x="0" y="2" width="2.4" height="12" rx="1.2"/><rect x="5" y="4" width="2.4" height="8" rx="1.2"/><rect x="10" y="5.5" width="2.4" height="5" rx="1.2"/><rect x="15" y="6.5" width="2.4" height="3" rx="1.2"/></g><circle cx="22.6" cy="8" r="1.7" fill="#b9c4d2"/></svg>
+    </div>
+    <h1>L.O.B.A</h1>
+    <p class="tag">Speak once.<br>Your words arrive.</p>
+    <p class="lede">Hold a key, talk, let go. L.O.B.A writes what you said, cleaned up, wherever you're typing: in English, French, Chinese and more. It runs on your Mac and sends nothing anywhere.</p>
+    <div class="actions">
+      <a class="btn solid" href="#get">Download free</a>
+      <a class="btn line" href="#how">See how it works</a>
+    </div>
+    <p class="fine">For Apple Silicon Macs, macOS 14 or newer. Free with your email, or $2.</p>
+  </div>
+</header>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">The problem</p>
+    <h2>What you said, and what you meant</h2>
+    <p>Speech is fast and messy. Ums, restarts, a list said out loud as one breath. L.O.B.A keeps your words and drops the rest, then pastes the result into the app you're in, written the way that app needs it.</p>
+    <div class="demo" role="list">
+      <div class="row" role="listitem">
+        <div class="said">um so for tomorrow we need uh milk eggs no wait oat milk and bread</div>
+        <div class="got">For tomorrow we need:
+- oat milk
+- eggs
+- bread</div>
+        <span class="app">WeChat</span>
+      </div>
+      <div class="row" role="listitem">
+        <div class="said">bonjour euh je voulais confirmer le rendez-vous de jeudi</div>
+        <div class="got">Bonjour, je voulais confirmer le rendez-vous de jeudi.</div>
+        <span class="app">Mail</span>
+      </div>
+      <div class="row" role="listitem">
+        <div class="said">嗯 我们明天 meeting 的时候 讨论一下 这个 budget</div>
+        <div class="got">我们明天 meeting 的时候讨论一下 budget。</div>
+        <span class="app">Slack</span>
+      </div>
+    </div>
+    <p class="caption">Real outputs. Mixed languages stay mixed; nothing is translated.</p>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">Privacy</p>
+    <h2>There is no server</h2>
+    <p>The speech model and the model that tidies your words both run on your Mac. There's no account, no upload, no subscription. Turn off Wi-Fi and it works the same. Meeting recordings and transcripts are files in a folder you can open, move or delete.</p>
+  </div>
+</section>
+
+<section class="s" id="how">
+  <div class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2>Hold, talk, let go</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">1 key</div><div class="k">Hold to talk</div><p>Text lands where the cursor is, in any app.</p></div>
+      <div class="stat"><div class="n">9</div><div class="k">Languages to pick from</div><p>Choose the ones you speak; it won't wander into others.</p></div>
+      <div class="stat"><div class="n">0</div><div class="k">Accounts</div><p>Download, open, talk.</p></div>
+    </div>
+    <div class="pair">
+      <div class="stat"><h3>Command mode</h3><p>Select text, hold a second key and say "make this shorter" or "translate to French". The selection is rewritten.</p></div>
+      <div class="stat"><h3>A voice per app</h3><p>Chats stay loose, email is tidied, and code or the terminal gets exactly what you said.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">The interface</p>
+    <h2>What it looks like</h2>
+    <div class="shots">
+      <figure><img src="img/home.webp" width="1600" height="1030" alt="L.O.B.A Home: words dictated, time saved, the two shortcuts and the latest dictations in English, French and Chinese."><figcaption>Home: what you've said lately, and the two keys.</figcaption></figure>
+      <div class="small">
+        <figure><img src="img/languages.webp" width="1600" height="969" alt="Settings: the languages you speak, sounds, and what happens to music while you dictate."><figcaption>Pick your languages. Music pauses while you talk.</figcaption></figure>
+        <figure><img src="img/meeting.webp" width="1600" height="888" alt="A meeting: recap with action items, speakers named, and the transcript."><figcaption>A meeting, with its recap and who said what.</figcaption></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">What it does</p>
+    <h2>Four things, done quietly</h2>
+    <div class="steps">
+      <div class="step"><span class="k">Dictate</span><div><h3>Talk instead of type</h3><p>Hold the key anywhere you can type. Let go and the text is pasted, punctuation and lists included.</p></div></div>
+      <div class="step"><span class="k">Polish</span><div><h3>Light or Polished</h3><p>Light keeps your wording and drops the fillers. Polished rewrites what you said into clear sentences, same meaning, nothing added.</p></div></div>
+      <div class="step"><span class="k">Remember</span><div><h3>Your words, spelled your way</h3><p>A dictionary for names and jargon, and a history of the last 50 dictations. Said it in the wrong language? Hear it again in the right one.</p></div></div>
+      <div class="step"><span class="k">Meetings</span><div><h3>Record, transcribe, recap</h3><p>Audio, or audio and video of the call window. You and the others, kept apart. A recap when it ends.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Meetings</p>
+    <h2>The call, written down</h2>
+    <p>Start a meeting and L.O.B.A listens to you and to the call. The others are told apart by voice as Speaker A, B, C; click a name to rename it everywhere. When you stop, a recap appears: summary, decisions, who does what by when. Keep audio only, about 15 MB an hour, or film the call window you pick. Click any line of the transcript to play that moment.</p>
+    <img src="img/meeting.webp" width="1600" height="888" alt="" loading="lazy">
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">Honest limits</p>
+    <h2>What it will not pretend to do</h2>
+    <div class="honest">
+      <div><h3>It doesn't read minds mid-sentence</h3><p>Switching languages halfway through one sentence can come out in a single language. Short words from another language usually survive.</p></div>
+      <div><h3>Two similar voices can become one speaker</h3><p>Renaming fixes it in a click. One-word replies take the name of whoever spoke just before.</p></div>
+      <div><h3>The cleanup needs Ollama</h3><p>A free app that runs the local model. Without it, L.O.B.A pastes exactly what it heard, which is still fast.</p></div>
+      <div><h3>It's a Mac app</h3><p>Apple Silicon only. No Windows, no iPhone, no web version.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">Requirements</p>
+    <h2>What you need</h2>
+    <table class="spec">
+      <tr><td>Mac</td><td>Apple Silicon (M1 or newer)</td></tr>
+      <tr><td>macOS</td><td>14 Sonoma or newer; 15 for video in meetings</td></tr>
+      <tr><td>Memory</td><td>16 GB recommended for the cleanup model</td></tr>
+      <tr><td>Disk</td><td>About 7 GB: speech model 1.5 GB, cleanup model 5 GB</td></tr>
+      <tr><td>Also</td><td>Ollama, free (for cleanup and recaps)</td></tr>
+      <tr><td>Network</td><td>Only to download the models, once</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="s">
+  <div class="wrap">
+    <p class="eyebrow">The name</p>
+    <h2>Why L.O.B.A</h2>
+    <p>Loba means <em>speak</em> in Lingala, the language of the Congo river. It also stands for <strong>Listen Once, Bring Across</strong>: you say it once, and your words arrive where you're typing, in the language you spoke.</p>
+  </div>
+</section>
+
+<section class="s" id="get">
+  <div class="wrap">
+    <p class="eyebrow">Get it</p>
+    <h2>L.O.B.A for Mac</h2>
+    <div class="price">$0 or $2<small>yours to choose, same app</small></div>
+    <div class="offers">
+      <div class="offer">
+        <h3>Free</h3>
+        <p>Leave your email and the download starts. We'll only write when there's a new version worth having.</p>
+        <form id="free" novalidate>
+          <label for="email" class="sr" style="position:absolute;left:-9999px">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com">
+          <button class="btn solid" type="submit">Download</button>
+        </form>
+        <p class="note" id="free-note" role="status" aria-live="polite"></p>
+      </div>
+      <div class="offer">
+        <h3>$2</h3>
+        <p>No email, no list. Pay once through Stripe and the download follows. It keeps the lights on.</p>
+        <div><button class="btn line" id="pay" type="button">Pay $2 and download</button></div>
+        <p class="note" id="pay-note" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Recording, transcription and pasting come from Handy by CJ Pais, used under the MIT License.</p>
+    <p>© ASMBLY</p>
+  </div>
+</footer>
+
+<script>
+  window.LOBA_PAGE = window.LOBA_PAGE || {
+    // Saves the email and answers { "url": "<download link>" }. See loba-signup.ts.
+    signupEndpoint: "/api/loba-signup",
+    // Creates the Stripe checkout for $2. See ../loba-checkout.ts.
+    checkoutEndpoint: "/api/loba-checkout",
+  };
+
+  (() => {
+    const cfg = window.LOBA_PAGE;
+    const free = document.getElementById("free");
+    const email = document.getElementById("email");
+    const freeNote = document.getElementById("free-note");
+    const pay = document.getElementById("pay");
+    const payNote = document.getElementById("pay-note");
+
+    const say = (el, text, kind) => {
+      el.textContent = text;
+      el.className = "note" + (kind ? " " + kind : "");
+    };
+
+    free.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const value = email.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        say(freeNote, "That email doesn't look right.", "err");
+        email.focus();
+        return;
+      }
+      say(freeNote, "One moment…");
+      try {
+        const res = await fetch(cfg.signupEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: value }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || "no link");
+        say(freeNote, "Thanks. The download is starting.", "ok");
+        window.location.href = data.url;
+      } catch {
+        say(freeNote, "That didn't go through. Try again in a moment.", "err");
+      }
+    });
+
+    pay.addEventListener("click", async () => {
+      say(payNote, "Opening checkout…");
+      pay.disabled = true;
+      try {
+        const res = await fetch(cfg.checkoutEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: 2 }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.url) throw new Error(data.error || "no checkout");
+        window.location.href = data.url;
+      } catch {
+        pay.disabled = false;
+        say(payNote, "Checkout didn't open. Try again, or take the free download.", "err");
+      }
+    });
+  })();
+</script>
+</body>
+</html>
