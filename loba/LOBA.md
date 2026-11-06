@@ -379,6 +379,13 @@ the same either way.
 
 ## Download page (asmbly.store)
 
+Signups for the free download go to the **L.O.B.A** contact list in Resend
+(segment id `dd3203fe-7e5b-4d93-81fd-f2129232648d`), and each gets a short
+email with the download link from Asmbly <reach@asmbly.tech> (the verified
+`asmbly.tech` domain). Replies land in the reach@asmbly.tech inbox.
+`site/loba-page/` is the page drafted in the Sift page's layout, to be
+rebuilt inside the asmbly-store repo.
+
 `site/loba-download.html` is a self-contained block for the product page: a
 $1 to $25 slider, "Pay $N and download" through Stripe Checkout, and "Skip
 this time", which downloads straight away. Set `dmgUrl` and
